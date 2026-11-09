@@ -1,0 +1,27 @@
+#
+ Secrets
+.env
+*.pem
+.oci/
+*.tfvars
+#
+ Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+#
+ Python
+__pycache__/
+.venv/
+.ipynb_checkpoints/
+#
+ Node
+node_modules/
+dist/
+#
+ Donnes (versionnes par DVC, pas par Git)
+*.parquet
+#
+ Divers
+.DS_Store
+.vscode/
