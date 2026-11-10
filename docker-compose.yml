@@ -3,6 +3,7 @@ services:
   postgres:
     image: postgres:16
     container_name: agricoop-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: agricoop
       POSTGRES_PASSWORD: agricoop_dev   # local uniquement, jamais en production
