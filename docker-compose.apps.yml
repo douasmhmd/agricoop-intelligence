@@ -149,6 +149,9 @@ services:
       LOG_LEVEL: info
       OIDC_ISSUER: http://localhost:8080/realms/agricoop
       OIDC_JWKS_URL: http://keycloak:8080/realms/agricoop/protocol/openid-connect/certs
+      # Encoded in printed labels: ${WEB_PUBLIC_URL}/v/<token>
+      WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-http://localhost:5173}
+      QR_VERIFY_RATE_PER_MIN: 30
     ports:
       - '3001:3001'
 

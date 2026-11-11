@@ -49,3 +49,27 @@ describe('apiFetch (Orval mutator)', () => {
     expect((error as ApiError).problem?.code).toBe('not_found');
   });
 });
+
+describe('apiFetch binary responses', () => {
+  it('returns PDFs as a Blob', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(new Uint8Array([37, 80, 68, 70]), {
+            status: 201,
+            headers: { 'content-type': 'application/pdf' },
+          }),
+        ),
+      ),
+    );
+    const res = await apiFetch<{ data: Blob; status: number }>('/qr/v1/lots/x/qr-codes', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(201);
+    // jsdom and Node expose different Blob classes: check the shape, not the realm.
+    expect(res.data.type).toBe('application/pdf');
+    expect(await res.data.text()).toBe('%PDF');
+    vi.unstubAllGlobals();
+  });
+});

@@ -258,3 +258,48 @@ with one `stock_modifie` per movement.
   (decision 3 of phase 1).
 - Customers can cancel their own order while `creee` or `payee` (refund is the provider's job).
 - Storefront shows synthetic cooperatives' products too (demo data is synthetic).
+
+## Phase 6 — QR authenticity service (2026-11-11)
+
+**Done** (`apps/qr`, all under `/qr/v1`)
+
+- **Tokens:** 16 random bytes, base64url without padding; only `hex(sha256(token))` is stored — verified
+  byte-for-byte against Python `hashlib` (the generator's convention).
+- **Generation + labels (`coop_manager`):** `POST /lots/{lotId}/qr-codes[?regenerer=true]` issues one
+  code per lot or one per `unite` (following `produit.niveau_qr`), under a row lock on the lot, and
+  returns the printable **A4 PDF** (3 × 8 labels: QR of `${WEB_PUBLIC_URL}/v/<token>`, product, lot,
+  serial number, expiry, cooperative). The PDF is the only copy of the clear tokens; printing twice →
+  409 `qr_deja_generes` unless regenerating (old codes deactivated). Max `QR_MAX_LABELS` (5000) per call.
+- **Public verification:** `GET /verify/{token}` — shape check, hash, cross-tenant lookup through
+  `qr_lookup()` when RLS proposal 001 is applied (auto-detected) or a plain query otherwise, then inside
+  the tenant: row lock on the code, scan recorded (city from the trusted `x-agricoop-city` / `cf-ipcity`
+  header only, device class `Android` / `iPhone` / `Autre`, **no IP**), anomaly evaluation, `qr_scanne`
+  event, `Cache-Control: no-store`. Unknown codes → 404 `qr_inconnu`. Rate limit
+  `QR_VERIFY_RATE_PER_MIN` (30) per client. Metric `qr_verifications_total{resultat}`.
+- **Anomaly rules** (`anomaly.ts`, configurable): `qr_inactif` (status not `actif`), `lot_perime`,
+  `scans_multiples` (unit code > 5 scans; lot code > 2 × lot size), `villes_multiples` (unit code in
+  > 2 cities within 24 h). Codes are **not** auto-flagged: a suspicious scan is reported in the response,
+  > the event and the back office; the manager decides.
+- **Back office (`coop_manager`):** `GET /qr-codes` (per-code scan count, cities, last scan, current
+  alerts; filters `lot_id`, `statut`), `GET/PATCH /qr-codes/{id}` (deactivate / flag / reactivate),
+  `GET /qr-codes/{id}/scans`, `GET /scans/villes?jours=` (per-city counts, `Inconnue` when no city).
+- Front-end fetch mutator returns a `Blob` for `application/pdf`.
+
+**Tests:** 31 QR integration tests (15 cases × {without RLS, with RLS} + rate limit) — PDF and rows per
+unit / per lot, print-twice refusal and regeneration, **no clear token anywhere in qr_code / outbox /
+scan_qr** (but every hash present), authentic scan recorded without the forwarded IP, valid `qr_scanne`
+event, unknown and malformed tokens, city / count / lot-size / expiry rules, deactivation, cross-tenant
+404s, scan history and per-city stats, 429 after the budget; plus 9 unit tests (tokens, hash convention,
+anomaly rule, device / city parsing).
+
+**Verified manually:** rendered a 26-label sheet and checked it visually (2 pages, 24 per page, French
+accents, serial numbers).
+
+**Choices made**
+
+- Re-printing requires regenerating (tokens are unrecoverable by design).
+- The city comes only from an edge header; the IP lookup is a stub until a GeoIP database is chosen
+  (the IP is never retained either way).
+- Label text is French only: built-in PDF fonts cannot render Arabic (needs an embedded font).
+- Lot-level codes use a count threshold relative to lot size and no city rule, because many buyers
+  legitimately scan the same lot code.

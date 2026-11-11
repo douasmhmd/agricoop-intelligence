@@ -8,6 +8,8 @@ import { OPENAPI_INFO } from './openapi-info';
 
 async function main(): Promise<void> {
   const env = parseEnv(qrEnv);
+  // Read by the @Throttle resolver of the public verification route.
+  process.env.QR_VERIFY_RATE_PER_MIN = String(env.QR_VERIFY_RATE_PER_MIN);
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule.register(env),
     new FastifyAdapter({ trustProxy: true }),

@@ -10,6 +10,7 @@ import {
 } from '@agricoop/nest-kit';
 import { LoggerModule } from 'nestjs-pino';
 import type { QrEnv } from './env';
+import { QrModule } from './qr/qr.module';
 
 export const SERVICE_NAME = 'agricoop-qr';
 export const GLOBAL_PREFIX = 'qr/v1';
@@ -43,6 +44,7 @@ export class AppModule {
           inject: [DB_POOL],
           useFactory: (pool: Pool) => [{ name: 'database', check: () => pingDb(pool) }],
         }),
+        QrModule.register(env),
       ],
     };
   }

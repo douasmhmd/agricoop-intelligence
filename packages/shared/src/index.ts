@@ -8,3 +8,4 @@ export * from './dates.js';
 export * from './schemas/lot.js';
 export * from './schemas/commande.js';
 export * from './fefo.js';
+export * from './schemas/qr.js';

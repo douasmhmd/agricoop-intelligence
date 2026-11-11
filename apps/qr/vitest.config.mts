@@ -3,5 +3,10 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [swc.vite({ module: { type: 'es6' } })],
-  test: { environment: 'node', include: ['test/**/*.test.ts', 'src/**/*.test.ts'] },
+  test: {
+    environment: 'node',
+    include: ['test/**/*.test.ts', 'src/**/*.test.ts'],
+    testTimeout: 30_000,
+    hookTimeout: 180_000,
+  },
 });

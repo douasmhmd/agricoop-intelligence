@@ -161,6 +161,13 @@ generate` regenerates the TS types.
   `NotificationProvider` after commit; never log addresses or phone numbers.
 - **Relay:** `relayBatch` claims rows with `FOR UPDATE SKIP LOCKED`, publishes, then marks `publie`
   in the same transaction (at-least-once); invalid events → `agricoop.dead_letter.v1` without payload.
+- **QR codes (apps/qr):** tokens from `generateQrToken()` (16 random bytes, base64url, no padding),
+  stored only as `hashQrToken()` = hex sha256 (same as the synthetic generator). The clear tokens
+  exist only in the label PDF returned by `POST /qr/v1/lots/{id}/qr-codes` — never log, store or return
+  them otherwise. Public verification resolves the hash through `qr_lookup()` when proposal 001 is
+  applied (auto-detected), then works inside the tenant. Scans keep city (trusted header only) and
+  device class, never the IP. Anomaly rules live in `apps/qr/src/qr/anomaly.ts` (city rule for
+  unit-level codes only).
 - Unique violations: catch and map with `isUniqueViolation(error, '<constraint>')` → `Problems.conflict`.
 
 ## Local dev

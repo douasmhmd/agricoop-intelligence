@@ -39,8 +39,15 @@ export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<
   const response = await fetch(url, { ...init, headers });
   const contentType = response.headers.get('content-type') ?? '';
   const isJson = contentType.includes('json');
+  const isBinary = /application\/(pdf|octet-stream)/.test(contentType);
   const data: unknown =
-    response.status === 204 ? undefined : isJson ? await response.json() : await response.text();
+    response.status === 204
+      ? undefined
+      : isJson
+        ? await response.json()
+        : isBinary
+          ? await response.blob() // e.g. QR label sheets (application/pdf)
+          : await response.text();
 
   if (!response.ok) {
     throw new ApiError(response.status, isJson ? (data as ProblemDetails) : undefined);

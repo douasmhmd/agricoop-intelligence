@@ -961,6 +961,313 @@ paths:
         - bearer: []
       tags:
         - stock
+  /qr/v1/lots/{lotId}/qr-codes:
+    post:
+      operationId: QrAdmin_generate
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: lotId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: regenerer
+          required: false
+          in: query
+          schema:
+            default: "false"
+            type: string
+            enum:
+              - "true"
+              - "false"
+      responses:
+        "201":
+          description: Printable label sheet
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - qr-codes
+  /qr/v1/qr-codes:
+    get:
+      operationId: QrAdmin_list
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: page
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 9007199254740991
+            default: 1
+            type: integer
+        - name: pageSize
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            type: integer
+        - name: lot_id
+          required: false
+          in: query
+          schema:
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            type: string
+        - name: statut
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - actif
+              - desactive
+              - signale
+      responses:
+        "200":
+          description: QR codes with scan statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QrCodePage"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - qr-codes
+  /qr/v1/qr-codes/{qrId}:
+    get:
+      operationId: QrAdmin_get
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: qrId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The QR code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QrCode"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - qr-codes
+    patch:
+      operationId: QrAdmin_changeStatut
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: qrId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QrStatutChange"
+      responses:
+        "200":
+          description: QR code updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QrCode"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - qr-codes
+  /qr/v1/qr-codes/{qrId}/scans:
+    get:
+      operationId: QrAdmin_scans
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: qrId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Scan history (latest 500)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Scan"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - qr-codes
+  /qr/v1/scans/villes:
+    get:
+      operationId: QrAdmin_villes
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: jours
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 365
+            default: 30
+            type: integer
+      responses:
+        "200":
+          description: Scans per city
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScansParVille"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - qr-codes
+  /qr/v1/verify/{token}:
+    get:
+      operationId: Verification_verify
+      parameters:
+        - name: token
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Verification"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      tags:
+        - verification
 components:
   schemas:
     AlertePeremption:
@@ -2019,6 +2326,244 @@ components:
             - unite
         actif:
           type: boolean
+    QrCode:
+      type: object
+      properties:
+        qr_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        niveau:
+          type: string
+          enum:
+            - lot
+            - unite
+        statut:
+          type: string
+          enum:
+            - actif
+            - desactive
+            - signale
+        lot_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        lot_numero:
+          type: string
+        unite_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          nullable: true
+        numero_serie:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        produit_code:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        nb_scans:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        nb_villes:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        dernier_scan:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+          nullable: true
+        alertes:
+          type: array
+          items:
+            type: string
+            enum:
+              - qr_inactif
+              - lot_perime
+              - scans_multiples
+              - villes_multiples
+        is_synthetic:
+          type: boolean
+      required:
+        - qr_id
+        - niveau
+        - statut
+        - lot_id
+        - lot_numero
+        - unite_id
+        - numero_serie
+        - produit_code
+        - created_at
+        - nb_scans
+        - nb_villes
+        - dernier_scan
+        - alertes
+        - is_synthetic
+      additionalProperties: false
+    QrCodePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              qr_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              niveau:
+                type: string
+                enum:
+                  - lot
+                  - unite
+              statut:
+                type: string
+                enum:
+                  - actif
+                  - desactive
+                  - signale
+              lot_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              lot_numero:
+                type: string
+              unite_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                nullable: true
+              numero_serie:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+                nullable: true
+              produit_code:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+              nb_scans:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              nb_villes:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              dernier_scan:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                nullable: true
+              alertes:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - qr_inactif
+                    - lot_perime
+                    - scans_multiples
+                    - villes_multiples
+              is_synthetic:
+                type: boolean
+            required:
+              - qr_id
+              - niveau
+              - statut
+              - lot_id
+              - lot_numero
+              - unite_id
+              - numero_serie
+              - produit_code
+              - created_at
+              - nb_scans
+              - nb_villes
+              - dernier_scan
+              - alertes
+              - is_synthetic
+            additionalProperties: false
+        total:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        page:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        pageSize:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - items
+        - total
+        - page
+        - pageSize
+      additionalProperties: false
+    QrStatutChange:
+      type: object
+      properties:
+        statut:
+          type: string
+          enum:
+            - actif
+            - desactive
+            - signale
+      required:
+        - statut
+    Scan:
+      type: object
+      properties:
+        scan_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        date_scan:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        ville:
+          type: string
+          nullable: true
+        appareil:
+          type: string
+          nullable: true
+        is_synthetic:
+          type: boolean
+      required:
+        - scan_id
+        - date_scan
+        - ville
+        - appareil
+        - is_synthetic
+      additionalProperties: false
+    ScansParVille:
+      type: object
+      properties:
+        ville:
+          type: string
+        nb_scans:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        nb_qr:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - ville
+        - nb_scans
+        - nb_qr
+      additionalProperties: false
     StatutChange:
       type: object
       properties:
@@ -2031,6 +2576,104 @@ components:
             - annulee
       required:
         - statut
+    Verification:
+      type: object
+      properties:
+        resultat:
+          type: string
+          enum:
+            - authentique
+            - alerte
+        alertes:
+          type: array
+          items:
+            type: string
+            enum:
+              - qr_inactif
+              - lot_perime
+              - scans_multiples
+              - villes_multiples
+        statut_qr:
+          type: string
+          enum:
+            - actif
+            - desactive
+            - signale
+        niveau:
+          type: string
+          enum:
+            - lot
+            - unite
+        produit:
+          type: object
+          properties:
+            nom:
+              type: string
+            famille:
+              type: string
+              enum:
+                - alimentaire
+                - cosmetique
+                - coffret
+            categorie:
+              type: string
+          required:
+            - nom
+            - famille
+            - categorie
+          additionalProperties: false
+        cooperative:
+          type: object
+          properties:
+            code:
+              type: string
+            nom:
+              type: string
+            province:
+              type: string
+          required:
+            - code
+            - nom
+            - province
+          additionalProperties: false
+        lot:
+          type: object
+          properties:
+            numero:
+              type: string
+            date_fabrication:
+              type: string
+              format: date
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+            date_peremption:
+              type: string
+              format: date
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+          required:
+            - numero
+            - date_fabrication
+            - date_peremption
+          additionalProperties: false
+        numero_serie:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        nb_scans:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - resultat
+        - alertes
+        - statut_qr
+        - niveau
+        - produit
+        - cooperative
+        - lot
+        - numero_serie
+        - nb_scans
+      additionalProperties: false
   securitySchemes:
     bearer:
       scheme: bearer
