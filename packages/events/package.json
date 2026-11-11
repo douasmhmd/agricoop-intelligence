@@ -24,10 +24,14 @@
   ],
   "scripts": {
     "generate": "node scripts/generate.mjs",
-    "build": "pnpm generate && tsup",
+    "build": "tsup",
     "lint": "eslint .",
-    "typecheck": "pnpm generate && tsc -p tsconfig.json",
-    "test": "pnpm generate && vitest run"
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
   },
   "devDependencies": {
     "@agricoop/config": "workspace:*",

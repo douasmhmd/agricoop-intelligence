@@ -11,6 +11,240 @@ servers:
   - url: /
 tags: []
 paths:
+  /api/v1/lots:
+    get:
+      operationId: Lots_list
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: page
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 9007199254740991
+            default: 1
+            type: integer
+        - name: pageSize
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            type: integer
+        - name: produit_id
+          required: false
+          in: query
+          schema:
+            format: uuid
+            pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            type: string
+        - name: statut
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - disponible
+              - epuise
+              - perime
+        - name: synthetic
+          required: false
+          in: query
+          schema:
+            default: include
+            type: string
+            enum:
+              - include
+              - exclude
+      responses:
+        "200":
+          description: A page of lots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LotPage"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - lots
+    post:
+      operationId: Lots_create
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LotCreate"
+      responses:
+        "201":
+          description: Lot created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lot"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - lots
+  /api/v1/lots/{lotId}:
+    get:
+      operationId: Lots_get
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: lotId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The lot with its stock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lot"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - lots
+  /api/v1/lots/{lotId}/mouvements:
+    get:
+      operationId: Lots_mouvements
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: lotId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stock movements of the lot
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Mouvement"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - lots
+  /api/v1/lots/{lotId}/pertes:
+    post:
+      operationId: Lots_perte
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: lotId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PerteCreate"
+      responses:
+        "201":
+          description: Loss recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerteResult"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - lots
   /api/v1/me:
     get:
       operationId: Me_get
@@ -48,6 +282,32 @@ paths:
           required: false
           schema:
             type: string
+        - name: famille
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - alimentaire
+              - cosmetique
+              - coffret
+        - name: actif
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - "true"
+              - "false"
+        - name: synthetic
+          required: false
+          in: query
+          schema:
+            default: include
+            type: string
+            enum:
+              - include
+              - exclude
       responses:
         "200":
           description: Products of the cooperative
@@ -57,6 +317,44 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Produit"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - produits
+    post:
+      operationId: Produits_create
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProduitCreate"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Produit"
         4XX:
           description: Problem details (RFC 7807)
           content:
@@ -111,8 +409,381 @@ paths:
         - bearer: []
       tags:
         - produits
+    patch:
+      operationId: Produits_update
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: produitId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProduitUpdate"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Produit"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - produits
+    delete:
+      operationId: Produits_remove
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: produitId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Product deleted
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - produits
+  /api/v1/stock/alertes-peremption:
+    get:
+      operationId: Stock_alertes
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: jours
+          required: false
+          in: query
+          schema:
+            default: "90"
+            type: string
+            enum:
+              - "30"
+              - "60"
+              - "90"
+        - name: synthetic
+          required: false
+          in: query
+          schema:
+            default: include
+            type: string
+            enum:
+              - include
+              - exclude
+      responses:
+        "200":
+          description: Expiry alerts, most urgent first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertePeremption"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - stock
 components:
   schemas:
+    AlertePeremption:
+      type: object
+      properties:
+        lot_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        produit_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        produit_code:
+          type: string
+        produit_nom:
+          type: string
+        niveau_qr:
+          type: string
+          enum:
+            - lot
+            - unite
+        numero:
+          type: string
+        date_fabrication:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        date_peremption:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        quantite_initiale:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        stock:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        statut:
+          type: string
+          enum:
+            - disponible
+            - epuise
+            - perime
+        is_synthetic:
+          type: boolean
+        jours_restants:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        niveau:
+          type: string
+          enum:
+            - perime
+            - j30
+            - j60
+            - j90
+      required:
+        - lot_id
+        - produit_id
+        - produit_code
+        - produit_nom
+        - niveau_qr
+        - numero
+        - date_fabrication
+        - date_peremption
+        - quantite_initiale
+        - stock
+        - statut
+        - is_synthetic
+        - jours_restants
+        - niveau
+      additionalProperties: false
+    Lot:
+      type: object
+      properties:
+        lot_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        produit_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        produit_code:
+          type: string
+        produit_nom:
+          type: string
+        niveau_qr:
+          type: string
+          enum:
+            - lot
+            - unite
+        numero:
+          type: string
+        date_fabrication:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        date_peremption:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        quantite_initiale:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        stock:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        statut:
+          type: string
+          enum:
+            - disponible
+            - epuise
+            - perime
+        is_synthetic:
+          type: boolean
+      required:
+        - lot_id
+        - produit_id
+        - produit_code
+        - produit_nom
+        - niveau_qr
+        - numero
+        - date_fabrication
+        - date_peremption
+        - quantite_initiale
+        - stock
+        - statut
+        - is_synthetic
+      additionalProperties: false
+    LotCreate:
+      type: object
+      properties:
+        produit_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        numero:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_/-]{1,63}$
+        date_fabrication:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        date_peremption:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        quantite_initiale:
+          type: integer
+          minimum: 1
+          maximum: 100000
+      required:
+        - produit_id
+        - numero
+        - date_fabrication
+        - quantite_initiale
+    LotPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              lot_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              produit_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              produit_code:
+                type: string
+              produit_nom:
+                type: string
+              niveau_qr:
+                type: string
+                enum:
+                  - lot
+                  - unite
+              numero:
+                type: string
+              date_fabrication:
+                type: string
+                format: date
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+              date_peremption:
+                type: string
+                format: date
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+              quantite_initiale:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              stock:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              statut:
+                type: string
+                enum:
+                  - disponible
+                  - epuise
+                  - perime
+              is_synthetic:
+                type: boolean
+            required:
+              - lot_id
+              - produit_id
+              - produit_code
+              - produit_nom
+              - niveau_qr
+              - numero
+              - date_fabrication
+              - date_peremption
+              - quantite_initiale
+              - stock
+              - statut
+              - is_synthetic
+            additionalProperties: false
+        total:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        page:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        pageSize:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - items
+        - total
+        - page
+        - pageSize
+      additionalProperties: false
     Me:
       type: object
       properties:
@@ -133,6 +804,96 @@ components:
       required:
         - roles
         - coop_id
+      additionalProperties: false
+    Mouvement:
+      type: object
+      properties:
+        mouvement_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        lot_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        type_mouvement:
+          type: string
+          enum:
+            - entree
+            - sortie
+            - perte
+        quantite:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        date_mouvement:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        is_synthetic:
+          type: boolean
+      required:
+        - mouvement_id
+        - lot_id
+        - type_mouvement
+        - quantite
+        - date_mouvement
+        - is_synthetic
+      additionalProperties: false
+    PerteCreate:
+      type: object
+      properties:
+        quantite:
+          type: integer
+          minimum: 1
+          maximum: 9007199254740991
+      required:
+        - quantite
+    PerteResult:
+      type: object
+      properties:
+        mouvement:
+          type: object
+          properties:
+            mouvement_id:
+              type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            lot_id:
+              type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            type_mouvement:
+              type: string
+              enum:
+                - entree
+                - sortie
+                - perte
+            quantite:
+              type: integer
+              minimum: -9007199254740991
+              maximum: 9007199254740991
+            date_mouvement:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            is_synthetic:
+              type: boolean
+          required:
+            - mouvement_id
+            - lot_id
+            - type_mouvement
+            - quantite
+            - date_mouvement
+            - is_synthetic
+          additionalProperties: false
+        stock_apres:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - mouvement
+        - stock_apres
       additionalProperties: false
     ProblemDetails:
       type: object
@@ -198,6 +959,12 @@ components:
           type: string
           pattern: ^\d{1,8}(\.\d{1,2})?$
           description: Amount in MAD, NUMERIC(10,2) as a string
+        marge_mad:
+          type: string
+          pattern: ^-?\d+\.\d{2}$
+        marge_pct:
+          type: string
+          nullable: true
         conservation_j:
           type: integer
           minimum: -9007199254740991
@@ -223,12 +990,109 @@ components:
         - categorie
         - prix_mad
         - cout_mad
+        - marge_mad
+        - marge_pct
         - conservation_j
         - huile_ml_par_unite
         - niveau_qr
         - actif
         - is_synthetic
       additionalProperties: false
+    ProduitCreate:
+      type: object
+      properties:
+        code:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9_-]{1,31}$
+        nom:
+          type: string
+          minLength: 2
+          maxLength: 120
+        famille:
+          type: string
+          enum:
+            - alimentaire
+            - cosmetique
+            - coffret
+        categorie:
+          type: string
+          pattern: ^[a-z][a-z0-9_]{1,39}$
+        prix_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        cout_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        conservation_j:
+          type: integer
+          minimum: 1
+          maximum: 3650
+        huile_ml_par_unite:
+          default: 0
+          type: integer
+          minimum: 0
+          maximum: 100000
+        niveau_qr:
+          type: string
+          enum:
+            - lot
+            - unite
+        actif:
+          default: true
+          type: boolean
+      required:
+        - code
+        - nom
+        - famille
+        - categorie
+        - prix_mad
+        - cout_mad
+        - conservation_j
+        - niveau_qr
+    ProduitUpdate:
+      type: object
+      properties:
+        code:
+          type: string
+          pattern: ^[A-Z0-9][A-Z0-9_-]{1,31}$
+        nom:
+          type: string
+          minLength: 2
+          maxLength: 120
+        famille:
+          type: string
+          enum:
+            - alimentaire
+            - cosmetique
+            - coffret
+        categorie:
+          type: string
+          pattern: ^[a-z][a-z0-9_]{1,39}$
+        prix_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        cout_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        conservation_j:
+          type: integer
+          minimum: 1
+          maximum: 3650
+        huile_ml_par_unite:
+          type: integer
+          minimum: 0
+          maximum: 100000
+        niveau_qr:
+          type: string
+          enum:
+            - lot
+            - unite
+        actif:
+          type: boolean
   securitySchemes:
     bearer:
       scheme: bearer

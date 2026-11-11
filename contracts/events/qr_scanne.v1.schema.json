@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.agricoop.ma/events/qr_scanne.v1.schema.json",
+  "title": "QrScanneV1",
+  "description": "An authenticity QR code was scanned on the public verification page. Topic agricoop.qr_scanne.v1, key = coop_id.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "type", "version", "coop_id", "occurred_at", "is_synthetic", "payload"],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "outbox.event_id; consumers deduplicate on it"
+    },
+    "type": {
+      "const": "qr_scanne"
+    },
+    "version": {
+      "const": 1
+    },
+    "coop_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Tenant; also the Kafka message key"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "outbox.created_at"
+    },
+    "is_synthetic": {
+      "type": "boolean"
+    },
+    "payload": {
+      "$ref": "#/$defs/payload"
+    }
+  },
+  "$defs": {
+    "payload": {
+      "title": "QrScannePayloadV1",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scan_id",
+        "qr_id",
+        "niveau",
+        "lot_id",
+        "unite_id",
+        "produit_id",
+        "date_scan",
+        "ville",
+        "appareil",
+        "statut_qr",
+        "resultat",
+        "alertes"
+      ],
+      "properties": {
+        "scan_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "qr_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "niveau": {
+          "enum": ["lot", "unite"]
+        },
+        "lot_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "unite_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "produit_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "date_scan": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ville": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Approximate city; never an IP address"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "appareil": {
+          "enum": ["Android", "iPhone", "Autre"]
+        },
+        "statut_qr": {
+          "enum": ["actif", "desactive", "signale"]
+        },
+        "resultat": {
+          "enum": ["authentique", "alerte"]
+        },
+        "alertes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["qr_inactif", "lot_perime", "scans_multiples", "villes_multiples"]
+          }
+        }
+      }
+    }
+  }
+}

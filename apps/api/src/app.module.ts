@@ -11,7 +11,8 @@ import {
 import { LoggerModule } from 'nestjs-pino';
 import type { ApiEnv } from './env';
 import { MeController } from './me/me.controller';
-import { ProduitsModule } from './produits/produits.module';
+import { CatalogueModule } from './catalogue/catalogue.module';
+import { StockModule } from './stock/stock.module';
 
 export const SERVICE_NAME = 'agricoop-api';
 export const GLOBAL_PREFIX = 'api/v1';
@@ -45,7 +46,8 @@ export class AppModule {
           inject: [DB_POOL],
           useFactory: (pool: Pool) => [{ name: 'database', check: () => pingDb(pool) }],
         }),
-        ProduitsModule,
+        CatalogueModule,
+        StockModule,
       ],
       controllers: [MeController],
     };

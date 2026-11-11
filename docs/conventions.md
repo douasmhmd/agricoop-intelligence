@@ -137,6 +137,17 @@ update / delete ...)`. Raw `scope.tx` queries (joins, aggregates) must add `scop
   Orval clients; operation ids are `<Controller>_<method>` → hooks like `useProduitsList`).
 - Tests: `*.int.test.ts` boot the real module against Testcontainers Postgres (`@agricoop/testing`) with a
   local JWT issuer; tenant-sensitive features get a case in both `{ rls: false }` and `{ rls: true }`.
+  Pin time with `createTestApp(db, issuer, { clock })`; business code reads time only through `CLOCK`
+  and `today(clock)` (Africa/Casablanca date).
+- **Stock:** never stored. Read it with `lotsWithStock` / `lotStock` (packages/db). Any operation that
+  changes a lot's stock must call `lockLotForStock(scope, lotId)` first (row lock) and write exactly one
+  `mouvement_stock` row + one `stock_modifie` event per movement. A lot is expired ON its
+  `date_peremption` (`isExpired`), same rule as the synthetic generator.
+- **Events:** `appendEvent(scope, type, payload)` inside the same `tenantDb.run` as the business write
+  (it validates against `contracts/events/<type>.v1.schema.json` and rejects PII). To change a payload,
+  edit the JSON schema first (contract owned with the data plane), then `pnpm --filter @agricoop/events
+generate` regenerates the TS types.
+- Unique violations: catch and map with `isUniqueViolation(error, '<constraint>')` → `Problems.conflict`.
 
 ## Local dev
 

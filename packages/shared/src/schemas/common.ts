@@ -32,3 +32,10 @@ export const problemDetails = z.object({
   code: z.string().optional().describe('Stable machine-readable error code'),
 });
 export type ProblemDetails = z.infer<typeof problemDetails>;
+
+/**
+ * Show / hide synthetic rows (data/synthetic-factory, demo seed). Default: include, with a badge in
+ * the back office.
+ */
+export const syntheticFilter = z.enum(['include', 'exclude']).default('include');
+export type SyntheticFilter = z.infer<typeof syntheticFilter>;

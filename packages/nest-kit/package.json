@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@agricoop/db": "workspace:*",
+    "@agricoop/events": "workspace:*",
     "@agricoop/shared": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "jose": "^6.2.17",

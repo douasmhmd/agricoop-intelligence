@@ -15,3 +15,6 @@ export * from './core.module.js';
 export * from './problem/problem.filter.js';
 export * from './problem/problem.js';
 export * from './tenant-db.js';
+export * from './clock.js';
+export * from './outbox.js';
+export * from './problem/pg-errors.js';

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.agricoop.ma/events/lot_cree.v1.schema.json",
+  "title": "LotCreeV1",
+  "description": "A production lot was created (its initial `entree` movement emits stock_modifie). Topic agricoop.lot_cree.v1, key = coop_id.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "type", "version", "coop_id", "occurred_at", "is_synthetic", "payload"],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "outbox.event_id; consumers deduplicate on it"
+    },
+    "type": {
+      "const": "lot_cree"
+    },
+    "version": {
+      "const": 1
+    },
+    "coop_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Tenant; also the Kafka message key"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "outbox.created_at"
+    },
+    "is_synthetic": {
+      "type": "boolean"
+    },
+    "payload": {
+      "$ref": "#/$defs/payload"
+    }
+  },
+  "$defs": {
+    "payload": {
+      "title": "LotCreePayloadV1",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lot_id",
+        "produit_id",
+        "numero",
+        "date_fabrication",
+        "date_peremption",
+        "quantite_initiale",
+        "niveau_qr"
+      ],
+      "properties": {
+        "lot_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "produit_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "numero": {
+          "type": "string",
+          "description": "Lot number, e.g. HVE-1L-2026-001"
+        },
+        "date_fabrication": {
+          "type": "string",
+          "format": "date"
+        },
+        "date_peremption": {
+          "type": "string",
+          "format": "date"
+        },
+        "quantite_initiale": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "niveau_qr": {
+          "enum": ["lot", "unite"]
+        }
+      }
+    }
+  }
+}

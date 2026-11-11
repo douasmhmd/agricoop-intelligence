@@ -15,6 +15,7 @@ await mkdir(outDir, { recursive: true });
 
 const files = (await readdir(contractsDir)).filter((f) => f.endsWith('.schema.json')).sort();
 const modules = [];
+const embedded = [];
 for (const file of files) {
   const schema = JSON.parse(await readFile(join(contractsDir, file), 'utf8'));
   const moduleName = basename(file, '.schema.json').replace(/\./g, '_');
@@ -25,7 +26,17 @@ for (const file of files) {
   });
   await writeFile(join(outDir, `${moduleName}.ts`), ts);
   modules.push(moduleName);
+  embedded.push(
+    `  ${JSON.stringify(schema.properties?.type?.const ?? moduleName)}: ${JSON.stringify(schema)},`,
+  );
 }
+
+// The schemas themselves, embedded so runtime validation never reads files.
+await writeFile(
+  join(outDir, 'schemas.ts'),
+  `${banner}export const EVENT_SCHEMAS = {\n${embedded.join('\n')}\n} as const;\n`,
+);
+modules.push('schemas');
 
 const index =
   banner +

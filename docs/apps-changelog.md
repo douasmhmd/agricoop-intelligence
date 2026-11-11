@@ -149,3 +149,48 @@ tenant mismatch, admin override with audit log line, no tokens or passwords in l
 - `saas_admin` passes every `@Roles` check but must always name a tenant.
 - Health readiness returns Terminus' own body on 503 (not problem+json), as probes expect.
 - API JSON keeps the schema's snake_case French field names.
+
+## Phase 4 — Catalogue, lots, stock (2026-11-11)
+
+**Done**
+
+- **Event contract v1 (draft, needs data-plane review):** `contracts/events/<type>.v1.schema.json` for all
+  five types + `contracts/events/README.md` (topics, key, envelope, delivery, PII rules, versioning).
+  `packages/events` now generates TS types **and** embeds the schemas; `assertValidPayload` (PII guard +
+  Ajv draft 2020-12) and `assertValidEvent` (full envelope). Contract tests: one schema per type, identical
+  envelopes, no PII field name anywhere.
+- `packages/db`: `lotsWithStock` (lot + product + computed stock, `count(*) over()` total), `lotStock`,
+  `lockLotForStock` (row lock), `TenantScope.list` (typed, `forUpdate`).
+- `packages/shared`: catalogue / lot / stock DTO schemas, `syntheticFilter`, Morocco calendar helpers
+  (`isoDateInZone`, `addDays`, `daysBetween`, `isExpired`, `defaultDatePeremption`, `toIsoTimestamp`).
+- `packages/nest-kit`: `CLOCK` (injectable time), `appendEvent` (transactional outbox),
+  `isUniqueViolation` / `isForeignKeyViolation`.
+- API (`coop_manager`, all tenant-scoped):
+  - `GET/POST /produits`, `GET/PATCH/DELETE /produits/{id}` — margin (`marge_mad`, `marge_pct`) computed
+    with decimal.js; filters `famille`, `actif`, `synthetic`; 409 `produit_code_existe`,
+    `niveau_qr_verrouille` (product has lots), `produit_utilise` (delete → deactivate instead).
+  - `GET/POST /lots`, `GET /lots/{id}`, `GET /lots/{id}/mouvements`, `POST /lots/{id}/pertes` — lot creation
+    writes the `entree` movement, `unite` rows 1..N (`generate_series`) for unit-level QR products and the
+    `lot_cree` + `stock_modifie` events in one transaction; default expiry = fabrication + conservation_j;
+    paginated list with `statut` (`disponible` / `epuise` / `perime`) and `synthetic` filters; losses lock the
+    lot and return 409 `stock_insuffisant`.
+  - `GET /stock/alertes-peremption?jours=30|60|90` — lots with stock, expired or expiring, bucketed
+    `perime` / `j30` / `j60` / `j90`.
+
+**Tests:** 136 passing. New `apps/api/test/catalogue-stock.int.test.ts` (17 cases × {without RLS, with
+RLS}): CRUD + validation + margin, smuggled `coop_id` ignored, cross-tenant 404s on products and lots,
+default expiry, unit rows, uniqueness / date / inactive-product errors, `niveau_qr` lock, status filters
+and pagination, expiry buckets with a pinned clock, **concurrent losses** (10 × 3 on a lot of 20 →
+exactly 6 succeed, final stock 2, `stock_apres` 17…2), and every outbox row validated as a v1 envelope
+with one `stock_modifie` per movement.
+
+**Choices made**
+
+- A lot is expired **on** its `date_peremption` (same rule as the synthetic generator).
+- Lot status precedence: stock 0 → `epuise`, else expired → `perime`, else `disponible`.
+- One `stock_modifie` event per movement, with `stock_apres` and a `motif`, so the data plane can rebuild
+  stock from the stream.
+- Payloads carry IDs and codes, never display names (`nom` is a forbidden key).
+- Business "today" is the Africa/Casablanca date, through an injectable clock.
+- `generate` is now a Turbo task (it raced when lint / typecheck / test regenerated in parallel).
+- Backend `vitest.config` files renamed to `.mts` (Vite native config loader warning).

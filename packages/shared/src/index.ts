@@ -4,3 +4,5 @@ export * from './schemas/common.js';
 export * from './logging.js';
 export * from './schemas/me.js';
 export * from './schemas/produit.js';
+export * from './dates.js';
+export * from './schemas/lot.js';

@@ -3,22 +3,22 @@
   "globalDependencies": ["eslint.config.mjs", "packages/config/**"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "api:generate"],
+      "dependsOn": ["^build", "api:generate", "generate"],
       "outputs": ["dist/**"]
     },
     "dev": {
-      "dependsOn": ["^build", "api:generate"],
+      "dependsOn": ["^build", "api:generate", "generate"],
       "cache": false,
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^build", "api:generate"]
+      "dependsOn": ["^build", "api:generate", "generate"]
     },
     "typecheck": {
-      "dependsOn": ["^build", "api:generate"]
+      "dependsOn": ["^build", "api:generate", "generate"]
     },
     "test": {
-      "dependsOn": ["^build", "api:generate"],
+      "dependsOn": ["^build", "api:generate", "generate"],
       "inputs": ["src/**", "test/**", "vitest.config.*", "$TURBO_ROOT$/contracts/**"]
     },
     "openapi:export": {
@@ -28,6 +28,10 @@
     "api:generate": {
       "inputs": ["$TURBO_ROOT$/contracts/api/openapi.yaml", "orval.config.ts"],
       "outputs": ["src/api/generated/**"]
+    },
+    "generate": {
+      "inputs": ["$TURBO_ROOT$/contracts/events/**", "scripts/**"],
+      "outputs": ["src/generated/**"]
     }
   }
 }

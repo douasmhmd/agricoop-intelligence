@@ -6,6 +6,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { AccessGuard } from './auth/access.guard.js';
 import { createJwtVerifier, JWT_VERIFIER, type OidcOptions } from './auth/jwt-verifier.js';
 import { createDbTenantDirectory, TENANT_DIRECTORY } from './auth/tenant-directory.js';
+import { CLOCK, systemClock } from './clock.js';
 import { RequestContextInterceptor } from './context/request-context.js';
 import { DB } from './database.module.js';
 import { ProblemDetailsFilter } from './problem/problem.filter.js';
@@ -41,6 +42,7 @@ export class CoreModule {
           useFactory: (db: Database) => createDbTenantDirectory(db),
         },
         TenantDb,
+        { provide: CLOCK, useValue: systemClock },
         // Global guards run in registration order.
         { provide: APP_GUARD, useClass: ThrottlerGuard },
         { provide: APP_GUARD, useClass: AccessGuard },
@@ -50,7 +52,7 @@ export class CoreModule {
         { provide: APP_PIPE, useClass: ZodValidationPipe },
         { provide: APP_FILTER, useClass: ProblemDetailsFilter },
       ],
-      exports: [TenantDb, JWT_VERIFIER, TENANT_DIRECTORY],
+      exports: [TenantDb, JWT_VERIFIER, TENANT_DIRECTORY, CLOCK],
     };
   }
 }

@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.agricoop.ma/events/commande_creee.v1.schema.json",
+  "title": "CommandeCreeeV1",
+  "description": "An order was placed (one transaction with its lines and stock movements). Topic agricoop.commande_creee.v1, key = coop_id.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "type", "version", "coop_id", "occurred_at", "is_synthetic", "payload"],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "outbox.event_id; consumers deduplicate on it"
+    },
+    "type": {
+      "const": "commande_creee"
+    },
+    "version": {
+      "const": 1
+    },
+    "coop_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Tenant; also the Kafka message key"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "outbox.created_at"
+    },
+    "is_synthetic": {
+      "type": "boolean"
+    },
+    "payload": {
+      "$ref": "#/$defs/payload"
+    }
+  },
+  "$defs": {
+    "payload": {
+      "title": "CommandeCreeePayloadV1",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commande_id",
+        "client_id",
+        "type_client",
+        "ville",
+        "canal",
+        "date_commande",
+        "statut",
+        "montant_total_mad",
+        "lignes"
+      ],
+      "properties": {
+        "commande_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "client_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "type_client": {
+          "enum": ["particulier", "revendeur"]
+        },
+        "ville": {
+          "type": "string",
+          "description": "client.ville (non-personal, from the `client` table)"
+        },
+        "canal": {
+          "enum": ["web", "revendeur", "direct"]
+        },
+        "date_commande": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "statut": {
+          "const": "creee"
+        },
+        "montant_total_mad": {
+          "type": "string",
+          "pattern": "^\\d{1,8}(\\.\\d{1,2})?$",
+          "description": "Amount in MAD, NUMERIC(10,2) as a string"
+        },
+        "lignes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ligne_id",
+              "produit_id",
+              "lot_id",
+              "quantite",
+              "prix_unitaire_mad",
+              "montant_mad"
+            ],
+            "properties": {
+              "ligne_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "produit_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "lot_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "quantite": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "prix_unitaire_mad": {
+                "type": "string",
+                "pattern": "^\\d{1,8}(\\.\\d{1,2})?$",
+                "description": "Amount in MAD, NUMERIC(10,2) as a string"
+              },
+              "montant_mad": {
+                "type": "string",
+                "pattern": "^\\d{1,8}(\\.\\d{1,2})?$",
+                "description": "Amount in MAD, NUMERIC(10,2) as a string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
