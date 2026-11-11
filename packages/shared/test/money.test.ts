@@ -24,6 +24,9 @@ describe('money', () => {
     expect(moneyString.safeParse('12.555').success).toBe(false);
     expect(positiveMoneyString.safeParse('0.00').success).toBe(false);
     expect(positiveMoneyString.safeParse('0.01').success).toBe(true);
+    // Regression: malformed input must fail validation, not throw from decimal.js.
+    expect(positiveMoneyString.safeParse('').success).toBe(false);
+    expect(positiveMoneyString.safeParse('abc').success).toBe(false);
   });
 
   it('rejects non-integer quantities', () => {

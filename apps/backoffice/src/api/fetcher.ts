@@ -19,6 +19,13 @@ export function setAccessTokenProvider(provider: AccessTokenProvider): void {
   accessTokenProvider = provider;
 }
 
+let coopHeaderProvider: () => string | undefined = () => undefined;
+
+/** saas_admin only: the cooperative to act on, sent as X-Coop-Id (audited by the API). */
+export function setCoopHeaderProvider(provider: () => string | undefined): void {
+  coopHeaderProvider = provider;
+}
+
 /** RFC 7807 error raised for every non-2xx response. `problem.code` is stable: translate on it. */
 export class ApiError extends Error {
   constructor(
@@ -35,6 +42,8 @@ export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<
   headers.set('accept', 'application/json, application/problem+json');
   const token = await accessTokenProvider();
   if (token) headers.set('authorization', `Bearer ${token}`);
+  const coopId = coopHeaderProvider();
+  if (coopId) headers.set('x-coop-id', coopId);
 
   const response = await fetch(url, { ...init, headers });
   const contentType = response.headers.get('content-type') ?? '';

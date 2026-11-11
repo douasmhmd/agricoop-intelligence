@@ -10,33 +10,154 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PrevisionsRouteImport } from './routes/previsions'
+import { Route as ProduitsRouteImport } from './routes/produits'
+import { Route as QrRouteImport } from './routes/qr'
+import { Route as AdminCooperativesRouteImport } from './routes/admin/cooperatives'
+import { Route as CommandesIndexRouteImport } from './routes/commandes/index'
+import { Route as CommandesCommandeIdRouteImport } from './routes/commandes/$commandeId'
+import { Route as LotsIndexRouteImport } from './routes/lots/index'
+import { Route as LotsLotIdRouteImport } from './routes/lots/$lotId'
+import { Route as StockAlertesRouteImport } from './routes/stock/alertes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrevisionsRoute = PrevisionsRouteImport.update({
+  id: '/previsions',
+  path: '/previsions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProduitsRoute = ProduitsRouteImport.update({
+  id: '/produits',
+  path: '/produits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QrRoute = QrRouteImport.update({
+  id: '/qr',
+  path: '/qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCooperativesRoute = AdminCooperativesRouteImport.update({
+  id: '/admin/cooperatives',
+  path: '/admin/cooperatives',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommandesIndexRoute = CommandesIndexRouteImport.update({
+  id: '/commandes/',
+  path: '/commandes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommandesCommandeIdRoute = CommandesCommandeIdRouteImport.update({
+  id: '/commandes/$commandeId',
+  path: '/commandes/$commandeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LotsIndexRoute = LotsIndexRouteImport.update({
+  id: '/lots/',
+  path: '/lots/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LotsLotIdRoute = LotsLotIdRouteImport.update({
+  id: '/lots/$lotId',
+  path: '/lots/$lotId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StockAlertesRoute = StockAlertesRouteImport.update({
+  id: '/stock/alertes',
+  path: '/stock/alertes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/previsions': typeof PrevisionsRoute
+  '/produits': typeof ProduitsRoute
+  '/qr': typeof QrRoute
+  '/admin/cooperatives': typeof AdminCooperativesRoute
+  '/commandes/$commandeId': typeof CommandesCommandeIdRoute
+  '/lots/$lotId': typeof LotsLotIdRoute
+  '/stock/alertes': typeof StockAlertesRoute
+  '/commandes/': typeof CommandesIndexRoute
+  '/lots/': typeof LotsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/previsions': typeof PrevisionsRoute
+  '/produits': typeof ProduitsRoute
+  '/qr': typeof QrRoute
+  '/admin/cooperatives': typeof AdminCooperativesRoute
+  '/commandes/$commandeId': typeof CommandesCommandeIdRoute
+  '/lots/$lotId': typeof LotsLotIdRoute
+  '/stock/alertes': typeof StockAlertesRoute
+  '/commandes': typeof CommandesIndexRoute
+  '/lots': typeof LotsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/previsions': typeof PrevisionsRoute
+  '/produits': typeof ProduitsRoute
+  '/qr': typeof QrRoute
+  '/admin/cooperatives': typeof AdminCooperativesRoute
+  '/commandes/$commandeId': typeof CommandesCommandeIdRoute
+  '/lots/$lotId': typeof LotsLotIdRoute
+  '/stock/alertes': typeof StockAlertesRoute
+  '/commandes/': typeof CommandesIndexRoute
+  '/lots/': typeof LotsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/previsions'
+    | '/produits'
+    | '/qr'
+    | '/admin/cooperatives'
+    | '/commandes/$commandeId'
+    | '/lots/$lotId'
+    | '/stock/alertes'
+    | '/commandes/'
+    | '/lots/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/previsions'
+    | '/produits'
+    | '/qr'
+    | '/admin/cooperatives'
+    | '/commandes/$commandeId'
+    | '/lots/$lotId'
+    | '/stock/alertes'
+    | '/commandes'
+    | '/lots'
+  id:
+    | '__root__'
+    | '/'
+    | '/previsions'
+    | '/produits'
+    | '/qr'
+    | '/admin/cooperatives'
+    | '/commandes/$commandeId'
+    | '/lots/$lotId'
+    | '/stock/alertes'
+    | '/commandes/'
+    | '/lots/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PrevisionsRoute: typeof PrevisionsRoute
+  ProduitsRoute: typeof ProduitsRoute
+  QrRoute: typeof QrRoute
+  AdminCooperativesRoute: typeof AdminCooperativesRoute
+  CommandesCommandeIdRoute: typeof CommandesCommandeIdRoute
+  LotsLotIdRoute: typeof LotsLotIdRoute
+  StockAlertesRoute: typeof StockAlertesRoute
+  CommandesIndexRoute: typeof CommandesIndexRoute
+  LotsIndexRoute: typeof LotsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +169,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/previsions': {
+      id: '/previsions'
+      path: '/previsions'
+      fullPath: '/previsions'
+      preLoaderRoute: typeof PrevisionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/produits': {
+      id: '/produits'
+      path: '/produits'
+      fullPath: '/produits'
+      preLoaderRoute: typeof ProduitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qr': {
+      id: '/qr'
+      path: '/qr'
+      fullPath: '/qr'
+      preLoaderRoute: typeof QrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/cooperatives': {
+      id: '/admin/cooperatives'
+      path: '/admin/cooperatives'
+      fullPath: '/admin/cooperatives'
+      preLoaderRoute: typeof AdminCooperativesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commandes/': {
+      id: '/commandes/'
+      path: '/commandes'
+      fullPath: '/commandes/'
+      preLoaderRoute: typeof CommandesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commandes/$commandeId': {
+      id: '/commandes/$commandeId'
+      path: '/commandes/$commandeId'
+      fullPath: '/commandes/$commandeId'
+      preLoaderRoute: typeof CommandesCommandeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lots/': {
+      id: '/lots/'
+      path: '/lots'
+      fullPath: '/lots/'
+      preLoaderRoute: typeof LotsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lots/$lotId': {
+      id: '/lots/$lotId'
+      path: '/lots/$lotId'
+      fullPath: '/lots/$lotId'
+      preLoaderRoute: typeof LotsLotIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stock/alertes': {
+      id: '/stock/alertes'
+      path: '/stock/alertes'
+      fullPath: '/stock/alertes'
+      preLoaderRoute: typeof StockAlertesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PrevisionsRoute: PrevisionsRoute,
+  ProduitsRoute: ProduitsRoute,
+  QrRoute: QrRoute,
+  AdminCooperativesRoute: AdminCooperativesRoute,
+  CommandesCommandeIdRoute: CommandesCommandeIdRoute,
+  LotsLotIdRoute: LotsLotIdRoute,
+  StockAlertesRoute: StockAlertesRoute,
+  CommandesIndexRoute: CommandesIndexRoute,
+  LotsIndexRoute: LotsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

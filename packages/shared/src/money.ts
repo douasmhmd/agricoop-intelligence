@@ -19,9 +19,11 @@ export const moneyString = z
   .describe('Amount in MAD, NUMERIC(10,2) as a string');
 
 /** A strictly positive NUMERIC(10,2) amount (e.g. prix_mad, prix_unitaire_mad). */
-export const positiveMoneyString = moneyString.refine((v) => new MadDecimal(v).gt(0), {
-  message: 'Le montant doit être strictement positif',
-});
+export const positiveMoneyString = moneyString.refine(
+  // Zod 4 still runs refinements after a failed regex check: guard before parsing.
+  (v) => MONEY_PATTERN.test(v) && new MadDecimal(v).gt(0),
+  { message: 'Le montant doit être strictement positif' },
+);
 
 export function money(value: string | Decimal): Decimal {
   if (typeof value === 'string' && !MONEY_PATTERN.test(value)) {

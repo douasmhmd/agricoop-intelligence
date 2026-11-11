@@ -43,3 +43,17 @@ describe('toIsoTimestamp', () => {
     expect(() => toIsoTimestamp('nope')).toThrow(RangeError);
   });
 });
+
+describe('weeks', () => {
+  it('normalizes to Mondays', async () => {
+    const { mondayOf, weeksBetween } = await import('../src/index.js');
+    expect(mondayOf('2026-11-11')).toBe('2026-11-09'); // Wednesday
+    expect(mondayOf('2026-11-09')).toBe('2026-11-09');
+    expect(mondayOf('2026-11-15')).toBe('2026-11-09'); // Sunday
+    expect(weeksBetween('2026-11-11', '2026-11-25')).toEqual([
+      '2026-11-09',
+      '2026-11-16',
+      '2026-11-23',
+    ]);
+  });
+});

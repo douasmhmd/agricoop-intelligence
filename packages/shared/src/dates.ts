@@ -61,3 +61,18 @@ export function toIsoTimestamp(value: string | Date): string {
     throw new RangeError(`Invalid timestamp: ${JSON.stringify(value)}`);
   return d.toISOString();
 }
+
+/** Monday of the ISO week containing `isoDate`. */
+export function mondayOf(isoDate: string): string {
+  assertIsoDate(isoDate);
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  const offset = (d.getUTCDay() + 6) % 7; // Monday = 0
+  return addDays(isoDate, -offset);
+}
+
+/** Mondays from `from` to `to` inclusive (both normalized to their Monday). */
+export function weeksBetween(from: string, to: string): string[] {
+  const weeks: string[] = [];
+  for (let w = mondayOf(from); w <= mondayOf(to); w = addDays(w, 7)) weeks.push(w);
+  return weeks;
+}

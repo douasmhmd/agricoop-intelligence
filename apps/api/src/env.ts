@@ -11,6 +11,12 @@ export const apiEnv = baseEnv
     /** Mailpit locally. */
     SMTP_URL: z.string().default('smtp://localhost:1025'),
     MAIL_FROM: z.string().default('AgriCoop <no-reply@agricoop.local>'),
+    /** Keycloak Admin API (platform admin: creating cooperatives). Without a secret, provisioning
+     *  falls back to an in-memory stub (local development only). */
+    KEYCLOAK_ADMIN_URL: z.url().default('http://localhost:8080'),
+    KEYCLOAK_REALM: z.string().default('agricoop'),
+    KC_PROVISIONER_CLIENT_ID: z.string().default('agricoop-provisioner'),
+    KC_PROVISIONER_SECRET: z.string().optional(),
   })
   .refine(
     (e) => e.NODE_ENV !== 'production' || e.PAYMENT_MOCK_SECRET !== 'dev-only-payment-mock-secret',

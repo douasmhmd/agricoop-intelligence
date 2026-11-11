@@ -23,6 +23,8 @@ export interface TestAppOverrides {
   clock?: Clock;
   /** Capture notifications instead of sending e-mail. */
   notifications?: NotificationProvider;
+  /** Any other provider replacement, e.g. the identity admin. */
+  providers?: { token: symbol | string; value: unknown }[];
 }
 
 export async function createTestApp(
@@ -43,6 +45,8 @@ export async function createTestApp(
   if (overrides.notifications) {
     builder = builder.overrideProvider(NOTIFICATION_PROVIDER).useValue(overrides.notifications);
   }
+  for (const p of overrides.providers ?? [])
+    builder = builder.overrideProvider(p.token).useValue(p.value);
   const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
     logger: false,
