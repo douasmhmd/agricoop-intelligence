@@ -12,11 +12,17 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { Test } from '@nestjs/testing';
 import { AppModule, GLOBAL_PREFIX } from '../../src/app.module';
 import { apiEnv } from '../../src/env';
+import {
+  NOTIFICATION_PROVIDER,
+  type NotificationProvider,
+} from '../../src/notifications/notifications';
 
 /** Boots the real api module against a test database, with tokens from a local test issuer. */
 export interface TestAppOverrides {
   /** Pin "now" (and therefore the business date). */
   clock?: Clock;
+  /** Capture notifications instead of sending e-mail. */
+  notifications?: NotificationProvider;
 }
 
 export async function createTestApp(
@@ -34,6 +40,9 @@ export async function createTestApp(
     .overrideProvider(JWT_VERIFIER)
     .useValue(createJwtVerifier({ issuer: issuer.issuer, audience: issuer.audience }, issuer.jwks));
   if (overrides.clock) builder = builder.overrideProvider(CLOCK).useValue(overrides.clock);
+  if (overrides.notifications) {
+    builder = builder.overrideProvider(NOTIFICATION_PROVIDER).useValue(overrides.notifications);
+  }
   const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
     logger: false,

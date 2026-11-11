@@ -8,11 +8,16 @@ export interface AuthUser {
   roles: RealmRole[];
   /** `tenant_id` claim (= coop_id), set for cooperative staff only. */
   tenantId?: string;
+  /** PERSONAL DATA: only used to link a storefront account to its client; never logged. */
+  email?: string;
+  emailVerified?: boolean;
 }
 
 interface KeycloakClaims extends JWTPayload {
   realm_access?: { roles?: unknown };
   tenant_id?: unknown;
+  email?: unknown;
+  email_verified?: unknown;
 }
 
 export function toAuthUser(payload: JWTPayload): AuthUser {
@@ -26,7 +31,16 @@ export function toAuthUser(payload: JWTPayload): AuthUser {
     typeof claims.tenant_id === 'string' && claims.tenant_id.length > 0
       ? claims.tenant_id
       : undefined;
-  return { sub: claims.sub, roles, ...(tenantId ? { tenantId } : {}) };
+  const email =
+    typeof claims.email === 'string' && claims.email.length > 0
+      ? claims.email.trim().toLowerCase()
+      : undefined;
+  return {
+    sub: claims.sub,
+    roles,
+    ...(tenantId ? { tenantId } : {}),
+    ...(email ? { email, emailVerified: claims.email_verified === true } : {}),
+  };
 }
 
 export function hasRole(user: AuthUser | undefined, role: RealmRole): boolean {

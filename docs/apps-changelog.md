@@ -194,3 +194,67 @@ with one `stock_modifie` per movement.
 - Business "today" is the Africa/Casablanca date, through an injectable clock.
 - `generate` is now a Turbo task (it raced when lint / typecheck / test regenerated in parallel).
 - Backend `vitest.config` files renamed to `.mts` (Vite native config loader warning).
+
+## Phase 5 — Orders, payments, outbox relay (2026-11-11)
+
+**Done**
+
+- **Storefront (public, tenant = `/coops/:code`):** `GET /coops`, `GET /coops/{code}`,
+  `GET /coops/{code}/produits` (active products, price, orderable stock of non-expired lots; no cost or
+  margin).
+- **Storefront orders (customer / reseller):** `POST /coops/{code}/commandes`, `GET …/commandes`,
+  `GET …/commandes/{id}`, `POST …/commandes/{id}/annulation`. Placement is one transaction: all candidate
+  lots locked in a single global order (`date_peremption, lot_id`) → FEFO allocation (pure, all-or-nothing,
+  expired lots skipped) → client upsert → `commande` + one `ligne_commande` and one `sortie` per
+  (product, lot) → `commande_creee` + one `stock_modifie` per movement. 409 `stock_insuffisant` lists
+  `manquants`. Resellers get `canal = revendeur` / `type_client = revendeur` (same convention as the
+  synthetic generator), customers `canal = web`.
+- **Account linking:** one `client` per person and cooperative, created at the first order there.
+  Links on Keycloak `sub` via `client_compte` when proposal 003 is applied (auto-detected), otherwise on
+  the token's **verified** e-mail = `client_pii.email` (403 `email_non_verifie` if not verified).
+- **Back office (`coop_manager`):** `GET /commandes` (paginated, totals computed in SQL NUMERIC,
+  `statut` / `canal` / `synthetic` filters), `GET /commandes/{id}` (with delivery details from
+  `client_pii`), `POST /commandes/{id}/statut`.
+- **Status machine:** `creee → payee → expediee → livree`, `annulee` from `creee` / `payee` with compensating
+  `entree` movements (lots re-locked in the same global order); every change emits
+  `commande_statut_modifie`; 409 `transition_invalide` with `de` / `vers`. Idempotent for replays.
+- **Payments:** `PaymentGateway` port + `CmiMockGateway` — hosted mock page
+  (`/coops/{code}/paiements/mock/{id}`), signed form callback (`…/paiements/cmi/callback`,
+  HMAC-SHA512 with a per-cooperative store key), amount must equal the order total (409
+  `montant_incorrect`), `creee → payee` exactly once, then redirect to `/coops/{code}/commandes/{id}?paiement=ok|refuse`.
+- **Notifications:** `NotificationProvider` port; e-mail via SMTP (Mailpit), SMS / WhatsApp stubbed in
+  logs; order confirmation after payment, sent after commit, never logging addresses or numbers.
+- **Outbox relay:** `FOR UPDATE SKIP LOCKED` batches → KafkaJS (idempotent, acks = all, Java-compatible
+  partitioner, key = `coop_id`, headers `event_id` / `type` / `version`) → mark `publie` in the same
+  transaction (at-least-once); invalid events → `agricoop.dead_letter.v1` **without payload**; topics
+  created at startup if missing; metrics `outbox_events_published_total`,
+  `outbox_events_dead_lettered_total`, `outbox_lag_seconds`, `outbox_pending_events`; readiness includes
+  Redpanda. Reads `to_jsonb(outbox)` so proposal 002 columns are used as soon as they exist.
+- `contracts/events/README.md`: dead-letter topic documented.
+
+**Tests:** 185 passing.
+
+- `apps/api/test/commandes.int.test.ts` (18 cases × {without RLS, with RLS}): catalogue, FEFO across lots
+  skipping expired ones, exact `stock_apres` per movement, no PII in any event (keys and values),
+  all-or-nothing 409, inactive / foreign products, resellers, unverified e-mail, client reuse and order
+  privacy, back-office totals and details, forged / foreign-store / wrong-amount callbacks, payment once +
+  notification, mock-page redirect, status machine, single restock on cancellation,
+  **15 parallel orders on a lot of 10 → exactly 10 succeed, stock 0**, and **20 concurrent two-product
+  orders with opposite line order → no deadlock**.
+- `apps/api/test/client-compte.int.test.ts`: linking on `sub` once proposal 003 is applied.
+- `apps/outbox-relay/test/relay.int.test.ts` (4 cases × {without RLS, with RLS as `agricoop_relay`},
+  real Redpanda): envelopes valid and keyed by `coop_id`, drained = no-op, dead letter without payload,
+  failed publish → rows kept and retried, **3 concurrent relays publish 40 events exactly once**.
+- `packages/shared`: FEFO allocator unit tests.
+
+**Verified manually:** a real Keycloak access token for `client.demo` carries `email` +
+`email_verified: true`, so e-mail linking works with the realm as configured.
+
+**Choices made**
+
+- The mock gateway's decision endpoint can mark any order paid: it exists only with the mock provider
+  (`PAYMENT_PROVIDER=cmi-mock`) and must never be enabled in production.
+- No payment table: idempotency comes from the status machine, the amount from `ligne_commande`
+  (decision 3 of phase 1).
+- Customers can cancel their own order while `creee` or `payee` (refund is the provider's job).
+- Storefront shows synthetic cooperatives' products too (demo data is synthetic).

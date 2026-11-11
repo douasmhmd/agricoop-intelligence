@@ -11,6 +11,428 @@ servers:
   - url: /
 tags: []
 paths:
+  /api/v1/commandes:
+    get:
+      operationId: Commandes_list
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: page
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 9007199254740991
+            default: 1
+            type: integer
+        - name: pageSize
+          required: false
+          in: query
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            type: integer
+        - name: statut
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - creee
+              - payee
+              - expediee
+              - livree
+              - annulee
+        - name: canal
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - web
+              - revendeur
+              - direct
+        - name: synthetic
+          required: false
+          in: query
+          schema:
+            default: include
+            type: string
+            enum:
+              - include
+              - exclude
+      responses:
+        "200":
+          description: A page of orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandePage"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - commandes
+  /api/v1/commandes/{commandeId}:
+    get:
+      operationId: Commandes_get
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: commandeId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandeDetail"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - commandes
+  /api/v1/commandes/{commandeId}/statut:
+    post:
+      operationId: Commandes_changeStatut
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: commandeId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatutChange"
+      responses:
+        "200":
+          description: Order updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandeDetail"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - commandes
+  /api/v1/coops:
+    get:
+      operationId: Storefront_list
+      parameters: []
+      responses:
+        "200":
+          description: Cooperatives on the platform
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CooperativePublique"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      tags:
+        - storefront
+  /api/v1/coops/{code}:
+    get:
+      operationId: Storefront_get
+      parameters:
+        - name: code
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The cooperative
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CooperativePublique"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      tags:
+        - storefront
+  /api/v1/coops/{code}/commandes:
+    post:
+      operationId: BoutiqueCommandes_place
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: code
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommandeCreate"
+      responses:
+        "201":
+          description: Order placed; pay at paiement.redirect_url
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandeCreee"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+        - bearer: []
+      tags:
+        - boutique
+    get:
+      operationId: BoutiqueCommandes_mine
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: code
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: My orders in this cooperative
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Commande"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+        - bearer: []
+      tags:
+        - boutique
+  /api/v1/coops/{code}/commandes/{commandeId}:
+    get:
+      operationId: BoutiqueCommandes_get
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: code
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: commandeId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: One of my orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Commande"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+        - bearer: []
+      tags:
+        - boutique
+  /api/v1/coops/{code}/commandes/{commandeId}/annulation:
+    post:
+      operationId: BoutiqueCommandes_cancel
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: code
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: commandeId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Commande"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+        - bearer: []
+      tags:
+        - boutique
+  /api/v1/coops/{code}/produits:
+    get:
+      operationId: Storefront_catalogue
+      parameters:
+        - name: code
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Storefront catalogue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProduitCatalogue"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      tags:
+        - storefront
   /api/v1/lots:
     get:
       operationId: Lots_list
@@ -614,6 +1036,468 @@ components:
         - jours_restants
         - niveau
       additionalProperties: false
+    Commande:
+      type: object
+      properties:
+        commande_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        client_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        canal:
+          type: string
+          enum:
+            - web
+            - revendeur
+            - direct
+        date_commande:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        statut:
+          type: string
+          enum:
+            - creee
+            - payee
+            - expediee
+            - livree
+            - annulee
+        montant_total_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        lignes:
+          type: array
+          items:
+            type: object
+            properties:
+              ligne_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              produit_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              produit_code:
+                type: string
+              produit_nom:
+                type: string
+              lot_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                nullable: true
+              lot_numero:
+                type: string
+                nullable: true
+              quantite:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              prix_unitaire_mad:
+                type: string
+                pattern: ^\d{1,8}(\.\d{1,2})?$
+                description: Amount in MAD, NUMERIC(10,2) as a string
+              montant_mad:
+                type: string
+                pattern: ^\d{1,8}(\.\d{1,2})?$
+                description: Amount in MAD, NUMERIC(10,2) as a string
+            required:
+              - ligne_id
+              - produit_id
+              - produit_code
+              - produit_nom
+              - lot_id
+              - lot_numero
+              - quantite
+              - prix_unitaire_mad
+              - montant_mad
+            additionalProperties: false
+        is_synthetic:
+          type: boolean
+      required:
+        - commande_id
+        - client_id
+        - canal
+        - date_commande
+        - statut
+        - montant_total_mad
+        - lignes
+        - is_synthetic
+      additionalProperties: false
+    CommandeCreate:
+      type: object
+      properties:
+        lignes:
+          minItems: 1
+          maxItems: 50
+          type: array
+          items:
+            type: object
+            properties:
+              produit_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              quantite:
+                type: integer
+                minimum: 1
+                maximum: 1000
+            required:
+              - produit_id
+              - quantite
+        coordonnees:
+          type: object
+          properties:
+            nom:
+              type: string
+              minLength: 2
+              maxLength: 120
+            telephone:
+              type: string
+              pattern: ^\+?[0-9 ]{8,20}$
+            adresse:
+              type: string
+              minLength: 5
+              maxLength: 300
+            ville:
+              type: string
+              minLength: 2
+              maxLength: 80
+          required:
+            - nom
+            - adresse
+            - ville
+      required:
+        - lignes
+        - coordonnees
+    CommandeCreee:
+      type: object
+      properties:
+        commande_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        client_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        canal:
+          type: string
+          enum:
+            - web
+            - revendeur
+            - direct
+        date_commande:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        statut:
+          type: string
+          enum:
+            - creee
+            - payee
+            - expediee
+            - livree
+            - annulee
+        montant_total_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        lignes:
+          type: array
+          items:
+            type: object
+            properties:
+              ligne_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              produit_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              produit_code:
+                type: string
+              produit_nom:
+                type: string
+              lot_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                nullable: true
+              lot_numero:
+                type: string
+                nullable: true
+              quantite:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              prix_unitaire_mad:
+                type: string
+                pattern: ^\d{1,8}(\.\d{1,2})?$
+                description: Amount in MAD, NUMERIC(10,2) as a string
+              montant_mad:
+                type: string
+                pattern: ^\d{1,8}(\.\d{1,2})?$
+                description: Amount in MAD, NUMERIC(10,2) as a string
+            required:
+              - ligne_id
+              - produit_id
+              - produit_code
+              - produit_nom
+              - lot_id
+              - lot_numero
+              - quantite
+              - prix_unitaire_mad
+              - montant_mad
+            additionalProperties: false
+        is_synthetic:
+          type: boolean
+        paiement:
+          type: object
+          properties:
+            redirect_url:
+              type: string
+          required:
+            - redirect_url
+          additionalProperties: false
+      required:
+        - commande_id
+        - client_id
+        - canal
+        - date_commande
+        - statut
+        - montant_total_mad
+        - lignes
+        - is_synthetic
+        - paiement
+      additionalProperties: false
+    CommandeDetail:
+      type: object
+      properties:
+        commande_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        client_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        canal:
+          type: string
+          enum:
+            - web
+            - revendeur
+            - direct
+        date_commande:
+          type: string
+          format: date-time
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        statut:
+          type: string
+          enum:
+            - creee
+            - payee
+            - expediee
+            - livree
+            - annulee
+        montant_total_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        lignes:
+          type: array
+          items:
+            type: object
+            properties:
+              ligne_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              produit_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              produit_code:
+                type: string
+              produit_nom:
+                type: string
+              lot_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                nullable: true
+              lot_numero:
+                type: string
+                nullable: true
+              quantite:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              prix_unitaire_mad:
+                type: string
+                pattern: ^\d{1,8}(\.\d{1,2})?$
+                description: Amount in MAD, NUMERIC(10,2) as a string
+              montant_mad:
+                type: string
+                pattern: ^\d{1,8}(\.\d{1,2})?$
+                description: Amount in MAD, NUMERIC(10,2) as a string
+            required:
+              - ligne_id
+              - produit_id
+              - produit_code
+              - produit_nom
+              - lot_id
+              - lot_numero
+              - quantite
+              - prix_unitaire_mad
+              - montant_mad
+            additionalProperties: false
+        is_synthetic:
+          type: boolean
+        client:
+          type: object
+          properties:
+            type_client:
+              type: string
+              enum:
+                - particulier
+                - revendeur
+            ville:
+              type: string
+            nom:
+              type: string
+              nullable: true
+            telephone:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+            adresse:
+              type: string
+              nullable: true
+          required:
+            - type_client
+            - ville
+            - nom
+            - telephone
+            - email
+            - adresse
+          additionalProperties: false
+      required:
+        - commande_id
+        - client_id
+        - canal
+        - date_commande
+        - statut
+        - montant_total_mad
+        - lignes
+        - is_synthetic
+        - client
+      additionalProperties: false
+    CommandePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              commande_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              client_id:
+                type: string
+                format: uuid
+                pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              canal:
+                type: string
+                enum:
+                  - web
+                  - revendeur
+                  - direct
+              date_commande:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+              statut:
+                type: string
+                enum:
+                  - creee
+                  - payee
+                  - expediee
+                  - livree
+                  - annulee
+              montant_total_mad:
+                type: string
+                pattern: ^\d{1,8}(\.\d{1,2})?$
+                description: Amount in MAD, NUMERIC(10,2) as a string
+              nb_lignes:
+                type: integer
+                minimum: -9007199254740991
+                maximum: 9007199254740991
+              ville:
+                type: string
+              type_client:
+                type: string
+                enum:
+                  - particulier
+                  - revendeur
+              is_synthetic:
+                type: boolean
+            required:
+              - commande_id
+              - client_id
+              - canal
+              - date_commande
+              - statut
+              - montant_total_mad
+              - nb_lignes
+              - ville
+              - type_client
+              - is_synthetic
+            additionalProperties: false
+        total:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        page:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        pageSize:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - items
+        - total
+        - page
+        - pageSize
+      additionalProperties: false
+    CooperativePublique:
+      type: object
+      properties:
+        code:
+          type: string
+          pattern: ^[A-Z0-9_-]{2,32}$
+          description: Cooperative code, e.g. COOP01
+        nom:
+          type: string
+        province:
+          type: string
+      required:
+        - code
+        - nom
+        - province
+      additionalProperties: false
     Lot:
       type: object
       properties:
@@ -998,6 +1882,48 @@ components:
         - actif
         - is_synthetic
       additionalProperties: false
+    ProduitCatalogue:
+      type: object
+      properties:
+        produit_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        code:
+          type: string
+        nom:
+          type: string
+        famille:
+          type: string
+          enum:
+            - alimentaire
+            - cosmetique
+            - coffret
+        categorie:
+          type: string
+        prix_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        niveau_qr:
+          type: string
+          enum:
+            - lot
+            - unite
+        disponible:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - produit_id
+        - code
+        - nom
+        - famille
+        - categorie
+        - prix_mad
+        - niveau_qr
+        - disponible
+      additionalProperties: false
     ProduitCreate:
       type: object
       properties:
@@ -1093,6 +2019,18 @@ components:
             - unite
         actif:
           type: boolean
+    StatutChange:
+      type: object
+      properties:
+        statut:
+          type: string
+          enum:
+            - payee
+            - expediee
+            - livree
+            - annulee
+      required:
+        - statut
   securitySchemes:
     bearer:
       scheme: bearer

@@ -4,9 +4,10 @@ import pino from 'pino';
 import { collectDefaultMetrics, Registry } from 'prom-client';
 import { loadEnv } from './env';
 import { createProbeServer } from './http';
-import { createRelayMetrics, RelayLoop } from './relay';
+import { createKafkaPublisher } from './kafka';
+import { createRelayMetrics, refreshLagMetrics, relayBatch, RelayLoop } from './relay';
 
-function main(): void {
+async function main(): Promise<void> {
   const env = loadEnv();
   const logger = pino({
     name: 'agricoop-outbox-relay',
@@ -17,23 +18,41 @@ function main(): void {
   const pool = createPool({
     connectionString: env.DATABASE_URL,
     applicationName: 'agricoop-outbox-relay',
-    max: 2,
+    max: 4,
   });
   const registry = new Registry();
   registry.setDefaultLabels({ service: 'agricoop-outbox-relay' });
   collectDefaultMetrics({ register: registry });
-  createRelayMetrics(registry);
+  const metrics = createRelayMetrics(registry);
+
+  const publisher = await createKafkaPublisher({ brokers: env.KAFKA_BROKERS, logger });
+  await publisher.ensureTopics(env.TOPIC_PARTITIONS, env.TOPIC_REPLICATION);
 
   const loop = new RelayLoop({
     pollIntervalMs: env.POLL_INTERVAL_MS,
     logger,
-    // Phase 5: claim a batch of unpublished outbox rows and publish them to Redpanda.
-    tick: () => Promise.resolve(),
+    tick: async () => {
+      const handled = await relayBatch({
+        pool,
+        publisher,
+        batchSize: env.BATCH_SIZE,
+        logger,
+        metrics,
+      });
+      await refreshLagMetrics(pool, metrics);
+      return handled;
+    },
   });
 
-  const server = createProbeServer({ registry, readiness: { database: () => pingDb(pool) } });
+  const server = createProbeServer({
+    registry,
+    readiness: {
+      database: () => pingDb(pool),
+      redpanda: () => Promise.resolve(publisher.connected()),
+    },
+  });
   server.listen(env.PORT, '0.0.0.0', () => {
-    logger.info({ port: env.PORT }, 'outbox relay started');
+    logger.info({ port: env.PORT, brokers: env.KAFKA_BROKERS.length }, 'outbox relay started');
   });
   loop.start();
 
@@ -41,6 +60,7 @@ function main(): void {
     logger.info({ signal }, 'outbox relay stopping');
     void loop
       .stop()
+      .then(() => publisher.disconnect())
       .then(() => new Promise<void>((resolve) => server.close(() => resolve())))
       .then(() => pool.end())
       .finally(() => process.exit(0));
@@ -49,4 +69,7 @@ function main(): void {
   process.once('SIGINT', () => shutdown('SIGINT'));
 }
 
-main();
+main().catch((error: unknown) => {
+  console.error('outbox relay failed to start', error instanceof Error ? error.message : error);
+  process.exit(1);
+});

@@ -7,11 +7,16 @@ const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 export const SCHEMA_SQL_PATH = `${repoRoot}contracts/db/schema.sql`;
 export const RLS_PROPOSAL_PATH = `${repoRoot}contracts/db/proposals/001_rls.sql`;
 
+/** Absolute path of a schema proposal, e.g. proposalPath('003_client_compte.sql'). */
+export const proposalPath = (file: string): string => `${repoRoot}contracts/db/proposals/${file}`;
+
 export interface TestDatabase {
   /** Owner connection (bypasses RLS): use it to seed fixtures. */
   ownerUrl: string;
   /** Connection the application under test uses: owner without RLS, `agricoop_app` member with RLS. */
   appUrl: string;
+  /** Connection for the outbox relay: owner without RLS, `agricoop_relay` member with RLS. */
+  relayUrl: string;
   rls: boolean;
   stop(): Promise<void>;
 }
@@ -34,6 +39,7 @@ export async function startTestDatabase(options: TestDatabaseOptions = {}): Prom
 
   const ownerUrl = container.getConnectionUri();
   let appUrl = ownerUrl;
+  let relayUrl = ownerUrl;
 
   if (options.rls) {
     const client = new pg.Client({ connectionString: ownerUrl });
@@ -41,6 +47,9 @@ export async function startTestDatabase(options: TestDatabaseOptions = {}): Prom
     try {
       await client.query(readFileSync(RLS_PROPOSAL_PATH, 'utf8'));
       await client.query(`CREATE ROLE app_test LOGIN PASSWORD 'test-only' IN ROLE agricoop_app`);
+      await client.query(
+        `CREATE ROLE relay_test LOGIN PASSWORD 'test-only' IN ROLE agricoop_relay`,
+      );
     } finally {
       await client.end();
     }
@@ -48,11 +57,14 @@ export async function startTestDatabase(options: TestDatabaseOptions = {}): Prom
     url.username = 'app_test';
     url.password = 'test-only';
     appUrl = url.toString();
+    url.username = 'relay_test';
+    relayUrl = url.toString();
   }
 
   return {
     ownerUrl,
     appUrl,
+    relayUrl,
     rls: options.rls ?? false,
     stop: async () => {
       await container.stop();

@@ -130,6 +130,8 @@ services:
       # Tokens carry the browser-facing issuer; keys are fetched on the internal hostname.
       OIDC_ISSUER: http://localhost:8080/realms/agricoop
       OIDC_JWKS_URL: http://keycloak:8080/realms/agricoop/protocol/openid-connect/certs
+      SMTP_URL: smtp://mailpit:1025
+      PAYMENT_MOCK_SECRET: ${PAYMENT_MOCK_SECRET:-dev-only-payment-mock-secret}
     ports:
       - '3000:3000'
 

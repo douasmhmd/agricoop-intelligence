@@ -18,6 +18,8 @@ export interface TestTokenClaims {
   issuer?: string;
   /** Seconds from now; negative for an expired token. */
   expiresIn?: number;
+  /** Any other claim, e.g. { email, email_verified }. */
+  extra?: Record<string, unknown>;
 }
 
 export interface TestIssuer {
@@ -35,6 +37,7 @@ async function sign(key: CryptoKey, kid: string, c: TestTokenClaims): Promise<st
   const jwt = new SignJWT({
     realm_access: { roles: c.roles ?? [] },
     ...(c.tenantId ? { tenant_id: c.tenantId } : {}),
+    ...(c.extra ?? {}),
   })
     .setProtectedHeader({ alg: 'RS256', kid })
     .setSubject(c.sub ?? 'test-user')

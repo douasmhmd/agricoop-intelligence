@@ -12,6 +12,8 @@ export class AppProblem extends HttpException {
     readonly code: string,
     readonly title: string,
     readonly detail?: string,
+    /** RFC 7807 extension members (machine-readable details; never personal data). */
+    readonly extensions?: Record<string, unknown>,
   ) {
     super(detail ?? title, status);
   }

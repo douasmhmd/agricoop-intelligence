@@ -23,6 +23,8 @@
   },
   "devDependencies": {
     "@agricoop/config": "workspace:*",
+    "@agricoop/testing": "workspace:*",
+    "@testcontainers/redpanda": "^12.2.1",
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
     "pino-pretty": "^13.2.0",

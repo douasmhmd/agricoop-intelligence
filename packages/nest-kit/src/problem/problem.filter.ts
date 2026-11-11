@@ -51,6 +51,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         status: exception.getStatus(),
         code: exception.code,
         ...(exception.detail ? { detail: exception.detail } : {}),
+        ...(exception.extensions ?? {}),
       };
     }
     if (exception instanceof ZodValidationException) {

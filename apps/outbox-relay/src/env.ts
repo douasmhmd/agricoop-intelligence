@@ -13,6 +13,9 @@ export const relayEnv = z.object({
   PORT: z.coerce.number().int().positive().default(3002),
   POLL_INTERVAL_MS: z.coerce.number().int().min(50).default(1000),
   BATCH_SIZE: z.coerce.number().int().min(1).max(1000).default(100),
+  /** Used only when the relay creates missing topics at startup. */
+  TOPIC_PARTITIONS: z.coerce.number().int().min(1).default(3),
+  TOPIC_REPLICATION: z.coerce.number().int().min(1).default(1),
 });
 export type RelayEnv = z.infer<typeof relayEnv>;
 

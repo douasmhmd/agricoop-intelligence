@@ -6,3 +6,5 @@ export * from './schemas/me.js';
 export * from './schemas/produit.js';
 export * from './dates.js';
 export * from './schemas/lot.js';
+export * from './schemas/commande.js';
+export * from './fefo.js';

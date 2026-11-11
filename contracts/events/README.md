@@ -25,6 +25,13 @@ each event is inserted into `outbox` in the same database transaction as the bus
 - **Order:** guaranteed per `coop_id` key for events published by one relay in commit order
   (`outbox.created_at`); do not rely on cross-cooperative ordering.
 
+## Dead letter
+
+`agricoop.dead_letter.v1` (key `coop_id`) receives outbox rows the relay could not publish as valid v1
+events (unknown type, payload failing its schema). The message is the envelope with `payload: null`
+and an `errors` array: **the payload is never forwarded**, since an invalid payload may be exactly what
+would leak personal data. Producers validate before writing, so this topic should stay empty; alert on it.
+
 ## Envelope
 
 ```json

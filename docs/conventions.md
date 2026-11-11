@@ -147,6 +147,20 @@ update / delete ...)`. Raw `scope.tx` queries (joins, aggregates) must add `scop
   (it validates against `contracts/events/<type>.v1.schema.json` and rejects PII). To change a payload,
   edit the JSON schema first (contract owned with the data plane), then `pnpm --filter @agricoop/events
 generate` regenerates the TS types.
+- **Orders:** placement = one `tenantDb.runForCode` transaction: `lockLotsForAllocation` (all candidate
+  lots locked in global `date_peremption, lot_id` order → no deadlocks) → `allocateFefo` (all or
+  nothing; 409 `stock_insuffisant` with `manquants`) → client upsert → commande + one ligne and one
+  `sortie` per (product, lot) → events. Status changes go through `CommandesService.transition()`
+  (row lock, `canTransition`, restock on `annulee`, `commande_statut_modifie`); it is idempotent by
+  default (payment callbacks may be replayed).
+- **Storefront accounts:** `ClientsService` links a Keycloak user to its per-coop `client`: on `sub`
+  via `client_compte` when proposal 003 is applied (auto-detected), otherwise on the token's
+  VERIFIED e-mail = `client_pii.email`. `client_pii` is written/read only there.
+- **Payments:** `PaymentGateway` port (`CmiMockGateway`: per-coop HMAC store key, signed form
+  callback at `/coops/:code/paiements/cmi/callback`, mock hosted page). Notifications go through
+  `NotificationProvider` after commit; never log addresses or phone numbers.
+- **Relay:** `relayBatch` claims rows with `FOR UPDATE SKIP LOCKED`, publishes, then marks `publie`
+  in the same transaction (at-least-once); invalid events → `agricoop.dead_letter.v1` without payload.
 - Unique violations: catch and map with `isUniqueViolation(error, '<constraint>')` → `Problems.conflict`.
 
 ## Local dev

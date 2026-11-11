@@ -12,6 +12,7 @@ import { LoggerModule } from 'nestjs-pino';
 import type { ApiEnv } from './env';
 import { MeController } from './me/me.controller';
 import { CatalogueModule } from './catalogue/catalogue.module';
+import { CommandesModule } from './commandes/commandes.module';
 import { StockModule } from './stock/stock.module';
 
 export const SERVICE_NAME = 'agricoop-api';
@@ -48,6 +49,7 @@ export class AppModule {
         }),
         CatalogueModule,
         StockModule,
+        CommandesModule.register(env),
       ],
       controllers: [MeController],
     };
