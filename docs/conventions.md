@@ -116,6 +116,28 @@ How to work in this repo: the binding conventions for the application scope.
 - **Front ends:** file-based TanStack routes (`src/routeTree.gen.ts` is generated and committed);
   `@/` → `src/`; the only `fetch` is `src/api/fetcher.ts` (Orval mutator).
 
+## Writing an endpoint (api / qr)
+
+- Access rules are declarative, enforced by the single global `AccessGuard` (nest-kit):
+  - default: authenticated **and** tenant required (token `tenant_id`, or `X-Coop-Id` for `saas_admin`);
+  - `@Roles('coop_manager', ...)`: any-of; `saas_admin` always passes (and must send `X-Coop-Id`);
+  - `@NoTenant()`: authenticated, no tenant (e.g. `/me`, storefront routes keyed by `/coops/:code`);
+  - `@Public()`: no auth at all (public catalogue, QR verification, probes).
+    Every user also has the `customer` role (Keycloak default role): check `reseller` before `customer`.
+- Data access: inject `TenantDb` and use `tenantDb.run((scope) => scope.list / findOne / insert /
+update / delete ...)`. Raw `scope.tx` queries (joins, aggregates) must add `scope.owns(table)` for
+  every tenant table. `tenantDb.runAs(coopId, ...)` is only for public flows that resolved the tenant
+  themselves. Another tenant's row is a **404**, never a 403.
+- DTOs: Zod schemas in `packages/shared` (no `.meta({ id })`), `class XDto extends createZodDto(...)`,
+  `@ZodResponse({ status: 200, description, type })` — an explicit 2xx status is mandatory (the OpenAPI
+  export fails otherwise). Responses are validated and stripped by `ZodSerializerInterceptor`.
+- Errors: throw `Problems.*` / `new AppProblem(status, code, title, detail)`; `code` is stable and
+  translated by the front ends; `detail` never contains personal data.
+- Then `pnpm contracts:openapi` (exports api + qr, merges into `contracts/api/openapi.yaml`, regenerates
+  Orval clients; operation ids are `<Controller>_<method>` → hooks like `useProduitsList`).
+- Tests: `*.int.test.ts` boot the real module against Testcontainers Postgres (`@agricoop/testing`) with a
+  local JWT issuer; tenant-sensitive features get a case in both `{ rls: false }` and `{ rls: true }`.
+
 ## Local dev
 
 - `cp .env.example .env`, then

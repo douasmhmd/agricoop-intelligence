@@ -17,6 +17,7 @@ async function exportOpenApi(): Promise<void> {
   const env = parseEnv(qrEnv, {
     DATABASE_URL: 'postgres://openapi:export@localhost:1/none',
     LOG_LEVEL: 'silent',
+    OIDC_ISSUER: 'http://localhost:8080/realms/agricoop',
   });
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule.register(env),

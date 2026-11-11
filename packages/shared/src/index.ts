@@ -2,3 +2,5 @@ export * from './enums.js';
 export * from './money.js';
 export * from './schemas/common.js';
 export * from './logging.js';
+export * from './schemas/me.js';
+export * from './schemas/produit.js';

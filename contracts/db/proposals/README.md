@@ -12,7 +12,9 @@ Application code must keep working against `schema.sql` as it is until then.
 
 | #   | File                       | Status   | Summary                                                    |
 |-----|----------------------------|----------|------------------------------------------------------------|
+| 001 | `001_rls.sql`               | PROPOSED | Row-level security on business tables (`app.coop_id`), roles `agricoop_app` / `agricoop_relay`, `qr_lookup()` |
 | 002 | `002_outbox_envelope.sql`  | PROPOSED | `outbox.version`, `outbox.is_synthetic`, `outbox.published_at` |
 | 003 | `003_client_compte.sql`    | PROPOSED | Link a `client` to its Keycloak account (`idp_subject`)    |
 
-Proposal 001 (row-level security) is written in apps phase 3.
+Proposal 001 is exercised by the api test suite: `apps/api/test/tenant-isolation.int.test.ts` runs every
+isolation test with and without it (Testcontainers), as a non-owner `agricoop_app` member.

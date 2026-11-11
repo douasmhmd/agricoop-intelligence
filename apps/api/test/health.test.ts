@@ -14,6 +14,7 @@ describe('api health and metrics', () => {
     const env = parseEnv(apiEnv, {
       DATABASE_URL: 'postgres://test:test@localhost:1/test',
       LOG_LEVEL: 'silent',
+      OIDC_ISSUER: 'http://localhost:8080/realms/agricoop',
     });
     const moduleRef = await Test.createTestingModule({ imports: [AppModule.register(env)] })
       .overrideProvider(DB_POOL)

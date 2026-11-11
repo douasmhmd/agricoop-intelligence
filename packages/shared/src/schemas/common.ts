@@ -29,5 +29,6 @@ export const problemDetails = z.object({
     .array(z.object({ path: z.string(), message: z.string() }))
     .optional()
     .describe('Validation errors, when status is 400'),
+  code: z.string().optional().describe('Stable machine-readable error code'),
 });
 export type ProblemDetails = z.infer<typeof problemDetails>;

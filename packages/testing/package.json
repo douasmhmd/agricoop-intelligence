@@ -1,0 +1,43 @@
+{
+  "name": "@agricoop/testing",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Test-only helpers: Testcontainers Postgres loaded with schema.sql (optionally with RLS proposal 001), local JWT issuer",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@testcontainers/postgresql": "^12.2.1",
+    "jose": "^6.2.17",
+    "pg": "^8.23.1",
+    "testcontainers": "^12.2.1"
+  },
+  "devDependencies": {
+    "@agricoop/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "tsup": "^9.0.0",
+    "typescript": "~6.0.3"
+  }
+}

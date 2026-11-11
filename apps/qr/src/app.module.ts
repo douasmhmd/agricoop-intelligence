@@ -1,6 +1,7 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import { pingDb, type Pool } from '@agricoop/db';
 import {
+  CoreModule,
   createLoggerParams,
   DatabaseModule,
   DB_POOL,
@@ -29,6 +30,13 @@ export class AppModule {
         DatabaseModule.forRoot({
           connectionString: env.DATABASE_URL,
           applicationName: SERVICE_NAME,
+        }),
+        CoreModule.forRoot({
+          oidc: {
+            issuer: env.OIDC_ISSUER,
+            audience: env.OIDC_AUDIENCE,
+            ...(env.OIDC_JWKS_URL ? { jwksUrl: env.OIDC_JWKS_URL } : {}),
+          },
         }),
         MetricsModule.forRoot({ serviceName: SERVICE_NAME }),
         HealthModule.forRootAsync({

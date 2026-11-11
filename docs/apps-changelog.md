@@ -92,3 +92,60 @@ first thing in phase 3.
 - Customers/resellers have no `tenant_id` claim; storefront tenant comes from `/coops/:code` (decision 2,
   proposal 003).
 - Known peer warning: `@nestjs/schematics` wants chokidar 4, `@swc/cli` wants 5 (CLI tooling only).
+
+## Phase 3 — API core (2026-11-11)
+
+**Phase 2 leftovers verified (Docker up)**
+
+- `docker compose -f docker-compose.yml -f docker-compose.apps.yml up -d`: Postgres, db-seed (COOP01/COOP02
+  with fixed ids), Keycloak 26.8 (realm imported, `${ENV:default}` placeholders substituted), Redpanda
+  (healthy, topic auto-creation on), Console, Mailpit all up.
+- Real Keycloak tokens: managers carry `tenant_id` from their coop group; customers / resellers / admin have
+  none; `aud` contains `agricoop-api`; `iss` is `http://localhost:8080/realms/agricoop`.
+- Images: `agricoop/web` builds; `agricoop/api` builds and runs (non-root `node`, Node 24, internal JWKS URL,
+  real token accepted). Size 376 MB — slimming planned for phase 9.
+
+**Done**
+
+- `packages/db`: `withTenant(db, coopId, fn)` — transaction + `set_config('app.coop_id', …, true)` +
+  `TenantScope` (`list`, `findOne`, `select`, `insert`, `update`, `delete`, `owns`) that adds
+  `coop_id = :coopId` everywhere, forces it on insert and can never change it on update.
+- `contracts/db/proposals/001_rls.sql`: RLS on all business tables (`client_pii` via `client`), roles
+  `agricoop_app` / `agricoop_relay`, public-read `cooperative`, `qr_lookup()` SECURITY DEFINER. Enabled but
+  **not forced**: the owner (`agricoop`, used by the synthetic generator) is unaffected.
+- `packages/nest-kit`:
+  - `AccessGuard` (single global guard): JWT via `jose` + JWKS (RS256, issuer, audience, 30 s skew) →
+    `@Roles` → tenant (`tenant_id` claim; `saas_admin` + `X-Coop-Id`, validated, must exist, audit-logged).
+    Decorators `@Public`, `@NoTenant`, `@Roles`, `@CurrentUser`.
+  - `RequestContext` (AsyncLocalStorage) set by an interceptor; `TenantDb` service.
+  - `ProblemDetailsFilter`: RFC 7807 for every error (`AppProblem` codes, Zod validation errors by path,
+    500s without details, `WWW-Authenticate` on 401, query strings dropped from `instance`).
+  - Global `ZodValidationPipe` + `ZodSerializerInterceptor`, `ThrottlerGuard` (300/min default).
+  - OpenAPI normalization: clean schema names, explicit 2xx required, `4XX`/`5XX` → `ProblemDetails`,
+    fails on dangling `$ref`; operation ids `<Controller>_<method>`.
+- `apps/api`: `GET /api/v1/me` (no tenant), `GET /api/v1/produits`, `GET /api/v1/produits/{id}`
+  (`coop_manager`; read side of the catalogue — the vehicle for the isolation tests; CRUD in phase 4).
+- `packages/testing` (dev-only, **new**): Testcontainers Postgres 16 loaded with `schema.sql`, optionally
+  with proposal 001 and a non-owner app role; in-memory RS256 issuer.
+- `pnpm contracts:openapi` now exports api + qr only, merges, then regenerates the Orval clients.
+- Front ends: Orval mutator returns `{ data, status, headers }` (Orval 8 fetch contract) and throws
+  `ApiError` with the problem details on non-2xx; generated hooks `useMeGet`, `useProduitsList`,
+  `useProduitsGet`.
+
+**Tests:** 85 passing. Mandatory tenant-isolation suite (`apps/api/test/tenant-isolation.int.test.ts`),
+14 cases × {without RLS, with RLS}: own rows only, cross-tenant 404, no `coop_id` in responses,
+`X-Coop-Id` spoofing → 403, admin override (header required / UUID / must exist), role checks, 401 for
+missing / foreign-signed / expired / wrong-audience / wrong-issuer tokens, coop_id forced on insert and
+immutable on update, and — with RLS only — a raw query that forgot the predicate still sees only its tenant.
+Plus problem-filter and Orval-mutator unit tests.
+
+**Verified manually:** built api against the compose Postgres + real Keycloak: 401 / 403 / 200 cases,
+tenant mismatch, admin override with audit log line, no tokens or passwords in logs.
+
+**Choices made**
+
+- One composite guard instead of separate Auth/Roles/Tenant guards: fixed order, one place to audit.
+- Unauthenticated `X-Coop-Id` from a non-admin is rejected (403) rather than ignored.
+- `saas_admin` passes every `@Roles` check but must always name a tenant.
+- Health readiness returns Terminus' own body on 503 (not problem+json), as probes expect.
+- API JSON keeps the schema's snake_case French field names.

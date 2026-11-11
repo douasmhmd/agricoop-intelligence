@@ -10,9 +10,225 @@ info:
 servers:
   - url: /
 tags: []
-paths: {}
+paths:
+  /api/v1/me:
+    get:
+      operationId: Me_get
+      parameters: []
+      responses:
+        "200":
+          description: The caller
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - me
+  /api/v1/produits:
+    get:
+      operationId: Produits_list
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Products of the cooperative
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Produit"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - produits
+  /api/v1/produits/{produitId}:
+    get:
+      operationId: Produits_get
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: produitId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Produit"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - produits
 components:
-  schemas: {}
+  schemas:
+    Me:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
+            enum:
+              - customer
+              - reseller
+              - coop_manager
+              - saas_admin
+        coop_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+          nullable: true
+      required:
+        - roles
+        - coop_id
+      additionalProperties: false
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        detail:
+          type: string
+        instance:
+          type: string
+        errors:
+          description: Validation errors, when status is 400
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              message:
+                type: string
+            required:
+              - path
+              - message
+            additionalProperties: false
+        code:
+          description: Stable machine-readable error code
+          type: string
+      required:
+        - type
+        - title
+        - status
+      additionalProperties: false
+    Produit:
+      type: object
+      properties:
+        produit_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        code:
+          type: string
+        nom:
+          type: string
+        famille:
+          type: string
+          enum:
+            - alimentaire
+            - cosmetique
+            - coffret
+        categorie:
+          type: string
+        prix_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        cout_mad:
+          type: string
+          pattern: ^\d{1,8}(\.\d{1,2})?$
+          description: Amount in MAD, NUMERIC(10,2) as a string
+        conservation_j:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        huile_ml_par_unite:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        niveau_qr:
+          type: string
+          enum:
+            - lot
+            - unite
+        actif:
+          type: boolean
+        is_synthetic:
+          type: boolean
+      required:
+        - produit_id
+        - code
+        - nom
+        - famille
+        - categorie
+        - prix_mad
+        - cout_mad
+        - conservation_j
+        - huile_ml_par_unite
+        - niveau_qr
+        - actif
+        - is_synthetic
+      additionalProperties: false
   securitySchemes:
     bearer:
       scheme: bearer

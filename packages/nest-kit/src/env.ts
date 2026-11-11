@@ -10,6 +10,11 @@ export const baseEnv = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   LOG_PRETTY: booleanString.default(false),
   DATABASE_URL: z.url(),
+  /** Keycloak realm URL; must equal the `iss` of access tokens. */
+  OIDC_ISSUER: z.url(),
+  OIDC_AUDIENCE: z.string().min(1).default('agricoop-api'),
+  /** Optional internal JWKS URL (e.g. http://keycloak:8080/...) when the issuer host is not reachable. */
+  OIDC_JWKS_URL: z.url().optional(),
   /** Comma-separated list of allowed browser origins. */
   CORS_ORIGINS: z
     .string()

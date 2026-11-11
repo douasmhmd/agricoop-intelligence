@@ -5,6 +5,7 @@ describe('parseEnv', () => {
   it('applies defaults and parses CORS origins', () => {
     const env = parseEnv(baseEnv, {
       DATABASE_URL: 'postgres://u:p@localhost:5433/agricoop',
+      OIDC_ISSUER: 'http://localhost:8080/realms/agricoop',
       CORS_ORIGINS: 'http://localhost:5173, http://localhost:5174',
     });
     expect(env.NODE_ENV).toBe('development');
@@ -14,7 +15,11 @@ describe('parseEnv', () => {
 
   it('reports invalid variables by name without echoing values', () => {
     const secret = 'not-a-url-but-a-secret';
-    expect(() => parseEnv(baseEnv, { DATABASE_URL: secret })).toThrow(/DATABASE_URL/);
-    expect(() => parseEnv(baseEnv, { DATABASE_URL: secret })).not.toThrow(new RegExp(secret));
+    expect(() =>
+      parseEnv(baseEnv, { DATABASE_URL: secret, OIDC_ISSUER: 'http://kc/realms/a' }),
+    ).toThrow(/DATABASE_URL/);
+    expect(() =>
+      parseEnv(baseEnv, { DATABASE_URL: secret, OIDC_ISSUER: 'http://kc/realms/a' }),
+    ).not.toThrow(new RegExp(secret));
   });
 });

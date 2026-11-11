@@ -1,5 +1,7 @@
 import { Controller, type DynamicModule, Get, Global, Inject, Module, Res } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
+import { Public } from './auth/decorators.js';
 import type { FastifyReply } from 'fastify';
 import { collectDefaultMetrics, Histogram, Registry } from 'prom-client';
 
@@ -7,6 +9,8 @@ export const METRICS_REGISTRY = Symbol.for('agricoop.METRICS_REGISTRY');
 
 /** Prometheus scrape endpoint. Excluded from the global prefix and from the OpenAPI contract. */
 @ApiExcludeController()
+@Public()
+@SkipThrottle()
 @Controller('metrics')
 export class MetricsController {
   constructor(@Inject(METRICS_REGISTRY) private readonly registry: Registry) {}

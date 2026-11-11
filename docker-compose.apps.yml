@@ -127,6 +127,9 @@ services:
       DATABASE_URL: postgres://agricoop:${POSTGRES_PASSWORD:-agricoop_dev}@postgres:5432/agricoop
       CORS_ORIGINS: http://localhost:5173,http://localhost:5174
       LOG_LEVEL: info
+      # Tokens carry the browser-facing issuer; keys are fetched on the internal hostname.
+      OIDC_ISSUER: http://localhost:8080/realms/agricoop
+      OIDC_JWKS_URL: http://keycloak:8080/realms/agricoop/protocol/openid-connect/certs
     ports:
       - '3000:3000'
 
@@ -142,6 +145,8 @@ services:
       DATABASE_URL: postgres://agricoop:${POSTGRES_PASSWORD:-agricoop_dev}@postgres:5432/agricoop
       CORS_ORIGINS: http://localhost:5173,http://localhost:5174
       LOG_LEVEL: info
+      OIDC_ISSUER: http://localhost:8080/realms/agricoop
+      OIDC_JWKS_URL: http://keycloak:8080/realms/agricoop/protocol/openid-connect/certs
     ports:
       - '3001:3001'
 
