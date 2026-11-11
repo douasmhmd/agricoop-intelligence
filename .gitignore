@@ -28,3 +28,5 @@ data/synthetic-factory/output/
 .vscode/
 
 data/synthetic-factory/output/
+data/ml/mlflow.db
+data/ml/mlruns/
