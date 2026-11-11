@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+/*
+ * Theme tokens (shadcn/ui style). RTL: always use logical utilities (ms-/me-/ps-/pe-/start-/end-),
+ * never ml-/mr-/pl-/pr-/left-/right-, so layouts flip with <html dir="rtl">.
+ */
+@theme {
+  --color-olive-50: #f6f7ee;
+  --color-olive-100: #e9edd5;
+  --color-olive-600: #5d6b2c;
+  --color-olive-700: #4a5523;
+  --color-olive-900: #2c3315;
+  --font-sans: 'Inter', 'Noto Sans Arabic', system-ui, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-stone-50 text-stone-900 antialiased;
+}

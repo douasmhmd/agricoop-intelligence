@@ -1,0 +1,15 @@
+# Shared / teammate-owned areas: not formatted by the apps tooling
+data/
+infra/
+contracts/db/schema.sql
+docker-compose.yml
+README.md
+.github/CODEOWNERS
+
+# Generated
+pnpm-lock.yaml
+**/dist/
+**/coverage/
+**/generated/
+**/routeTree.gen.ts
+contracts/api/openapi.yaml

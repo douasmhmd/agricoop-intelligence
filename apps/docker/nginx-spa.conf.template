@@ -1,0 +1,42 @@
+# Rendered by the nginx image entrypoint (envsubst on ${API_UPSTREAM} / ${QR_UPSTREAM}).
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    # No client IPs in access logs (Law 09-08): method, path without query string, status only.
+    log_format agricoop '$time_iso8601 "$request_method $uri" $status $body_bytes_sent';
+    access_log /dev/stdout agricoop;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location /api/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /qr/ {
+        proxy_pass ${QR_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # SPA fallback (TanStack Router handles client-side routes such as /v/:token).
+    location / {
+        try_files $uri /index.html;
+        add_header Cache-Control "no-cache";
+    }
+}

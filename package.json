@@ -1,0 +1,41 @@
+{
+  "name": "agricoop-intelligence",
+  "private": true,
+  "description": "AgriCoop Intelligence — multi-tenant SaaS for Moroccan agricultural cooperatives",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:pull": "pnpm --filter @agricoop/db db:pull",
+    "contracts:openapi": "turbo run openapi:export && node scripts/merge-openapi.mjs",
+    "api:generate": "turbo run api:generate",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@agricoop/config": "workspace:*",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "eslint": "^10.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.10.0",
+    "turbo": "^2.11.11",
+    "typescript": "~6.0.3",
+    "yaml": "^2.9.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs}": [
+      "eslint --fix --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css,html}": "prettier --write"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "app": {
+    "name": "AgriCoop Back-office",
+    "tagline": "Gestion de la coopérative : catalogue, lots, stock, commandes et QR codes"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "home": {
+    "title": "Tableau de bord",
+    "intro": "Les modules arrivent : produits, lots et stock, commandes, QR codes, prévisions.",
+    "verifyHint": "Connexion requise (Keycloak) à partir de la phase 7."
+  },
+  "notFound": "Page introuvable"
+}

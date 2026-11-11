@@ -1,0 +1,17 @@
+{
+  "app": {
+    "name": "AgriCoop",
+    "tagline": "Produits authentiques des coopératives oléicoles du Maroc"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "home": {
+    "title": "Bienvenue",
+    "intro": "Huile d'olive, olives de table, savons et coffrets, directement des coopératives.",
+    "verifyHint": "Scannez le QR code sur l'étiquette pour vérifier l'authenticité d'un produit."
+  },
+  "notFound": "Page introuvable"
+}

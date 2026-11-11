@@ -28,7 +28,19 @@ data/synthetic-factory/output/
 .vscode/
 
 data/synthetic-factory/output/
-data/ml/mlflow.db
-data/ml/mlruns/
-data/lake/
-data/lake/
+
+# apps tooling
+.turbo/
+coverage/
+*.tsbuildinfo
+.env.local
+.env.*.local
+playwright-report/
+test-results/
+apps/*/openapi.json
+
+# generated at build time
+packages/events/src/generated/
+
+# generated API clients (pnpm api:generate)
+apps/*/src/api/generated/

@@ -5,15 +5,15 @@ How to work in this repo: the binding conventions for the application scope.
 
 ## Ownership (see `.github/CODEOWNERS`)
 
-| Path          | Owner                    | Allowed                                                        |
-|---------------|--------------------------|----------------------------------------------------------------|
-| `apps/`       | Omar (apps)              | create / edit freely                                           |
-| `packages/`   | Omar (apps tooling)      | create / edit freely                                           |
-| `contracts/`  | **shared**, both approve | add `api/openapi.yaml` (generated), `events/*`, `db/proposals/*`. **Never edit `db/schema.sql`.** |
-| `data/`       | Mohamed (data)           | **read only**                                                  |
-| `infra/terraform/` | shared              | **read only**                                                  |
-| `docker-compose.yml` (root) | shared     | **read only**; app services go in `docker-compose.apps.yml`   |
-| `docs/`       | shared                   | append to `docs/apps-changelog.md`                             |
+| Path                        | Owner                    | Allowed                                                                                           |
+| --------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------- |
+| `apps/`                     | Omar (apps)              | create / edit freely                                                                              |
+| `packages/`                 | Omar (apps tooling)      | create / edit freely                                                                              |
+| `contracts/`                | **shared**, both approve | add `api/openapi.yaml` (generated), `events/*`, `db/proposals/*`. **Never edit `db/schema.sql`.** |
+| `data/`                     | Mohamed (data)           | **read only**                                                                                     |
+| `infra/terraform/`          | shared                   | **read only**                                                                                     |
+| `docker-compose.yml` (root) | shared                   | **read only**; app services go in `docker-compose.apps.yml`                                       |
+| `docs/`                     | shared                   | append to `docs/apps-changelog.md`                                                                |
 
 ## Hard rules
 
@@ -90,13 +90,37 @@ How to work in this repo: the binding conventions for the application scope.
 ## Workflow
 
 - Work in the phases listed in `docs/apps-changelog.md` (recon → scaffold → API core → catalogue/stock →
-  orders/outbox → QR → backoffice → storefront → hardening). After each phase: `pnpm lint && pnpm typecheck
-  && pnpm test` green, OpenAPI regenerated + Orval clients regenerated if endpoints changed, entry appended
-  to `docs/apps-changelog.md`, Conventional Commit, short summary, then **stop and wait for the user**.
+  orders/outbox → QR → backoffice → storefront → hardening).
+- After each phase: `pnpm lint`, `pnpm typecheck` and `pnpm test` are green; `pnpm contracts:openapi`
+  re-run if endpoints changed (Orval clients regenerate automatically before front-end tasks); entry
+  appended to `docs/apps-changelog.md`; Conventional Commit on the feature branch; short summary; then
+  **stop and wait for the user**.
 - Make small implementation choices yourself and note them in the changelog. Ask only for choices that
   affect `contracts/` or the data plane.
 
+## Repo mechanics (learned in phase 2)
+
+- **Versions pinned on purpose:** NestJS **11.2** (not 12: `nestjs-zod` and `@nestjs/terminus` cap at
+  Nest 11) and TypeScript **6.0** (not 7: `typescript-eslint` caps at `<6.1`). Re-check before bumping.
+- **pnpm 12:** build-script allow-list is `allowBuilds` in `pnpm-workspace.yaml`; installs may append
+  `minimumReleaseAgeExclude` entries (keep them). Turbo needs `pnpm` on PATH (corepack shim).
+- **Workspace packages** (`packages/*`) are built with tsup to ESM + CJS; Nest apps are CommonJS built by
+  the Nest CLI with SWC (`nest-cli.json`). Do not set `rootDir` in `apps/*/tsconfig.build.json` (the Nest
+  CLI then stops stripping `src/` and emits `dist/src/`).
+- **`packages/nest-kit`**: shared Nest bootstrap (`configureApp`), env parsing, pino redaction, health,
+  metrics, `DatabaseModule` (`DB_POOL`, `DB`), OpenAPI builder. Use explicit `@Inject(token)` in it.
+- **Routing:** api under `/api/v1`, qr under `/qr/v1` (one origin behind the ingress / Vite proxy).
+  `/health/live`, `/health/ready`, `/metrics` stay at the root and are excluded from OpenAPI.
+- **Drizzle schema:** `pnpm db:pull` regenerates `packages/db/src/generated` (snake_case column names
+  preserved; NUMERIC / DATE / TIMESTAMPTZ come back as strings). Never edit the generated files.
+- **Front ends:** file-based TanStack routes (`src/routeTree.gen.ts` is generated and committed);
+  `@/` → `src/`; the only `fetch` is `src/api/fetcher.ts` (Orval mutator).
+
 ## Local dev
 
-- Postgres from the root compose: `localhost:5433`, db/user `agricoop` (password in root compose, local only).
-- `docker compose -f docker-compose.yml -f docker-compose.apps.yml up`
+- `cp .env.example .env`, then
+  `docker compose -f docker-compose.yml -f docker-compose.apps.yml up -d` (infra: Postgres 5433,
+  Keycloak 8080, Redpanda 19092, Console 8088, Mailpit 8025) and `pnpm dev`.
+  Add `--profile apps` to also run the app images.
+- Demo coops `COOP01` / `COOP02` have fixed ids (`apps/dev/seed`), matching the Keycloak group
+  attribute `tenant_id`. Demo users are listed in `.env.example`.

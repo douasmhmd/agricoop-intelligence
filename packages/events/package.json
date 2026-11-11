@@ -1,0 +1,40 @@
+{
+  "name": "@agricoop/events",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Event envelope, topic naming, PII guard and TS types generated from contracts/events",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "build": "pnpm generate && tsup",
+    "lint": "eslint .",
+    "typecheck": "pnpm generate && tsc -p tsconfig.json",
+    "test": "pnpm generate && vitest run"
+  },
+  "devDependencies": {
+    "@agricoop/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "json-schema-to-typescript": "^16.0.0",
+    "tsup": "^9.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.0"
+  }
+}
