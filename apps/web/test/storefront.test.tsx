@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ThemeProvider } from '@agricoop/ui';
 import { CartProvider, cartOps, EMPTY_CART } from '@/cart/cart';
 import '@/i18n';
 import ar from '@/i18n/locales/ar.json';
@@ -116,9 +117,12 @@ function renderAt(path: string) {
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <CartProvider>
-        <RouterProvider router={router} />
-      </CartProvider>
+      {/* Same providers as main.tsx (the layout's theme toggles need ThemeProvider). */}
+      <ThemeProvider>
+        <CartProvider>
+          <RouterProvider router={router} />
+        </CartProvider>
+      </ThemeProvider>
     </QueryClientProvider>,
   );
 }

@@ -16,8 +16,9 @@ server {
     access_log /dev/stdout agricoop;
 
     # The OIDC provider is a separate origin: token / discovery calls (connect-src) and silent renew
-    # (frame-src). Styles: Radix / sonner inject runtime styles.
-    set $csp "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ${OIDC_AUTHORITY}/; frame-src ${OIDC_AUTHORITY}/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'";
+    # (frame-src). Styles: Radix / sonner inject runtime styles. Images: storefront placeholder photos
+    # from images.unsplash.com (apps/web/src/lib/images.ts).
+    set $csp "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com; font-src 'self' data:; connect-src 'self' ${OIDC_AUTHORITY}/; frame-src ${OIDC_AUTHORITY}/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'";
 
     location = /healthz {
         access_log off;

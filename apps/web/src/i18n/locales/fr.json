@@ -12,14 +12,27 @@
     "home": "Toutes les coopératives",
     "account": "Mon compte",
     "cart_one": "Panier ({{count}} article)",
-    "cart_other": "Panier ({{count}} articles)"
+    "cart_other": "Panier ({{count}} articles)",
+    "products": "Produits",
+    "cooperatives": "Coopératives",
+    "story": "Notre histoire",
+    "authenticity": "Authenticité",
+    "menu": "Menu",
+    "main": "Navigation principale"
   },
   "common": {
     "loading": "Chargement…",
     "close": "Fermer"
   },
   "footer": {
-    "verify": "Scannez le QR code d'une étiquette pour vérifier son authenticité."
+    "verify": "Scannez le QR code d'une étiquette pour vérifier son authenticité.",
+    "tagline": "Huile d'olive, olives et savons des coopératives du Maroc, traçables lot par lot.",
+    "shop": "Boutique",
+    "trust": "Confiance",
+    "preferences": "Préférences",
+    "demo": "Coopératives fictives — plateforme de démonstration.",
+    "photos": "Photos : Unsplash",
+    "rights": "© {{year}} AgriCoop"
   },
   "auth": {
     "signIn": "Se connecter",
@@ -44,7 +57,9 @@
     "soldOut": "Épuisé",
     "available_one": "{{count}} disponible",
     "available_other": "{{count}} disponibles",
-    "qrUnit": "QR code d'authenticité sur chaque unité"
+    "qrUnit": "QR code d'authenticité sur chaque unité",
+    "filtered": "Filtré : {{famille}}",
+    "clearFilter": "Tout afficher"
   },
   "cart": {
     "title": "Panier",
@@ -136,5 +151,74 @@
     "light": "Clair",
     "dark": "Sombre",
     "system": "Système"
+  },
+  "hero": {
+    "eyebrow": "Coopératives oléicoles du Maroc",
+    "title": "L'or vert des collines, de la coopérative à votre table",
+    "cta": "Découvrir les produits",
+    "verify": "Vérifier un produit",
+    "coldPressed": "Pressée à froid",
+    "traceable": "Traçable par QR",
+    "direct": "En direct des coopératives",
+    "scroll": "Faire défiler",
+    "imageAlt": "Oliveraie bordée d'un muret de pierre, sous un ciel bleu",
+    "badgeHarvest": "Récolte de la saison",
+    "badgeVerified": "Authenticité vérifiée"
+  },
+  "story": {
+    "eyebrow": "Notre histoire",
+    "title": "Des familles d'oléiculteurs, réunies en coopératives",
+    "p1": "Dans les collines du nord du Maroc, des coopératives récoltent, pressent et conditionnent elles-mêmes leur huile, leurs olives et leurs savons.",
+    "p2": "AgriCoop les relie directement à vous : chaque achat leur revient, et chaque produit garde la trace de son lot.",
+    "imageAlt": "Mains triant des olives fraîchement récoltées",
+    "statCoops": "Coopératives",
+    "statProducts": "Produits",
+    "statProvinces": "Provinces"
+  },
+  "featured": {
+    "eyebrow": "Sélection",
+    "title": "Les produits du moment",
+    "subtitle": "Huiles, olives et savons tout juste arrivés des coopératives.",
+    "prev": "Produits précédents",
+    "next": "Produits suivants"
+  },
+  "categories": {
+    "eyebrow": "Univers",
+    "title": "Du fruit au flacon",
+    "huile": "Huiles d'olive",
+    "olives": "Olives de table",
+    "soins": "Savons et soins",
+    "coffrets": "Coffrets cadeaux",
+    "count_one": "{{count}} produit",
+    "count_other": "{{count}} produits",
+    "explore": "Découvrir",
+    "soon": "Bientôt"
+  },
+  "qr": {
+    "eyebrow": "Authenticité garantie",
+    "title": "Un QR code sur chaque étiquette, une preuve à chaque scan",
+    "text": "Chaque lot reçoit un code unique, très difficile à falsifier. Scannez-le avec l'appareil photo de votre téléphone : la coopérative, le lot et les dates s'affichent aussitôt.",
+    "step1": "Scannez le code",
+    "step1Text": "Avec l'appareil photo, sans application.",
+    "step2": "Vérifiez l'origine",
+    "step2Text": "Coopérative, lot, fabrication et péremption.",
+    "step3": "Achetez en confiance",
+    "step3Text": "Un code copié ou désactivé est signalé.",
+    "illustration": "Illustration : un téléphone scanne le QR code d'une étiquette et affiche « Authentique ».",
+    "authentic": "Authentique"
+  },
+  "coops": {
+    "eyebrow": "Les producteurs",
+    "subtitle": "Achetez directement auprès des coopératives.",
+    "from": "À partir de {{price}}",
+    "visit": "Voir la boutique"
+  },
+  "newsletter": {
+    "title": "Les nouvelles récoltes, en avant-première",
+    "text": "Une lettre par saison : arrivages, coopératives et recettes.",
+    "email": "Adresse e-mail",
+    "submit": "S'inscrire",
+    "soon": "L'inscription à la lettre ouvrira bientôt. Merci de votre intérêt !",
+    "invalid": "Saisissez une adresse e-mail valide."
   }
 }

@@ -1,8 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router';
-import { ShieldCheck } from 'lucide-react';
+import { createRootRouteWithContext, Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
+import { SmoothScroll } from '@/components/SmoothScroll';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -14,18 +15,21 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootLayout() {
-  const { t } = useTranslation();
+  // The home page is full-bleed (hero under the transparent header); other pages sit in a
+  // centred column below the fixed header.
+  const isHome = useRouterState({ select: (s) => s.location.pathname === '/' });
   return (
     <div className="flex min-h-dvh flex-col">
+      <SmoothScroll />
       <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5">
+      <main
+        className={
+          isHome ? 'flex-1' : 'mx-auto w-full max-w-5xl flex-1 px-4 pt-24 pb-16 sm:px-6 lg:pt-28'
+        }
+      >
         <Outlet />
       </main>
-      <footer className="border-t py-5 text-center text-sm text-muted-foreground">
-        <p className="inline-flex items-center gap-1.5">
-          <ShieldCheck className="size-4" /> {t('footer.verify')}
-        </p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

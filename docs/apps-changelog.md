@@ -512,3 +512,44 @@ e2e 3/3 against the redesigned UI with no selector change.
 **Not done yet (next phases):** page layouts themselves (header, hero, catalogue, cart drawer, QR
 page, dashboard shell, command palette, charts); Lenis, cmdk, vaul, Embla and NumberFlow are added
 when their components are built (phases 2–4).
+
+## UI redesign — phase 2: storefront header, home, footer (2026-11-13)
+
+**Done**
+
+- Header: fixed; transparent over the hero, then a frosted glass bar with a soft shadow once the page
+  scrolls (always glass on other pages). Desktop navigation to the home sections with a gold underline
+  on hover, language switch, sign-in / account, cart with a gold count badge that bounces when an item
+  is added. Mobile: an animated menu (top sheet, staggered links, language and theme controls).
+- Hero (full height): gold eyebrow, serif headline revealed word by word, two CTAs with
+  micro-interactions, trust points, the olive grove in a Moroccan arch with a parallax and a gold arch
+  outline drifting the other way, floating glass chips, scroll cue.
+- Home sections: "Notre histoire" (harvest photo in an arch, live figures counting up with
+  NumberFlow: cooperatives, products, provinces), featured products carousel (Embla, swipe/drag,
+  RTL-aware, controls disabled at the ends, hover zoom and reveal), category tiles (arch photos, zoom,
+  sliding panel; each leads to the coop with the most products of that kind, pre-filtered),
+  "Authenticité garantie par QR" on a deep olive band (three steps, animated phone scanning a QR code,
+  drawn checkmark), cooperative cards from the live catalogues (families, product count, lowest price),
+  newsletter, rich footer (zellige band, links, language and theme, demo and photo credits).
+- Catalogue page: optional `?groupe=huile|olives|soins|coffrets` filter with a chip to clear it (used by
+  the category tiles; the catalogue itself is redesigned in phase 3).
+- Lenis smooth scrolling (storefront only, off with reduced motion, paused under overlays).
+- Imagery: Unsplash placeholder photos (free licence, credited in the footer) via `src/lib/images.ts`;
+  `<Picture>` in `@agricoop/ui` gives stable aspect ratios, lazy loading, blur-up and a branded fallback.
+  CSP `img-src` allows `https://images.unsplash.com`; the hero photo is preconnected and loads eagerly.
+- Translations: ~80 new keys in FR and AR (Arabic plural forms included).
+
+**Fixes found while reviewing the screenshots**
+
+- The screenshot helper did not wait for lazy photos or for the scan animation: it now waits for every
+  `<Picture>` and for the longest in-view sequence.
+- Two products of the same category showed the same photo: photos now alternate by rank.
+- White titles on light category photos lacked contrast: stronger gradient.
+
+**Tests:** web 20 (5 new: category groups, featured selection alternating coops, tile targets, exact
+lowest price, photo variants); the router test now mounts the same providers as the app. All suites
+green, Playwright e2e 3/3 unchanged, home page checked in the nginx image under the production CSP (no
+violations). Screenshots: `apps/e2e/screenshots/redesign/phase2/`.
+
+**Open point:** the newsletter has no backend. Making it real needs an API endpoint (and a consent
+record), so it currently shows an honest "opening soon" message and stores nothing.

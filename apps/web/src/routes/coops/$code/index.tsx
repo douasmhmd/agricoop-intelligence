@@ -1,6 +1,6 @@
 import type { ProduitCatalogue } from '@agricoop/shared';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -9,8 +9,12 @@ import { ok } from '@/api/ok';
 import { useCart } from '@/cart/cart';
 import { EmptyState, ErrorAlert, Loading, Money, QuantityStepper } from '@/components/common';
 import { Badge, Button } from '@agricoop/ui';
+import { GROUPES, type Groupe, groupeOf } from '@/lib/home';
 
 export const Route = createFileRoute('/coops/$code/')({
+  // Optional filter set by the home page's category tiles (?groupe=huile|olives|soins|coffrets).
+  validateSearch: (search: Record<string, unknown>): { groupe?: Groupe } =>
+    GROUPES.includes(search.groupe as Groupe) ? { groupe: search.groupe as Groupe } : {},
   component: CataloguePage,
 });
 
@@ -19,7 +23,9 @@ function CataloguePage() {
   const { t } = useTranslation();
   const coop = ok(useStorefrontGet(code).data);
   const catalogue = useStorefrontCatalogue(code);
-  const produits = ok(catalogue.data) ?? [];
+  const { groupe } = Route.useSearch();
+  const tous = ok(catalogue.data) ?? [];
+  const produits = groupe ? tous.filter((p) => groupeOf(p) === groupe) : tous;
 
   return (
     <>
@@ -29,6 +35,18 @@ function CataloguePage() {
         </Link>
         <h1 className="mt-1 text-2xl font-bold">{coop?.nom ?? code}</h1>
         {coop && <p className="text-sm text-muted-foreground">{coop.province}</p>}
+        {groupe && (
+          <Link
+            to="/coops/$code"
+            params={{ code }}
+            search={{}}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-sm shadow-soft hover:bg-accent"
+            aria-label={t('catalogue.clearFilter')}
+          >
+            {t('catalogue.filtered', { famille: t(`categories.${groupe}`) })}
+            <X className="size-3.5" aria-hidden />
+          </Link>
+        )}
       </div>
       {catalogue.isPending ? (
         <Loading />

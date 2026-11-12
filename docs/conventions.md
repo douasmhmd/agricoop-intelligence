@@ -226,6 +226,19 @@ generate` regenerates the TS types.
   (`staleTime`/`gcTime: Infinity`, no refetch, no retry).
 - Mock payment URLs come from `mockPaymentPath()` in `@agricoop/shared`.
 
+- Layout: the header is `fixed` (transparent over the home hero, glass elsewhere); the root layout
+  gives non-home pages their top padding. Home sections live in `src/home/` and take their figures
+  from the public API only (`src/lib/home.ts`, tested) — never invent reviews or numbers.
+- Photos: Unsplash placeholders through `src/lib/images.ts` + `<Picture>` from `@agricoop/ui`
+  (lazy, blur-up, branded fallback). The CSP allows `https://images.unsplash.com` for images; a new
+  image host must be added to `apps/docker/nginx-spa.conf.template`.
+- Cards with a stretched link keep the link's accessible name short (product or coop name only):
+  e2e tests find coops by `getByRole('link', { name })`, so a coop name inside another link breaks them.
+- Lenis smooth scroll (`SmoothScroll`) is storefront-only, off with reduced motion, and pauses while a
+  Radix overlay locks scrolling. Parallax uses `useReducedMotion()` (MotionConfig does not cover
+  style-bound motion values).
+- The newsletter form has no backend (it would need an API endpoint): it says so instead of storing.
+
 ## Local dev
 
 - `cp .env.example .env`, then

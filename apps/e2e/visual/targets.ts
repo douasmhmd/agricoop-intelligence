@@ -54,7 +54,19 @@ export async function settle(page: Page): Promise<void> {
     }
     window.scrollTo(0, 0);
   });
-  await page.waitForTimeout(900);
+  // Lazy photos start loading once scrolled near: wait until every <Picture> has loaded or
+  // fallen back (data-state set by @agricoop/ui Picture), then let fades finish.
+  await page
+    .waitForFunction(
+      () => !document.querySelector('[data-slot="picture"][data-state="loading"]'),
+      null,
+      {
+        timeout: 20_000,
+      },
+    )
+    .catch(() => undefined);
+  // Longest in-view sequence (the QR scan illustration) takes ~3 s.
+  await page.waitForTimeout(3000);
 }
 
 export function shotName(page: string, v: Variant): string {
