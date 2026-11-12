@@ -180,6 +180,25 @@ generate` regenerates the TS types.
   `/users/{id}/role-mappings/realm/available`), not `/roles/{name}` (needs view-realm). On any failure,
   delete what was created (user, then group).
 
+## Design system (packages/ui) — UI redesign in progress
+
+- Both front ends use `@agricoop/ui` (TypeScript source, no build step): tokens and themes in
+  `src/styles/theme.css` (Tailwind v4 `@theme`, OKLCH), motion presets in `src/motion.ts`, base
+  components in `src/components`. Import components from `@agricoop/ui`, never re-create local copies.
+  Each app's `index.css` imports `theme.css` and has `@source '../../../packages/ui/src'`.
+- Colours: semantic tokens (`bg-card`, `text-muted-foreground`, `bg-gold`, `text-success`…) for UI;
+  brand scales (`olive`, `gold`, `terracotta`, `sand`) for decoration. `packages/ui/test/contrast.test.ts`
+  checks WCAG AA for the token pairs in both themes: run it after changing a colour.
+- Class names must be literal in the source (`text-display-lg`), never built with template strings.
+- Dark mode: `.dark` on `<html>` via `ThemeProvider`; `public/theme-init.js` applies it before paint
+  (external file: the CSP forbids inline scripts).
+- Motion: presets only (`fadeUp`, `stagger`, `slideInFromStart`…), transform/opacity only, horizontal
+  offsets through `inlineOffset()` / `custom={dir}` so they mirror in RTL (`useDirection()`).
+  Apps are wrapped in `MotionProvider` (reduced motion keeps fades only).
+- Visual review: `pnpm --filter @agricoop/e2e screenshots` (desktop/mobile × light/dark × FR/AR,
+  fails on horizontal overflow) → `apps/e2e/screenshots/redesign/<VISUAL_PHASE>/` (git-ignored).
+  The back-office `/styleguide` route shows every token and component.
+
 ## Back office (apps/backoffice)
 
 - shadcn/ui components live in `src/components/ui` (generated; `cn` comes from `@/lib/utils` — the

@@ -44,3 +44,7 @@ packages/events/src/generated/
 
 # generated API clients (pnpm api:generate)
 apps/*/src/api/generated/
+
+# Visual review output and Playwright auth state
+apps/e2e/screenshots/
+apps/e2e/.auth/

@@ -1,6 +1,12 @@
 {
-  "app": { "name": "AgriCoop" },
-  "language": { "label": "Langue", "fr": "Français", "ar": "العربية" },
+  "app": {
+    "name": "AgriCoop"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "ar": "العربية"
+  },
   "notFound": "Page introuvable",
   "nav": {
     "home": "Toutes les coopératives",
@@ -8,8 +14,13 @@
     "cart_one": "Panier ({{count}} article)",
     "cart_other": "Panier ({{count}} articles)"
   },
-  "common": { "loading": "Chargement…" },
-  "footer": { "verify": "Scannez le QR code d'une étiquette pour vérifier son authenticité." },
+  "common": {
+    "loading": "Chargement…",
+    "close": "Fermer"
+  },
+  "footer": {
+    "verify": "Scannez le QR code d'une étiquette pour vérifier son authenticité."
+  },
   "auth": {
     "signIn": "Se connecter",
     "signOut": "Se déconnecter",
@@ -22,7 +33,11 @@
     "cooperatives": "Coopératives",
     "none": "Aucune coopérative pour le moment."
   },
-  "famille": { "alimentaire": "Alimentaire", "cosmetique": "Cosmétique", "coffret": "Coffret" },
+  "famille": {
+    "alimentaire": "Alimentaire",
+    "cosmetique": "Cosmétique",
+    "coffret": "Coffret"
+  },
   "catalogue": {
     "empty": "Aucun produit disponible.",
     "add": "Ajouter",
@@ -115,5 +130,11 @@
     "email_non_verifie": "Confirmez d'abord votre adresse e-mail (lien reçu par e-mail), puis réessayez.",
     "transition_invalide": "Cette commande ne peut plus être annulée.",
     "qr_inconnu": "QR code inconnu."
+  },
+  "theme": {
+    "group": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
   }
 }

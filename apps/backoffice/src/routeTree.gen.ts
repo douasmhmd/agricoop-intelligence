@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PrevisionsRouteImport } from './routes/previsions'
 import { Route as ProduitsRouteImport } from './routes/produits'
 import { Route as QrRouteImport } from './routes/qr'
+import { Route as StyleguideRouteImport } from './routes/styleguide'
 import { Route as AdminCooperativesRouteImport } from './routes/admin/cooperatives'
 import { Route as CommandesIndexRouteImport } from './routes/commandes/index'
 import { Route as CommandesCommandeIdRouteImport } from './routes/commandes/$commandeId'
@@ -38,6 +39,11 @@ const ProduitsRoute = ProduitsRouteImport.update({
 const QrRoute = QrRouteImport.update({
   id: '/qr',
   path: '/qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StyleguideRoute = StyleguideRouteImport.update({
+  id: '/styleguide',
+  path: '/styleguide',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCooperativesRoute = AdminCooperativesRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/previsions': typeof PrevisionsRoute
   '/produits': typeof ProduitsRoute
   '/qr': typeof QrRoute
+  '/styleguide': typeof StyleguideRoute
   '/admin/cooperatives': typeof AdminCooperativesRoute
   '/commandes/$commandeId': typeof CommandesCommandeIdRoute
   '/lots/$lotId': typeof LotsLotIdRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/previsions': typeof PrevisionsRoute
   '/produits': typeof ProduitsRoute
   '/qr': typeof QrRoute
+  '/styleguide': typeof StyleguideRoute
   '/admin/cooperatives': typeof AdminCooperativesRoute
   '/commandes/$commandeId': typeof CommandesCommandeIdRoute
   '/lots/$lotId': typeof LotsLotIdRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/previsions': typeof PrevisionsRoute
   '/produits': typeof ProduitsRoute
   '/qr': typeof QrRoute
+  '/styleguide': typeof StyleguideRoute
   '/admin/cooperatives': typeof AdminCooperativesRoute
   '/commandes/$commandeId': typeof CommandesCommandeIdRoute
   '/lots/$lotId': typeof LotsLotIdRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/previsions'
     | '/produits'
     | '/qr'
+    | '/styleguide'
     | '/admin/cooperatives'
     | '/commandes/$commandeId'
     | '/lots/$lotId'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/previsions'
     | '/produits'
     | '/qr'
+    | '/styleguide'
     | '/admin/cooperatives'
     | '/commandes/$commandeId'
     | '/lots/$lotId'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/previsions'
     | '/produits'
     | '/qr'
+    | '/styleguide'
     | '/admin/cooperatives'
     | '/commandes/$commandeId'
     | '/lots/$lotId'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   PrevisionsRoute: typeof PrevisionsRoute
   ProduitsRoute: typeof ProduitsRoute
   QrRoute: typeof QrRoute
+  StyleguideRoute: typeof StyleguideRoute
   AdminCooperativesRoute: typeof AdminCooperativesRoute
   CommandesCommandeIdRoute: typeof CommandesCommandeIdRoute
   LotsLotIdRoute: typeof LotsLotIdRoute
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       path: '/qr'
       fullPath: '/qr'
       preLoaderRoute: typeof QrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/styleguide': {
+      id: '/styleguide'
+      path: '/styleguide'
+      fullPath: '/styleguide'
+      preLoaderRoute: typeof StyleguideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/cooperatives': {
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrevisionsRoute: PrevisionsRoute,
   ProduitsRoute: ProduitsRoute,
   QrRoute: QrRoute,
+  StyleguideRoute: StyleguideRoute,
   AdminCooperativesRoute: AdminCooperativesRoute,
   CommandesCommandeIdRoute: CommandesCommandeIdRoute,
   LotsLotIdRoute: LotsLotIdRoute,

@@ -19,8 +19,7 @@ import { ok } from '@/api/ok';
 import { useSession } from '@/auth/session';
 import { NativeSelect } from '@/components/common';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { Button, Switch } from '@agricoop/ui';
 import { cn } from '@/lib/utils';
 import { usePreferences } from '@/state/preferences';
 

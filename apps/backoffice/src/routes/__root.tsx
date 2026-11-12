@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { hasAuthParams, useAuth } from 'react-oidc-context';
 import { useSession } from '@/auth/session';
 import { AppShell } from '@/components/AppShell';
-import { Button } from '@/components/ui/button';
+import { Button } from '@agricoop/ui';
 
 export interface RouterContext {
   queryClient: QueryClient;

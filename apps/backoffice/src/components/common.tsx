@@ -3,8 +3,7 @@ import { AlertTriangle, ChevronLeft, ChevronRight, Inbox, Loader2 } from 'lucide
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/api/fetcher';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge, Button } from '@agricoop/ui';
 import { cn } from '@/lib/utils';
 
 export function useLocale(): 'fr' | 'ar' {

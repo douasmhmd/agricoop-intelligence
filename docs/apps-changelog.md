@@ -467,3 +467,48 @@ passes actionlint.
 
 **Local state:** the stack now runs from the app images (`--profile apps`) on the usual ports; the
 `pnpm dev` servers were stopped. COOP02 has the demo seed plus the e2e orders and products.
+
+## UI redesign — phase 1: design system (2026-11-13)
+
+Brief: premium "Moroccan olive oil" look for the storefront and back office, with motion; FR + AR
+(RTL), light + dark; no change to business logic, API, routes, auth or existing i18n keys.
+
+**Done**
+
+- New package `@agricoop/ui` (TypeScript source, consumed by both Vite apps):
+  - Tokens (`theme.css`, Tailwind v4 `@theme`, OKLCH): brand scales olive / gold / terracotta / sand,
+    semantic tokens kept under the shadcn names (so existing screens restyle without code changes),
+    warm dark theme, layered warm shadows, radii 8–20px, fluid display scale (`text-display-sm…2xl`,
+    `clamp()`), easing tokens incl. a CSS `linear()` spring, brand utilities `zellige`, `grain`,
+    `arch`, `glass`, `hairline-gold`.
+  - Fonts, self-hosted with `font-display: swap`: Fraunces (display, optical sizing), Manrope (UI),
+    IBM Plex Sans Arabic + Noto Kufi Arabic (reached through the font stacks, so Arabic text switches
+    face automatically and the Arabic files load only when Arabic is rendered).
+  - `motion.ts`: durations, easings, springs, `fade`, `fadeUp`, `scaleIn`, RTL-aware
+    `slideInFromStart/End`, `stagger`, `wordReveal`, `revealViewport`, `inlineOffset()`.
+  - `ThemeProvider` (light / dark / system, remembered), `MotionProvider` (`reducedMotion="user"`),
+    `useDirection()`.
+  - Components: Button (gold variant, pill shape, 44px `lg`), Input, Textarea, Label, Card
+    (`interactive`), Badge (status dot, success/warning/info/gold/terracotta, striped `synthetic`),
+    Dialog (spring open), Sheet (logical sides), Table (sticky header, hairline rows), Skeleton
+    (shimmer), Tabs (sliding indicator), DropdownMenu (logical spacing), Switch (RTL), Toaster (brand,
+    follows theme and direction), BrandMark, Ornament, ZelligeBackdrop, ThemeToggle.
+  - Tests: theme persistence and resolution, RTL offsets, class merging, and WCAG AA for 20 token
+    pairs × 2 themes computed from `theme.css` (it caught a light focus ring at 2.8:1, fixed to ≥ 3:1).
+- Both apps now import their UI components from `@agricoop/ui` (local shadcn copies removed), load the
+  fonts, wrap the app in `ThemeProvider` + `MotionProvider`, and apply the saved theme before first
+  paint (`public/theme-init.js`, allowed by the CSP).
+- Language switcher (both apps): segmented pill with a sliding indicator; short endonyms (FR / ع) on
+  phones, full names kept as accessible labels.
+- Back office `/styleguide`: colours, scales, type scale, buttons, fields, badges, cards, tabs, table
+  with skeleton rows and row menu, dialog, sheets, dropdown, toasts, motion presets (replayable),
+  textures. Not in the navigation.
+- Visual review tooling: `pnpm --filter @agricoop/e2e screenshots` (Playwright) captures pages at
+  1440px and 390px, light and dark, FR and AR, and fails on horizontal overflow.
+
+**Tests:** all suites green (ui 45 incl. 40 contrast checks, plus the existing suites), Playwright
+e2e 3/3 against the redesigned UI with no selector change.
+
+**Not done yet (next phases):** page layouts themselves (header, hero, catalogue, cart drawer, QR
+page, dashboard shell, command palette, charts); Lenis, cmdk, vaul, Embla and NumberFlow are added
+when their components are built (phases 2–4).

@@ -4,7 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '@/cart/cart';
 import { EmptyState, Money, QuantityStepper } from '@/components/common';
-import { Button } from '@/components/ui/button';
+import { Button } from '@agricoop/ui';
 
 export const Route = createFileRoute('/panier')({
   component: CartPage,

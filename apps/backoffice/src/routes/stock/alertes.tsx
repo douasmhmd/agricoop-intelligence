@@ -19,8 +19,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from '@agricoop/ui';
 import { alerteTone } from '@/lib/tones';
 import { usePreferences } from '@/state/preferences';
 

@@ -21,7 +21,7 @@ import {
   PageHeader,
   useLocale,
 } from '@/components/common';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@agricoop/ui';
 import { usePreferences } from '@/state/preferences';
 
 export const Route = createFileRoute('/previsions')({

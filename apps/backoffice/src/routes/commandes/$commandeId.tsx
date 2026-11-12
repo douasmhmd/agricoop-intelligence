@@ -16,9 +16,12 @@ import {
   SyntheticBadge,
   useErrorMessage,
 } from '@/components/common';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Table,
   TableBody,
   TableCell,
@@ -26,7 +29,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@agricoop/ui';
 import { commandeTone } from '@/lib/tones';
 
 export const Route = createFileRoute('/commandes/$commandeId')({

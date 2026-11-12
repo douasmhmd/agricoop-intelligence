@@ -1,6 +1,12 @@
 {
-  "app": { "name": "AgriCoop Back-office" },
-  "language": { "label": "Langue", "fr": "Français", "ar": "العربية" },
+  "app": {
+    "name": "AgriCoop Back-office"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "ar": "العربية"
+  },
   "notFound": "Page introuvable",
   "nav": {
     "menu": "Menu",
@@ -32,7 +38,8 @@
     "previous": "Page précédente",
     "next": "Page suivante",
     "total_one": "{{count}} élément",
-    "total_other": "{{count}} éléments"
+    "total_other": "{{count}} éléments",
+    "close": "Fermer"
   },
   "synthetic": {
     "toggle": "Données synthétiques",
@@ -49,8 +56,15 @@
     "recentOrders": "Dernières commandes",
     "expiryAlerts": "Alertes de péremption"
   },
-  "famille": { "alimentaire": "Alimentaire", "cosmetique": "Cosmétique", "coffret": "Coffret" },
-  "niveauQr": { "lot": "Par lot", "unite": "Par unité" },
+  "famille": {
+    "alimentaire": "Alimentaire",
+    "cosmetique": "Cosmétique",
+    "coffret": "Coffret"
+  },
+  "niveauQr": {
+    "lot": "Par lot",
+    "unite": "Par unité"
+  },
   "produits": {
     "title": "Produits",
     "subtitle": "Catalogue de la coopérative, prix et marges",
@@ -74,8 +88,16 @@
     "confirmDelete": "Supprimer le produit {{code}} ?",
     "deleted": "Produit supprimé"
   },
-  "lotStatut": { "disponible": "Disponible", "epuise": "Épuisé", "perime": "Périmé" },
-  "mouvement": { "entree": "Entrée", "sortie": "Sortie", "perte": "Perte" },
+  "lotStatut": {
+    "disponible": "Disponible",
+    "epuise": "Épuisé",
+    "perime": "Périmé"
+  },
+  "mouvement": {
+    "entree": "Entrée",
+    "sortie": "Sortie",
+    "perte": "Perte"
+  },
   "lots": {
     "title": "Lots et stock",
     "subtitle": "Lots de production et stock calculé à partir des mouvements",
@@ -109,7 +131,12 @@
     "none": "Aucun lot concerné.",
     "niveauLabel": "Urgence",
     "joursRestants": "Jours restants",
-    "niveau": { "perime": "Périmé", "j30": "≤ 30 j", "j60": "≤ 60 j", "j90": "≤ 90 j" }
+    "niveau": {
+      "perime": "Périmé",
+      "j30": "≤ 30 j",
+      "j60": "≤ 60 j",
+      "j90": "≤ 90 j"
+    }
   },
   "statut": {
     "creee": "Créée",
@@ -118,8 +145,15 @@
     "livree": "Livrée",
     "annulee": "Annulée"
   },
-  "canal": { "web": "Boutique en ligne", "revendeur": "Revendeur", "direct": "Vente directe" },
-  "typeClient": { "particulier": "Particulier", "revendeur": "Revendeur" },
+  "canal": {
+    "web": "Boutique en ligne",
+    "revendeur": "Revendeur",
+    "direct": "Vente directe"
+  },
+  "typeClient": {
+    "particulier": "Particulier",
+    "revendeur": "Revendeur"
+  },
   "commandes": {
     "title": "Commandes",
     "subtitle": "Suivi et traitement des commandes",
@@ -147,7 +181,11 @@
       "annulee": "Annuler la commande"
     }
   },
-  "qrStatut": { "actif": "Actif", "desactive": "Désactivé", "signale": "Signalé" },
+  "qrStatut": {
+    "actif": "Actif",
+    "desactive": "Désactivé",
+    "signale": "Signalé"
+  },
   "qrAlerte": {
     "qr_inactif": "QR inactif",
     "lot_perime": "Lot périmé",
@@ -175,7 +213,11 @@
     "printLabels": "Imprimer les étiquettes QR",
     "labelsReady": "Planche d'étiquettes téléchargée",
     "confirmRegenerate": "Des QR codes ont déjà été émis pour ce lot. Les désactiver et en émettre de nouveaux ?",
-    "action": { "actif": "Réactiver", "desactive": "Désactiver", "signale": "Signaler" }
+    "action": {
+      "actif": "Réactiver",
+      "desactive": "Désactiver",
+      "signale": "Signaler"
+    }
   },
   "previsions": {
     "title": "Prévisions",
@@ -234,5 +276,73 @@
     "montant_incorrect": "Montant incorrect.",
     "signature_invalide": "Signature invalide.",
     "qr_inconnu": "QR code inconnu."
+  },
+  "theme": {
+    "group": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "styleguide": {
+    "title": "Système de design",
+    "subtitle": "Jetons, composants et mouvements partagés par la boutique et le back-office.",
+    "colors": "Couleurs",
+    "semantic": "Rôles",
+    "scales": "Gammes de la marque",
+    "typography": "Typographie",
+    "sampleHeadline": "L'or vert des collines du Rif",
+    "sampleBody": "Pressée à froid dans les 24 heures suivant la récolte, notre huile d'olive vierge extra garde toute la fraîcheur du fruit.",
+    "buttons": "Boutons",
+    "primary": "Principal",
+    "secondary": "Secondaire",
+    "outline": "Contour",
+    "ghost": "Discret",
+    "gold": "Or",
+    "danger": "Danger",
+    "link": "Lien",
+    "addToCart": "Ajouter au panier",
+    "fields": "Champs",
+    "fieldName": "Nom du produit",
+    "fieldPrice": "Prix (MAD)",
+    "fieldInvalid": "Le prix doit être supérieur à 0.",
+    "fieldNotes": "Notes",
+    "fieldDisabled": "Désactivé",
+    "switchLabel": "Produit actif",
+    "badges": "Badges",
+    "cards": "Cartes",
+    "cardInteractive": "Carte interactive",
+    "cardInteractiveHint": "Survolez-la : elle se soulève.",
+    "cardStatic": "Carte",
+    "cardStaticHint": "Surface claire, bordure fine, ombre douce.",
+    "tabs": "Onglets",
+    "table": "Tableau",
+    "skeleton": "Chargement",
+    "overlays": "Superpositions",
+    "openDialog": "Boîte de dialogue",
+    "dialogTitle": "Nouveau lot",
+    "dialogText": "Les boîtes de dialogue s'ouvrent avec un léger ressort et gardent le focus à l'intérieur.",
+    "openSheet": "Panneau latéral",
+    "openBottomSheet": "Panneau du bas",
+    "sheetTitle": "Votre panier",
+    "sheetText": "Le panneau glisse depuis le bord de fin : à droite en français, à gauche en arabe.",
+    "menu": "Menu",
+    "menuView": "Voir l'historique",
+    "menuFlag": "Signaler",
+    "menuDelete": "Supprimer",
+    "toasts": "Notifications",
+    "toastSuccess": "Commande expédiée",
+    "toastError": "Stock insuffisant",
+    "toastInfo": "Nouvelle prévision disponible",
+    "toastWarning": "3 lots périment sous 30 jours",
+    "motion": "Mouvement",
+    "motionHint": "Préréglages partagés (@agricoop/ui/motion). Avec « réduire les animations », seuls les fondus restent.",
+    "replay": "Rejouer",
+    "textures": "Motifs et matières",
+    "zellige": "Zellige",
+    "grain": "Grain",
+    "arch": "Arche",
+    "glass": "Verre dépoli",
+    "ornament": "Ornement",
+    "checkout": "Commander"
   }
 }

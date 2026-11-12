@@ -1,6 +1,12 @@
 {
-  "app": { "name": "أغريكوب - الإدارة" },
-  "language": { "label": "اللغة", "fr": "Français", "ar": "العربية" },
+  "app": {
+    "name": "أغريكوب - الإدارة"
+  },
+  "language": {
+    "label": "اللغة",
+    "fr": "Français",
+    "ar": "العربية"
+  },
   "notFound": "الصفحة غير موجودة",
   "nav": {
     "menu": "القائمة",
@@ -36,7 +42,8 @@
     "total_two": "عنصران",
     "total_few": "{{count}} عناصر",
     "total_many": "{{count}} عنصرًا",
-    "total_other": "{{count}} عنصر"
+    "total_other": "{{count}} عنصر",
+    "close": "إغلاق"
   },
   "synthetic": {
     "toggle": "البيانات الاصطناعية",
@@ -53,8 +60,15 @@
     "recentOrders": "آخر الطلبيات",
     "expiryAlerts": "تنبيهات انتهاء الصلاحية"
   },
-  "famille": { "alimentaire": "غذائي", "cosmetique": "تجميلي", "coffret": "علبة هدايا" },
-  "niveauQr": { "lot": "حسب الدفعة", "unite": "حسب الوحدة" },
+  "famille": {
+    "alimentaire": "غذائي",
+    "cosmetique": "تجميلي",
+    "coffret": "علبة هدايا"
+  },
+  "niveauQr": {
+    "lot": "حسب الدفعة",
+    "unite": "حسب الوحدة"
+  },
   "produits": {
     "title": "المنتجات",
     "subtitle": "كتالوج التعاونية والأسعار والهوامش",
@@ -78,8 +92,16 @@
     "confirmDelete": "حذف المنتج {{code}}؟",
     "deleted": "تم حذف المنتج"
   },
-  "lotStatut": { "disponible": "متوفر", "epuise": "نفد", "perime": "منتهي الصلاحية" },
-  "mouvement": { "entree": "إدخال", "sortie": "إخراج", "perte": "ضياع" },
+  "lotStatut": {
+    "disponible": "متوفر",
+    "epuise": "نفد",
+    "perime": "منتهي الصلاحية"
+  },
+  "mouvement": {
+    "entree": "إدخال",
+    "sortie": "إخراج",
+    "perte": "ضياع"
+  },
   "lots": {
     "title": "الدفعات والمخزون",
     "subtitle": "دفعات الإنتاج والمخزون المحسوب من الحركات",
@@ -113,7 +135,12 @@
     "none": "لا توجد دفعات معنية.",
     "niveauLabel": "الاستعجال",
     "joursRestants": "الأيام المتبقية",
-    "niveau": { "perime": "منتهي", "j30": "≤ 30 يومًا", "j60": "≤ 60 يومًا", "j90": "≤ 90 يومًا" }
+    "niveau": {
+      "perime": "منتهي",
+      "j30": "≤ 30 يومًا",
+      "j60": "≤ 60 يومًا",
+      "j90": "≤ 90 يومًا"
+    }
   },
   "statut": {
     "creee": "منشأة",
@@ -122,8 +149,15 @@
     "livree": "مسلّمة",
     "annulee": "ملغاة"
   },
-  "canal": { "web": "المتجر الإلكتروني", "revendeur": "موزّع", "direct": "بيع مباشر" },
-  "typeClient": { "particulier": "زبون فردي", "revendeur": "موزّع" },
+  "canal": {
+    "web": "المتجر الإلكتروني",
+    "revendeur": "موزّع",
+    "direct": "بيع مباشر"
+  },
+  "typeClient": {
+    "particulier": "زبون فردي",
+    "revendeur": "موزّع"
+  },
   "commandes": {
     "title": "الطلبيات",
     "subtitle": "تتبع الطلبيات ومعالجتها",
@@ -151,7 +185,11 @@
       "annulee": "إلغاء الطلبية"
     }
   },
-  "qrStatut": { "actif": "نشط", "desactive": "معطّل", "signale": "مُبلّغ عنه" },
+  "qrStatut": {
+    "actif": "نشط",
+    "desactive": "معطّل",
+    "signale": "مُبلّغ عنه"
+  },
   "qrAlerte": {
     "qr_inactif": "رمز غير نشط",
     "lot_perime": "دفعة منتهية",
@@ -179,7 +217,11 @@
     "printLabels": "طباعة ملصقات QR",
     "labelsReady": "تم تنزيل لوحة الملصقات",
     "confirmRegenerate": "سبق إصدار رموز QR لهذه الدفعة. تعطيلها وإصدار رموز جديدة؟",
-    "action": { "actif": "إعادة التفعيل", "desactive": "تعطيل", "signale": "الإبلاغ" }
+    "action": {
+      "actif": "إعادة التفعيل",
+      "desactive": "تعطيل",
+      "signale": "الإبلاغ"
+    }
   },
   "previsions": {
     "title": "التوقعات",
@@ -238,5 +280,73 @@
     "montant_incorrect": "المبلغ غير صحيح.",
     "signature_invalide": "توقيع غير صالح.",
     "qr_inconnu": "رمز QR غير معروف."
+  },
+  "theme": {
+    "group": "المظهر",
+    "light": "فاتح",
+    "dark": "داكن",
+    "system": "النظام"
+  },
+  "styleguide": {
+    "title": "نظام التصميم",
+    "subtitle": "الرموز والمكونات والحركات المشتركة بين المتجر ولوحة الإدارة.",
+    "colors": "الألوان",
+    "semantic": "الأدوار",
+    "scales": "تدرجات العلامة",
+    "typography": "الطباعة",
+    "sampleHeadline": "الذهب الأخضر لتلال الريف",
+    "sampleBody": "يُعصر على البارد خلال 24 ساعة من القطف، فيحتفظ زيت الزيتون البكر الممتاز بكل نضارة الثمرة.",
+    "buttons": "الأزرار",
+    "primary": "رئيسي",
+    "secondary": "ثانوي",
+    "outline": "محدد",
+    "ghost": "خفي",
+    "gold": "ذهبي",
+    "danger": "خطر",
+    "link": "رابط",
+    "addToCart": "أضف إلى السلة",
+    "fields": "الحقول",
+    "fieldName": "اسم المنتج",
+    "fieldPrice": "السعر (درهم)",
+    "fieldInvalid": "يجب أن يكون السعر أكبر من 0.",
+    "fieldNotes": "ملاحظات",
+    "fieldDisabled": "معطّل",
+    "switchLabel": "منتج نشط",
+    "badges": "الشارات",
+    "cards": "البطاقات",
+    "cardInteractive": "بطاقة تفاعلية",
+    "cardInteractiveHint": "مرّر المؤشر فوقها: ترتفع قليلاً.",
+    "cardStatic": "بطاقة",
+    "cardStaticHint": "سطح فاتح وحدود رفيعة وظل ناعم.",
+    "tabs": "علامات التبويب",
+    "table": "الجدول",
+    "skeleton": "التحميل",
+    "overlays": "الطبقات المنبثقة",
+    "openDialog": "نافذة حوار",
+    "dialogTitle": "دفعة جديدة",
+    "dialogText": "تُفتح نوافذ الحوار بحركة نابضية خفيفة وتُبقي التركيز بداخلها.",
+    "openSheet": "لوحة جانبية",
+    "openBottomSheet": "لوحة سفلية",
+    "sheetTitle": "سلتك",
+    "sheetText": "تنزلق اللوحة من حافة النهاية: من اليمين بالفرنسية ومن اليسار بالعربية.",
+    "menu": "القائمة",
+    "menuView": "عرض السجل",
+    "menuFlag": "إبلاغ",
+    "menuDelete": "حذف",
+    "toasts": "الإشعارات",
+    "toastSuccess": "تم شحن الطلب",
+    "toastError": "المخزون غير كافٍ",
+    "toastInfo": "توقع جديد متاح",
+    "toastWarning": "3 دفعات تنتهي صلاحيتها خلال 30 يومًا",
+    "motion": "الحركة",
+    "motionHint": "إعدادات مشتركة (@agricoop/ui/motion). عند تفعيل «تقليل الحركة» يبقى التلاشي فقط.",
+    "replay": "إعادة التشغيل",
+    "textures": "الزخارف والخامات",
+    "zellige": "زليج",
+    "grain": "حُبيبات",
+    "arch": "قوس",
+    "glass": "زجاج مصنفر",
+    "ornament": "زخرفة",
+    "checkout": "إتمام الطلب"
   }
 }

@@ -16,14 +16,7 @@ import {
   StatusBadge,
   SyntheticBadge,
 } from '@/components/common';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@agricoop/ui';
 import { commandeTone } from '@/lib/tones';
 import { usePreferences } from '@/state/preferences';
 

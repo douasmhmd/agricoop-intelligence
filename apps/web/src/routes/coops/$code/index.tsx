@@ -8,8 +8,7 @@ import { useStorefrontCatalogue, useStorefrontGet } from '@/api/generated/storef
 import { ok } from '@/api/ok';
 import { useCart } from '@/cart/cart';
 import { EmptyState, ErrorAlert, Loading, Money, QuantityStepper } from '@/components/common';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge, Button } from '@agricoop/ui';
 
 export const Route = createFileRoute('/coops/$code/')({
   component: CataloguePage,

@@ -1,4 +1,5 @@
 import './i18n';
+import '@agricoop/ui/fonts';
 import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
@@ -9,7 +10,7 @@ import { AuthProvider, type AuthProviderProps, useAuth } from 'react-oidc-contex
 import { ApiError, setAccessTokenProvider } from './api/fetcher';
 import { safeReturnPath } from './auth/return-path';
 import { CartProvider } from './cart/cart';
-import { Toaster } from './components/ui/sonner';
+import { MotionProvider, ThemeProvider, Toaster } from '@agricoop/ui';
 import { config } from './config';
 import { routeTree } from './routeTree.gen';
 
@@ -62,15 +63,19 @@ if (!rootElement) throw new Error('#root element missing from index.html');
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AuthProvider {...oidc}>
-      <QueryClientProvider client={queryClient}>
-        <CartProvider>
-          <ApiBridge />
-          <RouterProvider router={router} />
-          {/* Bottom on phones: a top toast would cover the header (cart, account). */}
-          <Toaster position="bottom-center" richColors />
-        </CartProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <MotionProvider>
+        <AuthProvider {...oidc}>
+          <QueryClientProvider client={queryClient}>
+            <CartProvider>
+              <ApiBridge />
+              <RouterProvider router={router} />
+              {/* Bottom on phones: a top toast would cover the header (cart, account). */}
+              <Toaster position="bottom-center" richColors />
+            </CartProvider>
+          </QueryClientProvider>
+        </AuthProvider>
+      </MotionProvider>
+    </ThemeProvider>
   </StrictMode>,
 );

@@ -13,9 +13,7 @@ import { ok } from '@/api/ok';
 import { RequireAuth } from '@/auth/RequireAuth';
 import { useCart } from '@/cart/cart';
 import { EmptyState, ErrorAlert, Field, Money } from '@/components/common';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Button, Input, Textarea } from '@agricoop/ui';
 
 export const Route = createFileRoute('/coops/$code/commander')({
   component: () => (

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
 import { useCart } from '@/cart/cart';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { Button } from '@/components/ui/button';
+import { Button } from '@agricoop/ui';
 
 export function SiteHeader() {
   const { t } = useTranslation();

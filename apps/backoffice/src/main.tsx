@@ -1,4 +1,5 @@
 import './i18n';
+import '@agricoop/ui/fonts';
 import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
@@ -9,7 +10,7 @@ import { AuthProvider, type AuthProviderProps, useAuth } from 'react-oidc-contex
 import { ApiError, setAccessTokenProvider, setCoopHeaderProvider } from './api/fetcher';
 import { safeReturnPath } from './auth/return-path';
 import { useSession } from './auth/session';
-import { Toaster } from './components/ui/sonner';
+import { MotionProvider, ThemeProvider, Toaster } from '@agricoop/ui';
 import { config } from './config';
 import { routeTree } from './routeTree.gen';
 import { PreferencesProvider, usePreferences } from './state/preferences';
@@ -73,14 +74,18 @@ if (!rootElement) throw new Error('#root element missing from index.html');
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AuthProvider {...oidc}>
-      <PreferencesProvider>
-        <QueryClientProvider client={queryClient}>
-          <ApiBridge />
-          <RouterProvider router={router} />
-          <Toaster position="top-center" richColors />
-        </QueryClientProvider>
-      </PreferencesProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <MotionProvider>
+        <AuthProvider {...oidc}>
+          <PreferencesProvider>
+            <QueryClientProvider client={queryClient}>
+              <ApiBridge />
+              <RouterProvider router={router} />
+              <Toaster position="top-center" richColors />
+            </QueryClientProvider>
+          </PreferencesProvider>
+        </AuthProvider>
+      </MotionProvider>
+    </ThemeProvider>
   </StrictMode>,
 );

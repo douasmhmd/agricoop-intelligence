@@ -12,8 +12,7 @@ import {
 import { ok } from '@/api/ok';
 import { RequireAuth } from '@/auth/RequireAuth';
 import { DateText, ErrorAlert, Loading, Money, useErrorMessage } from '@/components/common';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge, Button } from '@agricoop/ui';
 
 export const Route = createFileRoute('/coops/$code/commandes/$commandeId')({
   // ?paiement=ok|refuse when coming back from the payment page.

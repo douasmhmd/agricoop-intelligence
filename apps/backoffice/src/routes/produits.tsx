@@ -32,24 +32,22 @@ import {
   SyntheticBadge,
   useErrorMessage,
 } from '@/components/common';
-import { Button } from '@/components/ui/button';
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import {
+  Input,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@agricoop/ui';
 import { usePreferences } from '@/state/preferences';
 
 export const Route = createFileRoute('/produits')({

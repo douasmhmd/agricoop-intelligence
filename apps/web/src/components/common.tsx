@@ -3,7 +3,7 @@ import { AlertTriangle, Inbox, Loader2, Minus, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/api/fetcher';
-import { Button } from '@/components/ui/button';
+import { Button } from '@agricoop/ui';
 
 export function useLocale(): 'fr' | 'ar' {
   const { i18n } = useTranslation();

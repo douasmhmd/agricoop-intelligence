@@ -12,15 +12,18 @@ import {
   StatusBadge,
   SyntheticBadge,
 } from '@/components/common';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@agricoop/ui';
 import { alerteTone, commandeTone } from '@/lib/tones';
 import { usePreferences } from '@/state/preferences';
 

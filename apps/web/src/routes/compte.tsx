@@ -7,8 +7,7 @@ import { useStorefrontList } from '@/api/generated/storefront/storefront';
 import { ok } from '@/api/ok';
 import { RequireAuth } from '@/auth/RequireAuth';
 import { DateText, Loading, Money } from '@/components/common';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge, Button } from '@agricoop/ui';
 
 export const Route = createFileRoute('/compte')({
   component: () => (

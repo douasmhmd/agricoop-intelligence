@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
 import { Loading } from '@/components/common';
-import { Button } from '@/components/ui/button';
+import { Button } from '@agricoop/ui';
 
 /** Customer pages (checkout, account, orders): sign in first, then come back to the same page. */
 export function RequireAuth({ children }: { children: ReactNode }) {

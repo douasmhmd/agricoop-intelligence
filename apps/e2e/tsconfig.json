@@ -3,7 +3,9 @@
   "compilerOptions": {
     // Playwright compiles the tests itself and resolves extensionless imports, like a bundler.
     "module": "esnext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    // page.evaluate() callbacks run in the browser.
+    "lib": ["es2023", "dom", "dom.iterable"]
   },
-  "include": ["tests", "*.config.ts"]
+  "include": ["tests", "visual", "*.config.ts"]
 }
