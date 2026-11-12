@@ -4,7 +4,7 @@
 -- Fichier : data/bi/02_gold_stocks.sql   (nécessite 01_gold_ventes.sql)
 -- Le fichier peut être rejoué : chaque objet est recréé.
 -- =============================================================================
-drop view if exists gold.v_risque_invendus, gold.v_stock_produit, gold.v_stock_lot;
+drop view if exists gold.v_anomalies_stock, gold.v_risque_invendus, gold.v_stock_produit, gold.v_stock_lot;
 
 -- Stock de chaque lot à la date de référence, et délai avant péremption
 create view gold.v_stock_lot as
@@ -25,7 +25,9 @@ select l.coop_id,
 from lot l
 join produit p on p.produit_id = l.produit_id
 join gold.v_date_reference r on r.coop_id = l.coop_id
-left join mouvement_stock m on m.lot_id = l.lot_id
+-- borne temporelle : seuls les mouvements antérieurs à la date d'analyse sont comptés
+left join mouvement_stock m on m.lot_id = l.lot_id and m.date_mouvement::date < r.date_reference
+where l.date_fabrication < r.date_reference
 group by l.coop_id, p.code, p.famille, l.lot_id, l.numero, l.date_fabrication,
          l.date_peremption, l.quantite_initiale, r.date_reference;
 
@@ -35,17 +37,17 @@ with ventes_28j as (
     select v.coop_id, v.produit, sum(v.quantite) as ventes_28j
     from gold.v_ventes_jour v
     join gold.v_date_reference r on r.coop_id = v.coop_id
-    where v.jour > r.date_reference - 28
+    where v.jour >= r.date_reference - 28 and v.jour < r.date_reference   -- 28 jours, bornés des deux côtés
     group by v.coop_id, v.produit
 )
 select s.coop_id,
        s.produit,
        s.famille,
-       coalesce(sum(s.stock_actuel) filter (where s.statut <> 'périmé'), 0) as stock_disponible,
+       coalesce(sum(greatest(s.stock_actuel, 0)) filter (where s.statut <> 'périmé'), 0) as stock_disponible,
        count(*) filter (where s.statut <> 'périmé' and s.stock_actuel > 0)  as lots_actifs,
        coalesce(v.ventes_28j, 0)                                            as ventes_28j,
        round(coalesce(v.ventes_28j, 0) / 28.0, 2)                           as vente_moy_jour,
-       round(sum(s.stock_actuel) filter (where s.statut <> 'périmé')
+       round(sum(greatest(s.stock_actuel, 0)) filter (where s.statut <> 'périmé')
              / nullif(coalesce(v.ventes_28j, 0) / 28.0, 0))                 as couverture_jours
 from gold.v_stock_lot s
 left join ventes_28j v on v.coop_id = s.coop_id and v.produit = s.produit
@@ -54,7 +56,9 @@ group by s.coop_id, s.produit, s.famille, v.ventes_28j;
 -- Risque d'invendus à une date donnée (logique « premier périmé, premier sorti ») :
 -- unités d'un lot qui risquent de périmer = stock cumulé jusqu'à ce lot
 --                                         − demande attendue avant sa péremption
--- La demande attendue est le rythme de vente des 28 jours précédant la date.
+-- ATTENTION : c'est une ESTIMATION, pas une prédiction ML. La demande attendue est le
+-- rythme de vente des 28 jours précédant la date, supposé constant (pas de saisonnalité).
+-- Les lots en stock négatif (anomalies) sont exclus : voir gold.v_anomalies_stock.
 create or replace function gold.f_risque_invendus(p_date date)
 returns table (coop_id uuid, produit text, famille text, lot text, date_peremption date,
                jours_avant_peremption integer, stock_actuel bigint, vente_moy_jour numeric,
@@ -99,7 +103,7 @@ $$;
 create view gold.v_risque_invendus as
 select f.*
 from gold.v_date_reference r
-cross join lateral gold.f_risque_invendus(r.date_reference) f
+cross join lateral gold.f_risque_invendus(r.date_reference - 1) f   -- fin du dernier jour d'activité
 where f.coop_id = r.coop_id;
 
 -- Pertes à la péremption, par mois et par produit
@@ -115,3 +119,13 @@ join lot l using (lot_id)
 join produit p on p.produit_id = l.produit_id
 where m.type_mouvement = 'perte'
 group by 1, 2, 3, 4;
+
+-- Contrôle qualité : anomalies de stock à corriger, jamais masquées.
+-- Règle métier : un stock négatif ou supérieur à la quantité produite est une erreur
+-- de saisie. Il est ramené à 0 dans le stock disponible, et signalé ici au gestionnaire.
+create view gold.v_anomalies_stock as
+select coop_id, produit, lot, date_fabrication, quantite_initiale, stock_actuel,
+       case when stock_actuel < 0 then 'stock négatif'
+            else 'stock supérieur à la quantité produite' end as anomalie
+from gold.v_stock_lot
+where stock_actuel < 0 or stock_actuel > quantite_initiale;
