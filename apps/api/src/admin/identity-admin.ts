@@ -110,6 +110,7 @@ export class KeycloakIdentityAdmin implements IdentityAdmin {
     if (!group.ok) throw identityUnavailable();
     const groupId = KeycloakIdentityAdmin.createdId(group);
 
+    let userId: string | undefined;
     try {
       const user = await this.call(token, 'POST', '/users', {
         username: input.manager.email,
@@ -123,13 +124,21 @@ export class KeycloakIdentityAdmin implements IdentityAdmin {
       });
       if (user.status === 409) throw managerExists();
       if (!user.ok) throw identityUnavailable();
-      const userId = KeycloakIdentityAdmin.createdId(user);
+      userId = KeycloakIdentityAdmin.createdId(user);
 
-      const role = await this.call(token, 'GET', '/roles/coop_manager');
-      if (!role.ok) throw identityUnavailable();
-      const mapped = await this.call(token, 'POST', `/users/${userId}/role-mappings/realm`, [
-        await role.json(),
-      ]);
+      // The user-scoped "available roles" listing only needs manage-users (GET /roles/{name} would
+      // need view-realm, which the provisioner deliberately does not have).
+      const available = await this.call(
+        token,
+        'GET',
+        `/users/${userId}/role-mappings/realm/available`,
+      );
+      if (!available.ok) throw identityUnavailable();
+      const role = ((await available.json()) as { id: string; name: string }[]).find(
+        (r) => r.name === 'coop_manager',
+      );
+      if (!role) throw identityUnavailable();
+      const mapped = await this.call(token, 'POST', `/users/${userId}/role-mappings/realm`, [role]);
       if (!mapped.ok) throw identityUnavailable();
 
       // Invitation e-mail (Mailpit locally). A failure here must not undo the tenant: the admin can
@@ -141,6 +150,8 @@ export class KeycloakIdentityAdmin implements IdentityAdmin {
 
       return { groupId, userId };
     } catch (error) {
+      // Undo everything created so far: no orphan account, no orphan group.
+      if (userId) await this.call(token, 'DELETE', `/users/${userId}`).catch(() => undefined);
       await this.call(token, 'DELETE', `/groups/${groupId}`).catch(() => undefined);
       throw error;
     }

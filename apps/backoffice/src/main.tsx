@@ -7,6 +7,7 @@ import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AuthProvider, type AuthProviderProps, useAuth } from 'react-oidc-context';
 import { ApiError, setAccessTokenProvider, setCoopHeaderProvider } from './api/fetcher';
+import { safeReturnPath } from './auth/return-path';
 import { useSession } from './auth/session';
 import { Toaster } from './components/ui/sonner';
 import { config } from './config';
@@ -45,8 +46,11 @@ const oidc: AuthProviderProps = {
   automaticSilentRenew: true,
   // Tokens live in sessionStorage (not localStorage): gone when the tab closes.
   userStore: new WebStorageStateStore({ store: window.sessionStorage }),
-  onSigninCallback: () => {
-    window.history.replaceState({}, document.title, window.location.pathname);
+  // Back to the page the user asked for (kept in the OIDC state), never to another origin.
+  onSigninCallback: (user) => {
+    router.history.replace(
+      safeReturnPath((user?.state as { returnTo?: unknown } | undefined)?.returnTo),
+    );
   },
 };
 

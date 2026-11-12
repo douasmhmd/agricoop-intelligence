@@ -17,13 +17,13 @@ server {
         return 200 "ok\n";
     }
 
-    location /api/ {
+    location /api/v1/ {
         proxy_pass ${API_UPSTREAM};
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    location /qr/ {
+    location /qr/v1/ {
         proxy_pass ${QR_UPSTREAM};
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;

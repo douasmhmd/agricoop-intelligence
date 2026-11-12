@@ -303,3 +303,70 @@ accents, serial numbers).
 - Label text is French only: built-in PDF fonts cannot render Arabic (needs an embedded font).
 - Lot-level codes use a count threshold relative to lot size and no city rule, because many buyers
   legitimately scan the same lot code.
+
+## Phase 7 — Back-office UI (2026-11-12)
+
+**Done**
+
+- **API additions**
+  - `GET /previsions/versions`, `GET /previsions?version_modele&depuis&jusqua&synthetic` (`coop_manager`):
+    weekly forecasts per famille from the analytics write-back next to actual weekly sales (non-cancelled
+    order lines), latest model version by default.
+  - `GET/POST /admin/cooperatives` (`saas_admin`, no tenant): creates the tenant row and, in the same
+    transaction, its Keycloak group `/coops/<CODE>` (`tenant_id` = coop_id) and first `coop_manager`
+    account through the `IdentityAdmin` port (Keycloak Admin API, in-memory double in tests); invitation
+    e-mail (set password + verify e-mail). Identity failure → nothing created (DB rollback + Keycloak
+    cleanup of user and group). 409 `coop_code_existe` / `gestionnaire_existe`, 502 `idp_indisponible`.
+- **Back office (`apps/backoffice`)**: React 19 + TanStack Router/Query + Orval hooks + shadcn/ui +
+  React Hook Form/Zod (same schemas as the API) + Recharts.
+  - Keycloak sign-in (PKCE, tokens in sessionStorage, silent renew, return to the requested page);
+    access limited to `coop_manager` / `saas_admin`.
+  - Header: coop switcher for `saas_admin` (sent as `X-Coop-Id`, cache dropped on switch), global
+    synthetic-data toggle (default on, remembered; rows carry a "Synthétique" badge), FR / AR.
+  - Pages: dashboard (to ship, to pay, expired, expiring ≤ 30 d, recent orders, alerts); products (CRUD,
+    margins, active switch, delete with translated 409s); lots (status tabs, pagination, creation with
+    default-expiry hint) and lot detail (movements, loss entry, **QR label PDF download** with
+    regenerate confirmation); expiry alerts 30 / 60 / 90; orders (filters, detail with lines, delivery
+    details, allowed status actions); QR codes (alerts, deactivate / flag / reactivate, scan history,
+    scans per city bar chart); forecasts (Recharts, forecast vs sales per famille, model version
+    selector, sales-only notice); platform admin (coops list, create coop + manager).
+  - i18n: ~170 keys FR + AR (Arabic plurals), Zod's built-in messages follow the UI language, API
+    problems translated by `code`; charts stay LTR inside RTL pages.
+
+**Bugs found by testing in the browser and against the real Keycloak (all fixed)**
+
+- `positiveMoneyString` crashed on malformed input (Zod 4 runs refinements after a failed regex;
+  decimal.js threw) — the API would have answered 500 instead of 400. Regression test added.
+- Arabic layout: the sidebar slid off-screen on desktop (`rtl:translate-x-full` beat `lg:translate-x-0`).
+- Reloading `/qr` hit the QR service: the dev proxy (and the nginx template) matched `/qr*`. Proxies now
+  forward only `/api/v1/` and `/qr/v1/`.
+- Deep links were lost after sign-in (always redirected to `/`).
+- Keycloak 26.8 Admin API rejected the provisioner's tokens (401, missing admin-API audience): the realm
+  export now gives `agricoop-provisioner` the built-in `kc-admin-api` client scope.
+- Role lookup `GET /roles/coop_manager` needs `view-realm` (403): replaced by the user-scoped
+  available-roles endpoint; and a failure after user creation left an orphan account — compensation now
+  deletes the user too.
+- The shadcn CLI generated `import { cn } from "cn"` (an unrelated npm package) and added `next-themes`:
+  both removed.
+- **Data-plane note:** the Postgres 16 image's tzdata puts Africa/Casablanca at UTC+0 in November (it is
+  UTC+1 outside Ramadan). Weekly sales are bucketed in TypeScript instead; any SQL in the data plane that
+  converts to `Africa/Casablanca` in this database is one hour off.
+
+**Tests:** API `test/previsions-admin.int.test.ts` (6 cases × {without RLS, with RLS}: versions per tenant,
+Morocco-week alignment incl. a Sunday-23:30-UTC order, cancelled orders excluded, version selection,
+synthetic exclusion, admin-only access, provisioning with the new coop_id, duplicate code / manager,
+identity failure rollback). Back office: 15 unit tests (translations complete in FR and AR, problem codes
+translated in both languages, synthetic preference, `X-Coop-Id` only when chosen, `ok()`, safe return
+path). Lint, typecheck and all test suites green.
+
+**Verified manually**
+
+- Real sign-in through Keycloak as `manager.coop02`, dashboard and pages with live data, Arabic RTL layout
+  (sidebar on the right), deep link `/qr` preserved through sign-in.
+- Platform admin against the real Keycloak: COOP03 created, group `/coops/COOP03` carries the new
+  coop_id, manager in the group with `coop_manager` and the set-password / verify-email actions,
+  duplicate manager e-mail → 409 with no leftovers, invitation e-mail received in Mailpit.
+  (COOP03 and its manager now exist in the local dev database / Keycloak.)
+
+**Not covered yet:** Playwright end-to-end tests (phase 9). Custom validation messages written in the
+shared Zod schemas stay in French in the Arabic UI.

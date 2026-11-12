@@ -59,8 +59,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh">
       <aside
         className={cn(
-          'fixed inset-y-0 start-0 z-30 w-64 border-e bg-card p-4 transition-transform lg:static lg:translate-x-0',
-          open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
+          'fixed inset-y-0 start-0 z-30 w-64 border-e bg-card p-4 transition-transform lg:static',
+          // Off-canvas drawer below lg only (an unscoped rtl: offset would beat lg:translate-x-0).
+          open ? 'translate-x-0' : 'max-lg:-translate-x-full max-lg:rtl:translate-x-full',
         )}
       >
         <div className="mb-6 px-2 text-lg font-semibold text-primary">{t('app.name')}</div>

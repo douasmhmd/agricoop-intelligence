@@ -13,8 +13,9 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     proxy: {
-      '/api': process.env.API_URL ?? 'http://localhost:3000',
-      '/qr': process.env.QR_URL ?? 'http://localhost:3001',
+      // Versioned API prefixes only: app routes such as /qr must stay with the SPA.
+      '/api/v1/': process.env.API_URL ?? 'http://localhost:3000',
+      '/qr/v1/': process.env.QR_URL ?? 'http://localhost:3001',
     },
   },
   preview: { port: 5174 },

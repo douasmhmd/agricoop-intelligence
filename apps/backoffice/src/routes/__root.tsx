@@ -17,6 +17,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   notFoundComponent: NotFound,
 });
 
+const currentPath = () => `${window.location.pathname}${window.location.search}`;
+
 /** The whole back office requires a signed-in coop_manager or saas_admin. */
 function Root() {
   const auth = useAuth();
@@ -31,7 +33,7 @@ function Root() {
       !auth.isLoading &&
       !auth.error
     ) {
-      void auth.signinRedirect();
+      void auth.signinRedirect({ state: { returnTo: currentPath() } });
     }
   }, [auth]);
 
@@ -41,7 +43,11 @@ function Root() {
         {auth.error ? (
           <div className="grid gap-3 text-center">
             <p>{t('auth.error')}</p>
-            <Button onClick={() => void auth.signinRedirect()}>{t('auth.signIn')}</Button>
+            <Button
+              onClick={() => void auth.signinRedirect({ state: { returnTo: currentPath() } })}
+            >
+              {t('auth.signIn')}
+            </Button>
           </div>
         ) : (
           <>

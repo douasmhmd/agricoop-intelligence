@@ -169,6 +169,29 @@ generate` regenerates the TS types.
   device class, never the IP. Anomaly rules live in `apps/qr/src/qr/anomaly.ts` (city rule for
   unit-level codes only).
 - Unique violations: catch and map with `isUniqueViolation(error, '<constraint>')` → `Problems.conflict`.
+- **Time zones in SQL:** never bucket by `AT TIME ZONE 'Africa/Casablanca'` in Postgres — the image's
+  tzdata is stale (UTC+0 instead of UTC+1 outside Ramadan). Aggregate per UTC hour/day in SQL and map
+  to Moroccan dates in TypeScript (`isoDateInZone`, `mondayOf`), like `PrevisionsService`.
+- **Keycloak Admin API** (`IdentityAdmin`): the `agricoop-provisioner` client needs the built-in
+  `kc-admin-api` client scope (Keycloak 26.8 checks the admin-API audience) and only has
+  manage/view/query-users + query-groups — use user-scoped endpoints (e.g.
+  `/users/{id}/role-mappings/realm/available`), not `/roles/{name}` (needs view-realm). On any failure,
+  delete what was created (user, then group).
+
+## Back office (apps/backoffice)
+
+- shadcn/ui components live in `src/components/ui` (generated; `cn` comes from `@/lib/utils` — the
+  shadcn CLI once wrote `from "cn"`, an unrelated npm package: check imports after `shadcn add`).
+- Data: Orval hooks + `ok(query.data)` (narrows the generated status unions to the 2xx data). Lists
+  pass `synthetic` from `usePreferences()`; rows show `<SyntheticBadge>`.
+- `saas_admin` acts on the coop chosen in the header (`X-Coop-Id` via `setCoopHeaderProvider`).
+- Errors: `useErrorMessage()` / `<ErrorAlert>` translate the API problem `code` (`errors.<code>` keys).
+- Every visible string goes through i18next (`fr.json` / `ar.json`); a test fails on missing keys.
+  Layout uses logical utilities only; offsets that must not apply on desktop use `max-lg:` (an
+  unscoped `rtl:` variant beats `lg:`).
+- Dev proxies and nginx forward only `/api/v1/` and `/qr/v1/`: app routes like `/qr` stay with the SPA.
+- After sign-in the user returns to the page they asked for (`returnTo` in the OIDC state, validated
+  by `safeReturnPath`).
 
 ## Local dev
 

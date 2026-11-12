@@ -4,6 +4,7 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, apiFetch, setCoopHeaderProvider } from '@/api/fetcher';
 import { ok } from '@/api/ok';
+import { safeReturnPath } from '@/auth/return-path';
 import { ErrorAlert } from '@/components/common';
 import { setLanguage } from '@/i18n';
 import ar from '@/i18n/locales/ar.json';
@@ -115,5 +116,20 @@ describe('ok()', () => {
     expect(ok({ status: 200, data: [1] })).toEqual([1]);
     expect(ok({ status: 404, data: { title: 'x' } })).toBeUndefined();
     expect(ok(undefined)).toBeUndefined();
+  });
+});
+
+describe('safeReturnPath', () => {
+  it('keeps same-origin paths and rejects anything that could leave the app', () => {
+    expect(safeReturnPath('/lots/abc?x=1')).toBe('/lots/abc?x=1');
+    for (const bad of [
+      '//evil.example',
+      '/\\evil.example',
+      'https://evil.example',
+      undefined,
+      42,
+    ]) {
+      expect(safeReturnPath(bad)).toBe('/');
+    }
   });
 });

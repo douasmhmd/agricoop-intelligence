@@ -23,8 +23,14 @@
   },
   "roles": {
     "realm": [
-      { "name": "customer", "description": "Storefront customer (particulier)" },
-      { "name": "reseller", "description": "Storefront reseller (revendeur)" },
+      {
+        "name": "customer",
+        "description": "Storefront customer (particulier)"
+      },
+      {
+        "name": "reseller",
+        "description": "Storefront reseller (revendeur)"
+      },
       {
         "name": "coop_manager",
         "description": "Cooperative manager: back office of their own cooperative"
@@ -33,17 +39,25 @@
         "name": "saas_admin",
         "description": "Platform administrator: tenants; may act on a tenant via X-Coop-Id (audited)"
       },
-      { "name": "offline_access" },
-      { "name": "uma_authorization" },
+      {
+        "name": "offline_access"
+      },
+      {
+        "name": "uma_authorization"
+      },
       {
         "name": "default-roles-agricoop",
         "description": "Roles granted to every new user (self-registration = customer)",
         "composite": true,
-        "composites": { "realm": ["customer", "offline_access", "uma_authorization"] }
+        "composites": {
+          "realm": ["customer", "offline_access", "uma_authorization"]
+        }
       }
     ]
   },
-  "defaultRole": { "name": "default-roles-agricoop" },
+  "defaultRole": {
+    "name": "default-roles-agricoop"
+  },
   "groups": [
     {
       "name": "coops",
@@ -213,7 +227,16 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
-      "secret": "${KC_PROVISIONER_SECRET:dev-only-provisioner-secret}"
+      "secret": "${KC_PROVISIONER_SECRET:dev-only-provisioner-secret}",
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "kc-admin-api",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ]
     }
   ],
   "users": [
