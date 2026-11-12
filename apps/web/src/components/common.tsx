@@ -1,9 +1,9 @@
 import { formatMad } from '@agricoop/shared';
-import { AlertTriangle, Inbox, Loader2, Minus, Plus } from 'lucide-react';
+import { AlertTriangle, Inbox, Minus, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/api/fetcher';
-import { Button } from '@agricoop/ui';
+import { BrandMark, Button, cn, ZelligeBackdrop } from '@agricoop/ui';
 
 export function useLocale(): 'fr' | 'ar' {
   const { i18n } = useTranslation();
@@ -48,24 +48,42 @@ export function Loading() {
   const { t } = useTranslation();
   return (
     <div
-      className="flex items-center justify-center gap-2 py-12 text-muted-foreground"
+      className="flex flex-col items-center justify-center gap-3 py-16 text-sm text-muted-foreground"
       role="status"
     >
-      <Loader2 className="size-5 animate-spin" /> {t('common.loading')}
+      {/* Olive sprig breathing (static with reduced motion). */}
+      <BrandMark className="size-9 animate-pulse text-primary motion-reduce:animate-none" />
+      {t('common.loading')}
     </div>
   );
 }
 
-export function EmptyState({ children }: { children: ReactNode }) {
+/** Empty / not-found states: a zellige medallion, an icon and a friendly message. */
+export function EmptyState({
+  children,
+  icon,
+  className,
+}: {
+  children: ReactNode;
+  icon?: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-12 text-center text-muted-foreground">
-      <Inbox className="size-7" />
+    <div
+      className={cn(
+        'relative isolate flex flex-col items-center gap-3 overflow-hidden rounded-2xl border border-dashed border-border bg-card/50 px-6 py-14 text-center text-muted-foreground',
+        className,
+      )}
+    >
+      <ZelligeBackdrop className="-z-10" />
+      <span className="grid size-16 place-items-center rounded-t-full rounded-b-2xl bg-secondary text-primary shadow-soft">
+        {icon ?? <Inbox className="size-7" aria-hidden />}
+      </span>
       {children}
     </div>
   );
 }
 
-/** Translates an API problem by its stable `code`, falling back to its title. */
 export function useErrorMessage(): (error: unknown) => string {
   const { t } = useTranslation();
   return (error) => {
@@ -83,7 +101,7 @@ export function ErrorAlert({ error }: { error: unknown }) {
   return (
     <div
       role="alert"
-      className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900"
+      className="flex items-start gap-2 rounded-xl border border-destructive/25 bg-destructive/8 p-3.5 text-sm text-destructive"
     >
       <AlertTriangle className="mt-0.5 size-4 shrink-0" />
       <span>{message(error)}</span>
@@ -104,7 +122,11 @@ export function Field({
     <label className="grid gap-1.5 text-sm">
       <span className="font-medium">{label}</span>
       {children}
-      {error && <span className="text-xs text-red-700">{error}</span>}
+      {error && (
+        <span className="text-xs text-destructive animate-in fade-in-0 slide-in-from-top-1">
+          {error}
+        </span>
+      )}
     </label>
   );
 }
@@ -123,26 +145,30 @@ export function QuantityStepper({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="inline-flex items-center rounded-lg border" role="group" aria-label={label}>
+    <div
+      className="inline-flex items-center rounded-full border border-input bg-card shadow-soft"
+      role="group"
+      aria-label={label}
+    >
       <Button
         type="button"
         variant="ghost"
-        size="icon"
-        className="size-10"
+        size="icon-lg"
+        shape="pill"
         onClick={() => onChange(value - 1)}
         disabled={value <= 1}
         aria-label={t('cart.less')}
       >
         <Minus className="size-4" />
       </Button>
-      <span className="w-8 text-center tabular-nums" aria-live="polite">
+      <span className="w-8 text-center font-semibold tabular-nums" aria-live="polite">
         {value}
       </span>
       <Button
         type="button"
         variant="ghost"
-        size="icon"
-        className="size-10"
+        size="icon-lg"
+        shape="pill"
         onClick={() => onChange(value + 1)}
         disabled={value >= max}
         aria-label={t('cart.more')}

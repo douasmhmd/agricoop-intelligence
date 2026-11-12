@@ -10,9 +10,20 @@ import {
 } from './targets';
 
 /** Pages to capture. Grows with each redesign phase. */
-const PAGES: { name: string; url: string; auth?: boolean; ready: string }[] = [
+const PAGES: { name: string; url: string; auth?: boolean; ready: string; open?: string }[] = [
   { name: 'styleguide', url: `${BACKOFFICE_URL}/styleguide`, auth: true, ready: 'h1' },
   { name: 'web-home', url: `${WEB_URL}/`, ready: 'h1' },
+  { name: 'web-catalogue', url: `${WEB_URL}/coops/COOP02`, ready: 'article h2' },
+  {
+    name: 'web-product',
+    // Demo seed product (apps/dev/seed/002_demo_catalogue.sql) or the first product of COOP02.
+    url: `${WEB_URL}/coops/COOP02`,
+    ready: 'h1',
+    open: 'article h2 a',
+  },
+  { name: 'web-verify-ok', url: `${WEB_URL}/v/DemoToken1234567890Abc`, ready: 'h1' },
+  { name: 'web-verify-unknown', url: `${WEB_URL}/v/CeJetonNExistePas000000`, ready: 'h1' },
+  { name: 'web-404', url: `${WEB_URL}/nulle-part`, ready: 'h1' },
 ];
 
 for (const p of PAGES) {
@@ -25,6 +36,10 @@ for (const p of PAGES) {
       const page = await context.newPage();
       await applyVariant(page, v);
       await page.goto(p.url);
+      if (p.open) {
+        // Pages reached by clicking (e.g. the first product of a catalogue).
+        await page.locator(p.open).first().click();
+      }
       await expect(page.locator(p.ready).first()).toBeVisible({ timeout: 30_000 });
       await expect(page.locator('html')).toHaveAttribute('dir', v.lang === 'ar' ? 'rtl' : 'ltr');
       await settle(page);

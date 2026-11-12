@@ -553,3 +553,57 @@ violations). Screenshots: `apps/e2e/screenshots/redesign/phase2/`.
 
 **Open point:** the newsletter has no backend. Making it real needs an API endpoint (and a consent
 record), so it currently shows an honest "opening soon" message and stores nothing.
+
+## UI redesign — phase 3: catalogue, product page, cart, checkout, QR page (2026-11-13)
+
+**Done**
+
+- Catalogue (`/coops/:code`): coop header band (arch monogram, province, product count), filter chips
+  with a sliding active pill (`?groupe=`), 2–4 column grid with animated filtering and skeleton cards.
+  Product cards: second photo on hover, quick "Ajouter" sliding up (always visible on touch screens),
+  animated price, availability, QR-per-unit badge, stretched link to the product page.
+- Product page (new route `/coops/:code/produits/:produitId`): Embla gallery with thumbnails
+  (RTL-aware), sticky buy box (animated price, stock dot, quantity stepper, gold "Ajouter au panier"),
+  accordion (description, origin and cooperative, traceability by lot / by unit, reference), "Du même
+  producteur". The card image morphs into the gallery with the View Transitions API (Motion
+  `layoutId` fallback); route changes cross-fade (`defaultViewTransition`), none with reduced motion.
+- Cart: drawer opened by the header cart (side sheet on desktop, Vaul bottom sheet with drag-to-close
+  on phones) with animated add/remove lines, thumbnails and an animated total; the thumbnail flies
+  from the product to the cart icon on add (arc, transform/opacity only). `/panier` restyled for
+  direct visits. Cart lines remember the product category for thumbnails (optional fields: carts
+  saved before keep working).
+- Checkout: journey indicator (Panier → Livraison → Paiement → Confirmation, gold line growing),
+  delivery form card and sticky summary, pay button with spinner. Order page: success card with a
+  drawn checkmark and a small confetti burst after payment, animated status timeline, badges with
+  status dots.
+- QR verification `/v/:token`: scanning animation while loading; authentic → a gold 8-point seal
+  turning into place with a drawn checkmark, then the product card with photo and details; warning →
+  pulsing shield, each alert with its own icon, and calm advice; unknown code → clear shield and
+  advice. Same texts as before (tests unchanged).
+- Empty / 404 / error states: zellige medallions, an arch with a serif "404" / "!", retry on errors;
+  restyled loading (breathing olive mark), sign-in gate and account page.
+- `@agricoop/ui`: Accordion (fade + lift, no height animation). Storefront: `Price` (NumberFlow on
+  money strings), `CheckoutSteps`, `Confetti`, `ProductCard`, `useAddToCart`, fly-to-cart layer.
+- A second soap photo (green olive soap) so soap products alternate.
+
+**Bug found by the e2e test (fixed)**
+
+- The quick "Ajouter" button could not be clicked: the card image wrapper carries a
+  `view-transition-name`, which makes it a stacking context, so the button's `z-index` stayed under
+  the card's stretched link. The button now sits outside that wrapper.
+
+**Fixes found while reviewing the screenshots**
+
+- On phones the "added to cart" toast covered the drawer's checkout button: opening the drawer now
+  dismisses toasts.
+- Prices forced to LTR rendered "د.م." differently from static prices: they now follow the page
+  direction like `formatMad`.
+- The paid order showed step 4 as "in progress": the indicator now has a completed state.
+
+**Tests:** all suites green; Playwright e2e 3/3 with no selector change (the storefront journey now
+goes through the drawer and the new checkout). New visual capture of the purchase journey
+(`visual/flows.visual.ts`: drawer, checkout, paid order). Every phase-3 page loaded in the nginx image
+under the production CSP: no violation. Screenshots: `apps/e2e/screenshots/redesign/phase3/`.
+
+**Limits (API, not UI):** product pages cannot show lot or expiry dates (the public catalogue has
+none; the QR page shows them), and product photos are per category until products have their own.

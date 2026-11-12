@@ -1,7 +1,9 @@
 import { type CommandeStatut, mockPaymentPath } from '@agricoop/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { CheckCircle2, CircleAlert } from 'lucide-react';
+import { CircleAlert } from 'lucide-react';
+import { motion } from 'motion/react';
+import { ease } from '@agricoop/ui/motion';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -11,7 +13,9 @@ import {
 } from '@/api/generated/boutique/boutique';
 import { ok } from '@/api/ok';
 import { RequireAuth } from '@/auth/RequireAuth';
+import { CheckoutSteps, Confetti } from '@/components/CheckoutSteps';
 import { DateText, ErrorAlert, Loading, Money, useErrorMessage } from '@/components/common';
+import { statutVariant } from '@/lib/ui';
 import { Badge, Button } from '@agricoop/ui';
 
 export const Route = createFileRoute('/coops/$code/commandes/$commandeId')({
@@ -54,80 +58,123 @@ function OrderPage() {
     );
   };
 
+  const paid = paiement === 'ok' && commande.statut !== 'creee';
+  const notPaid = paiement === 'refuse' || (paiement === 'ok' && commande.statut === 'creee');
+
   return (
-    <div className="mx-auto max-w-xl">
-      {paiement === 'ok' && commande.statut !== 'creee' && (
+    <div className="mx-auto max-w-3xl space-y-8">
+      <CheckoutSteps current={commande.statut === 'creee' ? 2 : 4} />
+
+      {paid && (
         <div
-          className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-emerald-900"
+          className="relative overflow-hidden rounded-2xl border border-success/25 bg-success/8 p-6 text-center"
           role="status"
         >
-          <CheckCircle2 className="size-5 shrink-0" /> {t('order.paid')}
+          <Confetti />
+          <svg viewBox="0 0 48 48" className="mx-auto size-14" aria-hidden>
+            <circle cx="24" cy="24" r="22" className="fill-success" />
+            <motion.path
+              d="M14 24.5l7 7 13-14"
+              fill="none"
+              stroke="white"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: ease.out }}
+            />
+          </svg>
+          <p className="mt-3 font-display text-xl font-semibold text-success">{t('order.paid')}</p>
         </div>
       )}
-      {(paiement === 'refuse' || (paiement === 'ok' && commande.statut === 'creee')) && (
+      {notPaid && (
         <div
-          className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 p-4 text-amber-900"
+          className="flex items-center gap-3 rounded-2xl border border-warning/50 bg-warning/15 p-4 text-warning-foreground dark:text-warning"
           role="status"
         >
           <CircleAlert className="size-5 shrink-0" /> {t('order.notPaid')}
         </div>
       )}
 
-      <h1 className="text-2xl font-bold">
-        {t('order.title')} {commande.commande_id.slice(0, 8).toUpperCase()}
-      </h1>
-      <p className="mb-4 text-sm text-muted-foreground">
-        <DateText value={commande.date_commande} withTime />
-      </p>
-
-      {commande.statut === 'annulee' ? (
-        <Badge variant="outline" className="mb-4">
-          {t('statut.annulee')}
-        </Badge>
-      ) : (
-        <ol
-          className="mb-5 grid grid-cols-4 gap-1 text-center text-xs"
-          aria-label={t('order.progress')}
-        >
-          {STEPS.map((s, i) => (
-            <li key={s} aria-current={i === step ? 'step' : undefined}>
-              <div className={`mb-1 h-1.5 rounded-full ${i <= step ? 'bg-primary' : 'bg-muted'}`} />
-              <span className={i <= step ? 'font-medium' : 'text-muted-foreground'}>
-                {t(`statut.${s}`)}
+      <section className="rounded-2xl border bg-card p-6 shadow-soft sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display text-display-sm font-semibold">
+              {t('order.title')}{' '}
+              <span className="font-mono text-lg tracking-wide text-muted-foreground" dir="ltr">
+                {commande.commande_id.slice(0, 8).toUpperCase()}
               </span>
-            </li>
-          ))}
-        </ol>
-      )}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              <DateText value={commande.date_commande} withTime />
+            </p>
+          </div>
+          <Badge variant={statutVariant[commande.statut]} dot>
+            {t(`statut.${commande.statut}`)}
+          </Badge>
+        </div>
 
-      <section className="rounded-xl border bg-card p-4">
-        <ul className="grid gap-2 text-sm">
+        {commande.statut !== 'annulee' && (
+          <ol
+            className="mt-8 grid grid-cols-4 gap-2 text-center text-xs"
+            aria-label={t('order.progress')}
+          >
+            {STEPS.map((st, i) => (
+              <li key={st} aria-current={i === step ? 'step' : undefined}>
+                <div className="relative mb-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <motion.div
+                    className="absolute inset-0 origin-left rounded-full bg-primary rtl:origin-right"
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: i <= step ? 1 : 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 + i * 0.12, ease: ease.out }}
+                  />
+                </div>
+                <span className={i <= step ? 'font-medium' : 'text-muted-foreground'}>
+                  {t(`statut.${st}`)}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+
+        <ul className="mt-8 grid gap-3 text-sm">
           {commande.lignes.map((l) => (
-            <li key={l.ligne_id} className="flex justify-between gap-2">
+            <li key={l.ligne_id} className="flex justify-between gap-3 border-b pb-3 last:border-0">
               <span>
-                {l.produit_nom} × {l.quantite}
+                {l.produit_nom} <span className="text-muted-foreground">× {l.quantite}</span>
               </span>
               <Money value={l.montant_mad} />
             </li>
           ))}
         </ul>
-        <p className="mt-3 flex justify-between border-t pt-3 font-semibold">
-          <span>{t('cart.total')}</span> <Money value={commande.montant_total_mad} />
+        <p className="mt-4 flex items-baseline justify-between border-t pt-4">
+          <span className="text-sm text-muted-foreground">{t('cart.total')}</span>
+          <Money
+            value={commande.montant_total_mad}
+            className="font-display text-xl font-semibold"
+          />
         </p>
       </section>
 
-      <div className="mt-5 grid gap-2">
+      <div className="grid gap-3 sm:flex sm:flex-wrap sm:items-center">
         {commande.statut === 'creee' && (
-          <Button asChild size="lg">
+          <Button asChild size="xl" shape="pill" variant="gold">
             <a href={mockPaymentPath(code, commandeId)}>{t('order.payNow')}</a>
           </Button>
         )}
         {(commande.statut === 'creee' || commande.statut === 'payee') && (
-          <Button variant="outline" onClick={onCancel} disabled={cancel.isPending}>
+          <Button
+            variant="outline"
+            shape="pill"
+            size="lg"
+            onClick={onCancel}
+            disabled={cancel.isPending}
+          >
             {t('order.cancel')}
           </Button>
         )}
-        <Link to="/compte" className="text-center text-sm text-primary underline">
+        <Link to="/compte" className="text-center text-sm text-primary underline sm:ms-auto">
           {t('order.allOrders')}
         </Link>
       </div>

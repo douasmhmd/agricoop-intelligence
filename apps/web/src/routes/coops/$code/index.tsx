@@ -1,18 +1,18 @@
-import type { ProduitCatalogue } from '@agricoop/shared';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { ShoppingBag, X } from 'lucide-react';
-import { useState } from 'react';
+import { cn, ZelligeBackdrop } from '@agricoop/ui';
+import { fadeUp, spring, stagger } from '@agricoop/ui/motion';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { ArrowLeft, MapPin, PackageSearch } from 'lucide-react';
+import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { useStorefrontCatalogue, useStorefrontGet } from '@/api/generated/storefront/storefront';
 import { ok } from '@/api/ok';
-import { useCart } from '@/cart/cart';
-import { EmptyState, ErrorAlert, Loading, Money, QuantityStepper } from '@/components/common';
-import { Badge, Button } from '@agricoop/ui';
+import { EmptyState, ErrorAlert } from '@/components/common';
+import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard';
 import { GROUPES, type Groupe, groupeOf } from '@/lib/home';
 
 export const Route = createFileRoute('/coops/$code/')({
-  // Optional filter set by the home page's category tiles (?groupe=huile|olives|soins|coffrets).
+  // Optional filter (?groupe=huile|olives|soins|coffrets), also set by the home category tiles.
   validateSearch: (search: Record<string, unknown>): { groupe?: Groupe } =>
     GROUPES.includes(search.groupe as Groupe) ? { groupe: search.groupe as Groupe } : {},
   component: CataloguePage,
@@ -20,112 +20,156 @@ export const Route = createFileRoute('/coops/$code/')({
 
 function CataloguePage() {
   const { code } = Route.useParams();
+  const { groupe } = Route.useSearch();
   const { t } = useTranslation();
   const coop = ok(useStorefrontGet(code).data);
   const catalogue = useStorefrontCatalogue(code);
-  const { groupe } = Route.useSearch();
-  const tous = ok(catalogue.data) ?? [];
+  const tous = useMemo(() => ok(catalogue.data) ?? [], [catalogue.data]);
   const produits = groupe ? tous.filter((p) => groupeOf(p) === groupe) : tous;
 
-  return (
-    <>
-      <div className="mb-5">
-        <Link to="/" className="text-sm text-muted-foreground hover:underline">
-          {t('nav.home')}
-        </Link>
-        <h1 className="mt-1 text-2xl font-bold">{coop?.nom ?? code}</h1>
-        {coop && <p className="text-sm text-muted-foreground">{coop.province}</p>}
-        {groupe && (
-          <Link
-            to="/coops/$code"
-            params={{ code }}
-            search={{}}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-sm shadow-soft hover:bg-accent"
-            aria-label={t('catalogue.clearFilter')}
-          >
-            {t('catalogue.filtered', { famille: t(`categories.${groupe}`) })}
-            <X className="size-3.5" aria-hidden />
-          </Link>
-        )}
-      </div>
-      {catalogue.isPending ? (
-        <Loading />
-      ) : catalogue.error ? (
-        <ErrorAlert error={catalogue.error} />
-      ) : produits.length === 0 ? (
-        <EmptyState>{t('catalogue.empty')}</EmptyState>
-      ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {produits.map((p) => (
-            <ProductCard key={p.produit_id} produit={p} coop={{ code, nom: coop?.nom ?? code }} />
-          ))}
-        </ul>
-      )}
-    </>
-  );
-}
-
-function ProductCard({
-  produit,
-  coop,
-}: {
-  produit: ProduitCatalogue;
-  coop: { code: string; nom: string };
-}) {
-  const { t } = useTranslation();
-  const cart = useCart();
-  const navigate = useNavigate();
-  const [quantite, setQuantite] = useState(1);
-  const inCart = cart.cart.lines.find((l) => l.produit_id === produit.produit_id)?.quantite ?? 0;
-  const remaining = Math.max(0, produit.disponible - inCart);
-
-  const add = () => {
-    const item = {
-      produit_id: produit.produit_id,
-      code: produit.code,
-      nom: produit.nom,
-      prix_mad: produit.prix_mad,
-      disponible: produit.disponible,
-    };
-    if (cart.add(coop, item, quantite) === 'other_coop') {
-      // One order = one cooperative: offer to start a new cart.
-      if (!window.confirm(t('cart.otherCoop', { coop: cart.cart.coopNom ?? '' }))) return;
-      cart.add(coop, item, quantite, { replace: true });
-    }
-    setQuantite(1);
-    toast.success(t('cart.added', { nom: produit.nom }), {
-      action: { label: t('cart.view'), onClick: () => void navigate({ to: '/panier' }) },
-    });
-  };
+  // Chips only for the groups this cooperative actually sells.
+  const groupesPresents = GROUPES.filter((g) => tous.some((p) => groupeOf(p) === g));
+  // Photo variants: alternate photos between products of the same category.
+  const variants = useMemo(() => {
+    const seen = new Map<string, number>();
+    return new Map(
+      tous.map((p) => {
+        const v = seen.get(p.categorie) ?? 0;
+        seen.set(p.categorie, v + 1);
+        return [p.produit_id, v] as const;
+      }),
+    );
+  }, [tous]);
+  const coopRef = { code, nom: coop?.nom ?? code };
 
   return (
-    <li className="flex flex-col rounded-xl border bg-card p-4">
-      <div className="flex items-start justify-between gap-2">
-        <h2 className="font-medium leading-snug">{produit.nom}</h2>
-        <Badge variant="secondary">{t(`famille.${produit.famille}`)}</Badge>
-      </div>
-      <Money value={produit.prix_mad} className="mt-2 text-xl font-semibold" />
-      <p
-        className={`mt-1 text-sm ${produit.disponible === 0 ? 'text-red-700' : 'text-muted-foreground'}`}
-      >
-        {produit.disponible === 0
-          ? t('catalogue.soldOut')
-          : t('catalogue.available', { count: produit.disponible })}
-      </p>
-      {produit.niveau_qr === 'unite' && (
-        <p className="mt-1 text-xs text-muted-foreground">{t('catalogue.qrUnit')}</p>
-      )}
-      <div className="mt-auto flex items-center gap-2 pt-4">
-        <QuantityStepper
-          value={quantite}
-          max={Math.max(1, remaining)}
-          onChange={setQuantite}
-          label={t('cart.quantity')}
+    <div className="space-y-10">
+      <header className="grain relative isolate overflow-hidden rounded-3xl border bg-card px-6 py-10 shadow-soft sm:px-10">
+        <ZelligeBackdrop className="-z-10" />
+        <div
+          aria-hidden
+          className="absolute -top-24 -z-10 size-80 rounded-full bg-gold/15 blur-3xl ltr:-right-20 rtl:-left-20"
         />
-        <Button className="h-10 flex-1" onClick={add} disabled={remaining === 0}>
-          <ShoppingBag className="size-4" /> {t('catalogue.add')}
-        </Button>
-      </div>
-    </li>
+        <motion.div variants={stagger(0.08)} initial="hidden" animate="visible">
+          <motion.div variants={fadeUp}>
+            <Link
+              to="/"
+              hash="cooperatives"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />
+              {t('nav.home')}
+            </Link>
+          </motion.div>
+          <div className="mt-5 flex items-center gap-5">
+            <motion.span
+              variants={fadeUp}
+              aria-hidden
+              className="grid size-16 shrink-0 place-items-center rounded-t-full rounded-b-xl bg-primary font-display text-3xl font-semibold text-primary-foreground shadow-lifted sm:size-20"
+            >
+              {(coop?.nom ?? code).replace(/^Coopérative\s+/i, '').charAt(0)}
+            </motion.span>
+            <div className="min-w-0">
+              <motion.h1
+                variants={fadeUp}
+                className="font-display text-display-lg font-semibold text-balance"
+              >
+                {coop?.nom ?? code}
+              </motion.h1>
+              {coop && (
+                <motion.p
+                  variants={fadeUp}
+                  className="mt-1 flex items-center gap-1.5 text-muted-foreground"
+                >
+                  <MapPin className="size-4" aria-hidden /> {coop.province}
+                  <span aria-hidden className="mx-1 text-gold">
+                    ✦
+                  </span>
+                  {t('categories.count', { count: tous.length })}
+                </motion.p>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </header>
+
+      {groupesPresents.length > 1 && (
+        <nav aria-label={t('catalogue.filters')}>
+          <LayoutGroup id="catalogue-filters">
+            <ul className="flex flex-wrap gap-2">
+              {[undefined, ...groupesPresents].map((g) => {
+                const active = groupe === g;
+                return (
+                  <li key={g ?? 'all'}>
+                    <Link
+                      to="/coops/$code"
+                      params={{ code }}
+                      search={g ? { groupe: g } : {}}
+                      resetScroll={false}
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(
+                        'relative inline-flex h-10 items-center rounded-full border px-4 text-sm font-medium transition-colors',
+                        active
+                          ? 'border-transparent text-primary-foreground'
+                          : 'border-border bg-card hover:border-foreground/25',
+                      )}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="filter-pill"
+                          aria-hidden
+                          className="absolute inset-0 rounded-full bg-primary shadow-soft"
+                          transition={spring.snappy}
+                        />
+                      )}
+                      <span className="relative">
+                        {g ? t(`categories.${g}`) : t('catalogue.all')}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </LayoutGroup>
+        </nav>
+      )}
+
+      <section aria-label={t('catalogue.products')}>
+        {catalogue.isPending ? (
+          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 6 }, (_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : catalogue.error ? (
+          <ErrorAlert error={catalogue.error} />
+        ) : produits.length === 0 ? (
+          <EmptyState icon={<PackageSearch className="size-7" aria-hidden />}>
+            <p>{t('catalogue.empty')}</p>
+          </EmptyState>
+        ) : (
+          <ul className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <AnimatePresence mode="popLayout" initial={false}>
+              {produits.map((p) => (
+                <motion.li
+                  key={p.produit_id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={spring.soft}
+                >
+                  <ProductCard
+                    produit={p}
+                    coop={coopRef}
+                    variant={variants.get(p.produit_id) ?? 0}
+                  />
+                </motion.li>
+              ))}
+            </AnimatePresence>
+          </ul>
+        )}
+      </section>
+    </div>
   );
 }

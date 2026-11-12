@@ -16,6 +16,9 @@ export interface CartLine {
   quantite: number;
   /** Orderable stock when added (soft cap in the UI; the API is the authority). */
   disponible: number;
+  /** For the thumbnail only (optional: carts saved before the redesign do not have them). */
+  categorie?: string;
+  famille?: string;
 }
 
 export interface CartState {

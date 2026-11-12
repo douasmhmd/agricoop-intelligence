@@ -237,6 +237,15 @@ generate` regenerates the TS types.
 - Lenis smooth scroll (`SmoothScroll`) is storefront-only, off with reduced motion, and pauses while a
   Radix overlay locks scrolling. Parallax uses `useReducedMotion()` (MotionConfig does not cover
   style-bound motion values).
+- Cart: the header cart is a real link to `/panier`; a plain click opens the cart drawer (side sheet
+  on desktop, Vaul bottom sheet on phones), and any navigation closes it. Add to cart through
+  `useAddToCart()` (one-coop rule, fly-to-cart, toast → drawer) everywhere.
+- Product page `/coops/$code/produits/$produitId` reads the coop catalogue (no single-product
+  endpoint); lot and dates are only public through the QR code. Its gallery image and the card image
+  share a `view-transition-name` (Motion `layoutId` fallback). An element with a
+  `view-transition-name` is its own stacking context: keep clickable overlays outside it.
+- Animated money: `<Price>` passes the money STRING to NumberFlow (Intl formats numeric strings
+  exactly); never `Number(prix)`.
 - The newsletter form has no backend (it would need an API endpoint): it says so instead of storing.
 
 ## Local dev

@@ -403,10 +403,27 @@
   height: 1px;
 }
 
+/* Route changes (View Transitions API): a short cross-fade, shared elements morph with the brand
+   easing. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+::view-transition-group(*) {
+  animation-duration: 450ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+
 /* Reduced motion: keep fades, drop movement-heavy CSS animations. */
 @media (prefers-reduced-motion: reduce) {
   .animate-shimmer,
   .animate-float {
     animation: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

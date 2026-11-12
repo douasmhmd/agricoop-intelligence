@@ -8,6 +8,7 @@
  *
  * Shipped as TypeScript source: the apps' Vite builds compile it (no build step of its own).
  */
+export * from './components/accordion';
 export * from './components/badge';
 export * from './components/brand';
 export * from './components/button';

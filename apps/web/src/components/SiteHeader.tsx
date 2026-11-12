@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
 import { useCart } from '@/cart/cart';
+import { useCartDrawer } from '@/cart/CartDrawer';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 /** Home sections reachable from the navigation (ids set on the home page). */
@@ -130,6 +131,7 @@ function AccountButton({ className }: { className?: string }) {
 function CartButton() {
   const { t } = useTranslation();
   const { count } = useCart();
+  const drawer = useCartDrawer();
   const [scope, animate] = useAnimate<HTMLSpanElement>();
   const previous = useRef(count);
   const reduced = useReducedMotion();
@@ -153,7 +155,16 @@ function CartButton() {
       className="relative"
       aria-label={t('nav.cart', { count })}
     >
-      <Link to="/panier">
+      <Link
+        to="/panier"
+        data-cart-target
+        onClick={(e) => {
+          // A plain click opens the drawer; new-tab / modified clicks keep the /panier page.
+          if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          drawer.setOpen(true);
+        }}
+      >
         <ShoppingBag className="size-5" />
         <span
           ref={scope}

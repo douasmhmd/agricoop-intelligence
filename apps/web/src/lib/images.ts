@@ -14,6 +14,7 @@ export const PHOTOS = {
   olives: '1727176401986-6289c5121eef', // green olives on a plate
   olivesAlt: '1698775942613-3e9fc114b2a1', // pile of green olives
   savon: '1618840152526-92682643af2d', // white soap bars with leaves
+  savonAlt: '1584305574647-0cc949a2bb9f', // green olive soap tied with twine
   coffret: '1764509195128-e2f389ac3235', // ornate metal box
   infusion: '1715016813310-3536d991cdce', // dried olive leaves
   soin: '1763503834047-ac85c4105c0b', // jar of cream
@@ -43,7 +44,7 @@ export function photo(key: PhotoKey, sizes: string, maxWidth = 1600) {
 const CATEGORY_PHOTOS: Record<string, PhotoKey[]> = {
   huile: ['huile', 'huileAlt'],
   olives_table: ['olives', 'olivesAlt'],
-  savon: ['savon'],
+  savon: ['savon', 'savonAlt'],
   infusion: ['infusion'],
   soin: ['soin'],
   capillaire: ['capillaire'],

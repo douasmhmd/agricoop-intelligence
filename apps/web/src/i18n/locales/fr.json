@@ -59,7 +59,10 @@
     "available_other": "{{count}} disponibles",
     "qrUnit": "QR code d'authenticité sur chaque unité",
     "filtered": "Filtré : {{famille}}",
-    "clearFilter": "Tout afficher"
+    "clearFilter": "Tout afficher",
+    "all": "Tout",
+    "filters": "Filtrer par univers",
+    "products": "Les produits"
   },
   "cart": {
     "title": "Panier",
@@ -75,7 +78,8 @@
     "added": "{{nom}} ajouté au panier",
     "view": "Voir le panier",
     "otherCoop": "Votre panier contient des produits de {{coop}}. Une commande concerne une seule coopérative : vider le panier et ajouter ce produit ?",
-    "priceNotice": "Les prix sont confirmés au moment de la commande."
+    "priceNotice": "Les prix sont confirmés au moment de la commande.",
+    "continue": "Continuer mes achats"
   },
   "checkout": {
     "title": "Finaliser la commande",
@@ -87,7 +91,14 @@
     "privacy": "Vos coordonnées servent uniquement à livrer votre commande (loi 09-08). Elles ne sont jamais partagées.",
     "pay": "Payer",
     "shortage_one": "{{nom}} : il ne reste que {{count}} unité.",
-    "shortage_other": "{{nom}} : il ne reste que {{count}} unités."
+    "shortage_other": "{{nom}} : il ne reste que {{count}} unités.",
+    "steps": "Étapes de la commande",
+    "stepCart": "Panier",
+    "stepDelivery": "Livraison",
+    "stepPayment": "Paiement",
+    "stepDone": "Confirmation",
+    "summary": "Récapitulatif",
+    "redirect": "Vous serez redirigé vers la page de paiement sécurisée."
   },
   "statut": {
     "creee": "Créée",
@@ -110,7 +121,9 @@
   "account": {
     "title": "Mon compte",
     "orders": "Mes commandes",
-    "onlyWithOrders": "Seules les coopératives auprès desquelles vous avez commandé apparaissent."
+    "onlyWithOrders": "Seules les coopératives auprès desquelles vous avez commandé apparaissent.",
+    "hello": "Bonjour {{name}}",
+    "empty": "Vous n'avez pas encore passé de commande."
   },
   "verify": {
     "authentic": "Authentique ✓",
@@ -133,7 +146,13 @@
     "scans": "Vérifications",
     "scansCount_one": "{{count}} vérification",
     "scansCount_other": "{{count}} vérifications",
-    "shop": "Découvrir les produits des coopératives"
+    "shop": "Découvrir les produits des coopératives",
+    "checking": "Vérification du code…",
+    "seal": "Sceau d'authenticité AgriCoop",
+    "details": "Détails du produit",
+    "whatToDo": "Que faire ?",
+    "warningAdvice": "Ce produit n'est pas forcément contrefait. En cas de doute, contactez la coopérative avant de le consommer.",
+    "unknownAdvice": "Ne consommez pas ce produit et signalez-le au vendeur."
   },
   "errors": {
     "generic": "Une erreur est survenue. Réessayez.",
@@ -220,5 +239,35 @@
     "submit": "S'inscrire",
     "soon": "L'inscription à la lettre ouvrira bientôt. Merci de votre intérêt !",
     "invalid": "Saisissez une adresse e-mail valide."
+  },
+  "product": {
+    "back": "Retour à la boutique",
+    "gallery": "Photos du produit",
+    "photo": "Photo {{n}}",
+    "addToCart": "Ajouter au panier",
+    "securePayment": "Paiement sécurisé",
+    "qrLot": "QR code d'authenticité sur chaque lot",
+    "details": "Détails",
+    "description": "Description",
+    "desc": {
+      "huile": "Huile d'olive pressée à froid par la coopérative, à partir d'olives récoltées dans la région.",
+      "olives": "Olives de table préparées et conditionnées par la coopérative.",
+      "soins": "Soin à l'huile d'olive, fabriqué de façon artisanale par la coopérative.",
+      "coffrets": "Une sélection de produits de la coopérative, prête à offrir.",
+      "autre": "Produit de la coopérative, préparé et conditionné sur place."
+    },
+    "origin": "Origine et coopérative",
+    "originText": "Produit par {{coop}}, province de {{province}}.",
+    "traceability": "Traçabilité",
+    "traceLot": "Chaque lot porte un QR code unique : scannez-le pour voir le lot, sa date de fabrication et sa date de péremption.",
+    "traceUnit": "Chaque unité porte son propre QR code numéroté : scannez-le pour vérifier le lot, les dates et le numéro de série.",
+    "reference": "Référence",
+    "sameCoop": "Du même producteur",
+    "notFound": "Ce produit n'est plus proposé."
+  },
+  "lost": {
+    "text": "Cette page s'est égarée dans l'oliveraie.",
+    "errorTitle": "Quelque chose s'est mal passé",
+    "retry": "Réessayer"
   }
 }

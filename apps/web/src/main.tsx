@@ -28,6 +28,8 @@ const router = createRouter({
   context: { queryClient },
   defaultPreload: 'intent',
   scrollRestoration: true,
+  // Native cross-fade / shared-element morphs between pages where the browser supports it.
+  defaultViewTransition: true,
 });
 
 declare module '@tanstack/react-router' {

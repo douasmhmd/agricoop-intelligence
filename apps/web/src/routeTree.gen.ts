@@ -16,6 +16,7 @@ import { Route as VTokenRouteImport } from './routes/v/$token'
 import { Route as CoopsCodeIndexRouteImport } from './routes/coops/$code/index'
 import { Route as CoopsCodeCommanderRouteImport } from './routes/coops/$code/commander'
 import { Route as CoopsCodeCommandesCommandeIdRouteImport } from './routes/coops/$code/commandes/$commandeId'
+import { Route as CoopsCodeProduitsProduitIdRouteImport } from './routes/coops/$code/produits/$produitId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -53,6 +54,12 @@ const CoopsCodeCommandesCommandeIdRoute =
     path: '/coops/$code/commandes/$commandeId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CoopsCodeProduitsProduitIdRoute =
+  CoopsCodeProduitsProduitIdRouteImport.update({
+    id: '/coops/$code/produits/$produitId',
+    path: '/coops/$code/produits/$produitId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/coops/$code/commander': typeof CoopsCodeCommanderRoute
   '/coops/$code/': typeof CoopsCodeIndexRoute
   '/coops/$code/commandes/$commandeId': typeof CoopsCodeCommandesCommandeIdRoute
+  '/coops/$code/produits/$produitId': typeof CoopsCodeProduitsProduitIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -71,6 +79,7 @@ export interface FileRoutesByTo {
   '/coops/$code/commander': typeof CoopsCodeCommanderRoute
   '/coops/$code': typeof CoopsCodeIndexRoute
   '/coops/$code/commandes/$commandeId': typeof CoopsCodeCommandesCommandeIdRoute
+  '/coops/$code/produits/$produitId': typeof CoopsCodeProduitsProduitIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -81,6 +90,7 @@ export interface FileRoutesById {
   '/coops/$code/commander': typeof CoopsCodeCommanderRoute
   '/coops/$code/': typeof CoopsCodeIndexRoute
   '/coops/$code/commandes/$commandeId': typeof CoopsCodeCommandesCommandeIdRoute
+  '/coops/$code/produits/$produitId': typeof CoopsCodeProduitsProduitIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -92,6 +102,7 @@ export interface FileRouteTypes {
     | '/coops/$code/commander'
     | '/coops/$code/'
     | '/coops/$code/commandes/$commandeId'
+    | '/coops/$code/produits/$produitId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -101,6 +112,7 @@ export interface FileRouteTypes {
     | '/coops/$code/commander'
     | '/coops/$code'
     | '/coops/$code/commandes/$commandeId'
+    | '/coops/$code/produits/$produitId'
   id:
     | '__root__'
     | '/'
@@ -110,6 +122,7 @@ export interface FileRouteTypes {
     | '/coops/$code/commander'
     | '/coops/$code/'
     | '/coops/$code/commandes/$commandeId'
+    | '/coops/$code/produits/$produitId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -120,6 +133,7 @@ export interface RootRouteChildren {
   CoopsCodeCommanderRoute: typeof CoopsCodeCommanderRoute
   CoopsCodeIndexRoute: typeof CoopsCodeIndexRoute
   CoopsCodeCommandesCommandeIdRoute: typeof CoopsCodeCommandesCommandeIdRoute
+  CoopsCodeProduitsProduitIdRoute: typeof CoopsCodeProduitsProduitIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -173,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoopsCodeCommandesCommandeIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/coops/$code/produits/$produitId': {
+      id: '/coops/$code/produits/$produitId'
+      path: '/coops/$code/produits/$produitId'
+      fullPath: '/coops/$code/produits/$produitId'
+      preLoaderRoute: typeof CoopsCodeProduitsProduitIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -184,6 +205,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoopsCodeCommanderRoute: CoopsCodeCommanderRoute,
   CoopsCodeIndexRoute: CoopsCodeIndexRoute,
   CoopsCodeCommandesCommandeIdRoute: CoopsCodeCommandesCommandeIdRoute,
+  CoopsCodeProduitsProduitIdRoute: CoopsCodeProduitsProduitIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
