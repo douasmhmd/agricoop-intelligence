@@ -17,6 +17,9 @@ export default tseslint.config(
       '**/routeTree.gen.ts',
       '**/playwright-report/**',
       '**/test-results/**',
+      // Static files copied as is by Vite (e.g. the runtime config.js placeholder), outside any tsconfig.
+      'apps/*/public/**',
+      'public/**',
       'data/**',
       'infra/**',
     ],

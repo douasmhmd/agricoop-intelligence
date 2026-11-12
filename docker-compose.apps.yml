@@ -11,9 +11,20 @@
 # Ports: postgres 5433 (root file) · keycloak 8080 · redpanda 19092 (Kafka API) · console 8088 ·
 #        mailpit 8025 (UI) / 1025 (SMTP) · api 3000 · qr 3001 · relay 3002 · web 5173 · backoffice 5174
 
+# Hardening shared by every app container: no privilege escalation, no Linux capabilities, an init
+# process for signal forwarding.
+x-hardened: &hardened
+  init: true
+  security_opt: ['no-new-privileges:true']
+  cap_drop: ['ALL']
+
 x-node-service: &node-service
+  <<: *hardened
   restart: unless-stopped
   profiles: ['apps']
+  # The images contain only built JavaScript: the root file system can stay read-only.
+  read_only: true
+  tmpfs: ['/tmp']
   depends_on:
     postgres:
       condition: service_healthy
@@ -132,9 +143,19 @@ services:
       OIDC_ISSUER: http://localhost:8080/realms/agricoop
       OIDC_JWKS_URL: http://keycloak:8080/realms/agricoop/protocol/openid-connect/certs
       SMTP_URL: smtp://mailpit:1025
-      PAYMENT_MOCK_SECRET: ${PAYMENT_MOCK_SECRET:-dev-only-payment-mock-secret}
+      # The images run with NODE_ENV=production, where the API refuses the built-in dev secret.
+      PAYMENT_MOCK_SECRET: ${COMPOSE_PAYMENT_MOCK_SECRET:-local-compose-only-payment-mock-secret}
+      # Platform admin provisions cooperatives in Keycloak through its Admin API.
+      KEYCLOAK_ADMIN_URL: http://keycloak:8080
+      KC_PROVISIONER_SECRET: ${KC_PROVISIONER_SECRET:?set KC_PROVISIONER_SECRET in .env (see .env.example)}
     ports:
       - '3000:3000'
+    healthcheck: &node-health
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3000/health/ready']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
 
   qr:
     <<: *node-service
@@ -155,6 +176,9 @@ services:
       QR_VERIFY_RATE_PER_MIN: 30
     ports:
       - '3001:3001'
+    healthcheck:
+      <<: *node-health
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3001/health/ready']
 
   outbox-relay:
     <<: *node-service
@@ -170,6 +194,9 @@ services:
       LOG_LEVEL: info
     ports:
       - '3002:3002'
+    healthcheck:
+      <<: *node-health
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3002/health/ready']
 
   web:
     build:
@@ -177,9 +204,22 @@ services:
       dockerfile: apps/docker/spa.Dockerfile
       args: { APP: web }
     image: agricoop/web:dev
+    <<: *hardened
     profiles: ['apps']
+    environment:
+      OIDC_AUTHORITY: http://localhost:8080/realms/agricoop
     ports:
       - '5173:8080'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    depends_on:
+      api:
+        condition: service_healthy
+      qr:
+        condition: service_healthy
     restart: unless-stopped
 
   backoffice:
@@ -188,9 +228,22 @@ services:
       dockerfile: apps/docker/spa.Dockerfile
       args: { APP: backoffice }
     image: agricoop/backoffice:dev
+    <<: *hardened
     profiles: ['apps']
+    environment:
+      OIDC_AUTHORITY: http://localhost:8080/realms/agricoop
     ports:
       - '5174:8080'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    depends_on:
+      api:
+        condition: service_healthy
+      qr:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

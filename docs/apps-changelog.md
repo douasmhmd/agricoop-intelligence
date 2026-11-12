@@ -413,3 +413,57 @@ OpenAPI unchanged.
   (A COOP02 test order and a demo QR code now exist in the local dev database.)
 
 **Not covered yet:** Playwright end-to-end tests (phase 9).
+
+## Phase 9 — Hardening (2026-11-12)
+
+**Done**
+
+- Container images (`apps/docker`):
+  - Multi-arch `linux/amd64` + `linux/arm64`. Install and build run once on the build platform and
+    only the runtime layer is per-architecture: a two-platform build of `api` or `web` takes about
+    30 s locally (no emulated `pnpm install`). The arm64 `api` image was run under emulation: Node
+    24.22.3, tz data 2026e.
+  - Build context filtered by `node-service.Dockerfile.dockerignore` / `spa.Dockerfile.dockerignore`.
+    Before, `COPY . .` sent `.env`, `data/` and `node_modules` to the builder.
+  - Node runtime: app files owned by root and read-only for the `node` user; OCI labels.
+  - Front ends: runtime configuration served as `/config.js` (`OIDC_AUTHORITY`, `OIDC_CLIENT_ID`), so
+    one image runs in every environment (it was documented in `src/config.ts` but never wired).
+    Content-Security-Policy, `Permissions-Policy`, `server_tokens off`; security headers repeated in
+    every location (nginx drops inherited `add_header`s in a location that sets its own).
+- `docker-compose.apps.yml`, app services: healthchecks, `init`, `no-new-privileges`, all capabilities
+  dropped, read-only root file system with a `/tmp` tmpfs for the Node services; the front ends wait
+  for healthy `api` and `qr`; the API gets the Keycloak Admin API settings (platform admin).
+- Demo seed `apps/dev/seed/002_demo_catalogue.sql` (COOP02 only, `is_synthetic = true`, idempotent,
+  dates relative to the seeding day): 6 products, 9 lots incl. one expiring within 30 days and one
+  expired, stock movements, 3 orders allocated FEFO, 2 demo QR codes (authentic / flagged).
+  `pnpm db:seed` re-runs the seed files.
+- Playwright (`apps/e2e`): storefront happy path on a phone viewport (catalogue → cart → Keycloak
+  sign-in at checkout → mock payment → order paid; QR check authentic and unknown) and back-office
+  happy path (sign-in → product → lot → ship the order just paid). Every page fails the test on a CSP
+  violation. `pnpm e2e`.
+- CI `.github/workflows/apps-ci.yml` (path filter `apps/**`, `packages/**`, `contracts/**`):
+  format, lint, typecheck, tests, OpenAPI / generated client drift check; the five images built for
+  amd64 + arm64 with the GitHub Actions cache (no push); e2e on the Compose stack with reports and logs
+  uploaded on failure. Checked with actionlint (incl. shellcheck).
+- `apps/README.md`: prerequisites, both ways to run, URLs, demo users and data, checks, e2e, images,
+  CI.
+
+**Bugs found (all fixed)**
+
+- The front-end images never started: `log_format` was inside `server {}` (nginx only allows it in
+  `http`). Found by running the images for the first time.
+- The `api` image would not start from Compose: images run with `NODE_ENV=production`, where the API
+  refuses the built-in dev payment secret that Compose passed by default. Compose now passes
+  `COMPOSE_PAYMENT_MOCK_SECRET` (local default).
+
+**Tests:** shared 32, events 15, outbox-relay 11, nest-kit 9, qr 45, api 116, backoffice 15, web 15 —
+258 green, plus 3 Playwright tests green against the app **images** (two consecutive green runs). One
+combined lint + typecheck + test run had an outbox-relay suite error at start-up, with the whole stack
+running beside it; it did not reproduce in the next two full runs (Testcontainers start-up under load).
+
+**Not verified:** the workflow has not run on GitHub yet (no remote in this repository); its steps
+were run locally (checks, contract drift, multi-arch builds, Compose stack + Playwright) and the file
+passes actionlint.
+
+**Local state:** the stack now runs from the app images (`--profile apps`) on the usual ports; the
+`pnpm dev` servers were stopped. COOP02 has the demo seed plus the e2e orders and products.

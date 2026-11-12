@@ -1,0 +1,9 @@
+{
+  "extends": "@agricoop/config/tsconfig.node.json",
+  "compilerOptions": {
+    // Playwright compiles the tests itself and resolves extensionless imports, like a bundler.
+    "module": "esnext",
+    "moduleResolution": "bundler"
+  },
+  "include": ["tests", "*.config.ts"]
+}

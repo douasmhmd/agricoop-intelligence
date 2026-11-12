@@ -215,3 +215,24 @@ generate` regenerates the TS types.
   Add `--profile apps` to also run the app images.
 - Demo coops `COOP01` / `COOP02` have fixed ids (`apps/dev/seed`), matching the Keycloak group
   attribute `tenant_id`. Demo users are listed in `.env.example`.
+- Demo data: `apps/dev/seed/*.sql` (run by `db-seed` on every `up`, or `pnpm db:seed`; idempotent,
+  `is_synthetic = true`). Seed **COOP02 only**: the synthetic generator owns every COOP01 row and
+  validates them. Full guide: `apps/README.md`.
+
+## Containers, CI, end-to-end
+
+- Images: `apps/docker/{node-service,spa}.Dockerfile`, context = repo root, filtered by
+  `<Dockerfile>.dockerignore` (never send `.env` / `data/` to the builder). Builder stages run on
+  `$BUILDPLATFORM` because no production dependency has a native addon: if one is added, drop
+  `--platform=$BUILDPLATFORM` or arm64 images will carry amd64 binaries.
+- Front ends read `window.__AGRICOOP_CONFIG__` from `/config.js` (nginx renders it from
+  `OIDC_AUTHORITY` / `OIDC_CLIENT_ID`; `public/config.js` is the empty dev placeholder). nginx sets a
+  CSP: a new third-party origin (fonts, analytics, maps…) must be added to
+  `apps/docker/nginx-spa.conf.template`, and in nginx a location with its own `add_header` loses
+  the server-level ones.
+- The app images run with `NODE_ENV=production`: settings that refuse dev defaults in production
+  (e.g. `PAYMENT_MOCK_SECRET`) need a value in `docker-compose.apps.yml`.
+- `apps/e2e` (Playwright) runs against a running stack: `pnpm e2e`. Locate elements by role and
+  visible French text; a form label's accessible name also contains its hint, so match the start
+  (`{ name: /^Prix/ }`). The suite fails on any CSP violation.
+- CI: `.github/workflows/apps-ci.yml` (checks + contract drift, multi-arch image builds, e2e).

@@ -12,9 +12,11 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "e2e": "pnpm --filter @agricoop/e2e e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:pull": "pnpm --filter @agricoop/db db:pull",
+    "db:seed": "docker compose -f docker-compose.yml -f docker-compose.apps.yml run --rm db-seed",
     "contracts:openapi": "turbo run openapi:export --filter=@agricoop/api --filter=@agricoop/qr && node scripts/merge-openapi.mjs && turbo run api:generate",
     "api:generate": "turbo run api:generate",
     "prepare": "husky"
