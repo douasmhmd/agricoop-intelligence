@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { z } from 'zod';
 import ar from './locales/ar.json';
 import fr from './locales/fr.json';
 
@@ -21,6 +22,8 @@ function storedLanguage(): Language | undefined {
 function applyDocumentDirection(lng: string): void {
   document.documentElement.lang = lng;
   document.documentElement.dir = i18n.dir(lng);
+  // Zod's built-in validation messages follow the UI language (custom messages stay as written).
+  z.config(lng === 'ar' ? z.locales.ar() : z.locales.fr());
 }
 
 export function setLanguage(lng: Language): Promise<unknown> {

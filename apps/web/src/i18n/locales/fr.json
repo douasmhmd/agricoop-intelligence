@@ -1,17 +1,119 @@
 {
-  "app": {
-    "name": "AgriCoop",
-    "tagline": "Produits authentiques des coopératives oléicoles du Maroc"
+  "app": { "name": "AgriCoop" },
+  "language": { "label": "Langue", "fr": "Français", "ar": "العربية" },
+  "notFound": "Page introuvable",
+  "nav": {
+    "home": "Toutes les coopératives",
+    "account": "Mon compte",
+    "cart_one": "Panier ({{count}} article)",
+    "cart_other": "Panier ({{count}} articles)"
   },
-  "language": {
-    "label": "Langue",
-    "fr": "Français",
-    "ar": "العربية"
+  "common": { "loading": "Chargement…" },
+  "footer": { "verify": "Scannez le QR code d'une étiquette pour vérifier son authenticité." },
+  "auth": {
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "required": "Connectez-vous pour continuer.",
+    "registerHint": "Pas encore de compte ? Créez-le depuis la page de connexion."
   },
   "home": {
-    "title": "Bienvenue",
-    "intro": "Huile d'olive, olives de table, savons et coffrets, directement des coopératives.",
-    "verifyHint": "Scannez le QR code sur l'étiquette pour vérifier l'authenticité d'un produit."
+    "title": "Produits des coopératives oléicoles du Maroc",
+    "intro": "Huile d'olive, olives de table, savons et coffrets, directement des producteurs. Chaque produit est traçable par QR code.",
+    "cooperatives": "Coopératives",
+    "none": "Aucune coopérative pour le moment."
   },
-  "notFound": "Page introuvable"
+  "famille": { "alimentaire": "Alimentaire", "cosmetique": "Cosmétique", "coffret": "Coffret" },
+  "catalogue": {
+    "empty": "Aucun produit disponible.",
+    "add": "Ajouter",
+    "soldOut": "Épuisé",
+    "available_one": "{{count}} disponible",
+    "available_other": "{{count}} disponibles",
+    "qrUnit": "QR code d'authenticité sur chaque unité"
+  },
+  "cart": {
+    "title": "Panier",
+    "empty": "Votre panier est vide.",
+    "browse": "Voir les produits",
+    "from": "Commande auprès de {{coop}}",
+    "quantity": "Quantité",
+    "less": "Diminuer la quantité",
+    "more": "Augmenter la quantité",
+    "remove": "Retirer du panier",
+    "total": "Total",
+    "checkout": "Commander",
+    "added": "{{nom}} ajouté au panier",
+    "view": "Voir le panier",
+    "otherCoop": "Votre panier contient des produits de {{coop}}. Une commande concerne une seule coopérative : vider le panier et ajouter ce produit ?",
+    "priceNotice": "Les prix sont confirmés au moment de la commande."
+  },
+  "checkout": {
+    "title": "Finaliser la commande",
+    "delivery": "Livraison",
+    "nom": "Nom complet",
+    "telephone": "Téléphone (facultatif)",
+    "adresse": "Adresse",
+    "ville": "Ville",
+    "privacy": "Vos coordonnées servent uniquement à livrer votre commande (loi 09-08). Elles ne sont jamais partagées.",
+    "pay": "Payer",
+    "shortage_one": "{{nom}} : il ne reste que {{count}} unité.",
+    "shortage_other": "{{nom}} : il ne reste que {{count}} unités."
+  },
+  "statut": {
+    "creee": "Créée",
+    "payee": "Payée",
+    "expediee": "Expédiée",
+    "livree": "Livrée",
+    "annulee": "Annulée"
+  },
+  "order": {
+    "title": "Commande",
+    "progress": "Avancement de la commande",
+    "paid": "Paiement accepté. Merci ! Un e-mail de confirmation vous a été envoyé.",
+    "notPaid": "Le paiement n'a pas abouti. Vous pouvez réessayer.",
+    "payNow": "Payer maintenant",
+    "cancel": "Annuler la commande",
+    "confirmCancel": "Annuler cette commande ?",
+    "cancelled": "Commande annulée",
+    "allOrders": "Toutes mes commandes"
+  },
+  "account": {
+    "title": "Mon compte",
+    "orders": "Mes commandes",
+    "onlyWithOrders": "Seules les coopératives auprès desquelles vous avez commandé apparaissent."
+  },
+  "verify": {
+    "authentic": "Authentique ✓",
+    "authenticText": "Ce produit a bien été produit et étiqueté par {{coop}}.",
+    "warning": "Attention ⚠",
+    "unknownTitle": "Code inconnu ⚠",
+    "unknownText": "Ce QR code n'a été émis par aucune coopérative de la plateforme. Le produit pourrait être une contrefaçon.",
+    "alerte": {
+      "qr_inactif": "Ce code a été désactivé ou signalé par la coopérative.",
+      "lot_perime": "La date de péremption de ce lot est dépassée.",
+      "scans_multiples": "Ce code a été scanné un nombre inhabituel de fois.",
+      "villes_multiples": "Ce code a été scanné dans plusieurs villes en peu de temps : il pourrait avoir été copié."
+    },
+    "produit": "Produit",
+    "cooperative": "Coopérative",
+    "lot": "Lot",
+    "serie": "N° de série",
+    "fabrication": "Fabrication",
+    "peremption": "Péremption",
+    "scans": "Vérifications",
+    "scansCount_one": "{{count}} vérification",
+    "scansCount_other": "{{count}} vérifications",
+    "shop": "Découvrir les produits des coopératives"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Réessayez.",
+    "not_found": "Élément introuvable.",
+    "validation": "Certaines valeurs sont invalides.",
+    "unknown_cooperative": "Coopérative inconnue.",
+    "stock_insuffisant": "Stock insuffisant pour certains produits.",
+    "produit_inactif": "Un produit n'est plus vendu.",
+    "email_non_verifie": "Confirmez d'abord votre adresse e-mail (lien reçu par e-mail), puis réessayez.",
+    "transition_invalide": "Cette commande ne peut plus être annulée.",
+    "qr_inconnu": "QR code inconnu."
+  }
 }

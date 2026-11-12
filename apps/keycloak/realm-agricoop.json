@@ -8,7 +8,7 @@
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
-  "verifyEmail": false,
+  "verifyEmail": true,
   "bruteForceProtected": true,
   "internationalizationEnabled": true,
   "supportedLocales": ["fr", "ar", "en"],

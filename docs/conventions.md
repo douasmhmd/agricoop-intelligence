@@ -169,9 +169,11 @@ generate` regenerates the TS types.
   device class, never the IP. Anomaly rules live in `apps/qr/src/qr/anomaly.ts` (city rule for
   unit-level codes only).
 - Unique violations: catch and map with `isUniqueViolation(error, '<constraint>')` → `Problems.conflict`.
-- **Time zones in SQL:** never bucket by `AT TIME ZONE 'Africa/Casablanca'` in Postgres — the image's
-  tzdata is stale (UTC+0 instead of UTC+1 outside Ramadan). Aggregate per UTC hour/day in SQL and map
-  to Moroccan dates in TypeScript (`isoDateInZone`, `mondayOf`), like `PrevisionsService`.
+- **Time zone:** Morocco has been on permanent UTC+0 since 2026-09-20 (IANA tzdb 2026c; UTC+1 before,
+  except Ramadan). Business dates use `Africa/Casablanca` through the runtime's tz data, which must be
+  ≥ 2026c: `node:24` images and Postgres 16 are current; Node 22.22 (tz 2026a) is NOT — services log a
+  `TimeZone` warning at boot when tz data is stale (`tzDataWarning`). Tests that depend on the offset
+  use instants before 2026-09-20, where every tz data version agrees.
 - **Keycloak Admin API** (`IdentityAdmin`): the `agricoop-provisioner` client needs the built-in
   `kc-admin-api` client scope (Keycloak 26.8 checks the admin-API audience) and only has
   manage/view/query-users + query-groups — use user-scoped endpoints (e.g.
@@ -192,6 +194,18 @@ generate` regenerates the TS types.
 - Dev proxies and nginx forward only `/api/v1/` and `/qr/v1/`: app routes like `/qr` stay with the SPA.
 - After sign-in the user returns to the page they asked for (`returnTo` in the OIDC state, validated
   by `safeReturnPath`).
+
+## Storefront (apps/web)
+
+- Same UI kit and conventions as the back office (`src/components/ui` copied from it; Orval hooks,
+  `ok()`, `useErrorMessage()`, FR/AR keys checked by a test).
+- Browsing is anonymous; checkout, order and account pages sit behind `<RequireAuth>` (client
+  `agricoop-web`). Customer endpoints take the tenant from `/coops/:code`, never from the token.
+- Cart (`src/cart/cart.tsx`): one coop per cart, quantities as integers, totals with decimal.js; switch
+  coops with `add(..., { replace: true })` so the replacement is atomic.
+- `/v/:token` calls verify once per page load (every call records a scan): keep its query options
+  (`staleTime`/`gcTime: Infinity`, no refetch, no retry).
+- Mock payment URLs come from `mockPaymentPath()` in `@agricoop/shared`.
 
 ## Local dev
 

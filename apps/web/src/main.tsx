@@ -2,12 +2,24 @@ import './i18n';
 import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
+import { WebStorageStateStore } from 'oidc-client-ts';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { AuthProvider, type AuthProviderProps, useAuth } from 'react-oidc-context';
+import { ApiError, setAccessTokenProvider } from './api/fetcher';
+import { safeReturnPath } from './auth/return-path';
+import { CartProvider } from './cart/cart';
+import { Toaster } from './components/ui/sonner';
+import { config } from './config';
 import { routeTree } from './routeTree.gen';
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 2,
+    },
+  },
 });
 
 const router = createRouter({
@@ -23,13 +35,42 @@ declare module '@tanstack/react-router' {
   }
 }
 
+const oidc: AuthProviderProps = {
+  authority: config.oidcAuthority,
+  client_id: config.oidcClientId,
+  redirect_uri: `${window.location.origin}/`,
+  post_logout_redirect_uri: `${window.location.origin}/`,
+  scope: 'openid profile email',
+  automaticSilentRenew: true,
+  userStore: new WebStorageStateStore({ store: window.sessionStorage }),
+  onSigninCallback: (user) => {
+    router.history.replace(
+      safeReturnPath((user?.state as { returnTo?: unknown } | undefined)?.returnTo),
+    );
+  },
+};
+
+/** Feeds the fetch mutator with the customer's token (anonymous browsing sends none). */
+function ApiBridge() {
+  const auth = useAuth();
+  setAccessTokenProvider(() => auth.user?.access_token);
+  return null;
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element missing from index.html');
 
 createRoot(rootElement).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <AuthProvider {...oidc}>
+      <QueryClientProvider client={queryClient}>
+        <CartProvider>
+          <ApiBridge />
+          <RouterProvider router={router} />
+          {/* Bottom on phones: a top toast would cover the header (cart, account). */}
+          <Toaster position="bottom-center" richColors />
+        </CartProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   </StrictMode>,
 );

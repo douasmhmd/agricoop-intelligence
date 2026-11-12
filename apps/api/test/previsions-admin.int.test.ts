@@ -16,7 +16,9 @@ import { createTestApp } from './support/test-app';
 
 const COOP_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const COOP_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-const clock = { now: () => new Date('2026-11-11T12:00:00Z') }; // Wednesday; week of 2026-11-09
+// June 2026 on purpose: before 2026-09-20 every tz data version agrees Morocco is UTC+1 (it moved to
+// permanent UTC+0 on that date, tzdb 2026c), so the week-boundary case below is version-independent.
+const clock = { now: () => new Date('2026-06-10T12:00:00Z') }; // Wednesday; week of 2026-06-08
 
 describe.each([{ rls: false }, { rls: true }])('previsions & admin (rls: $rls)', ({ rls }) => {
   let db: TestDatabase;
@@ -39,11 +41,11 @@ describe.each([{ rls: false }, { rls: true }])('previsions & admin (rls: $rls)',
     await ownerQuery(
       db,
       `INSERT INTO prevision (coop_id, famille, semaine, quantite_prevue, version_modele, date_calcul) VALUES
-         ($1, 'alimentaire', '2026-11-02', 10, 'v1', '2026-10-01'),
-         ($1, 'alimentaire', '2026-11-02', 12.5, 'v2', '2026-11-01'),
-         ($1, 'alimentaire', '2026-11-09', 14, 'v2', '2026-11-01'),
-         ($1, 'cosmetique', '2026-11-16', 3, 'v2', '2026-11-01'),
-         ($2, 'alimentaire', '2026-11-02', 99, 'vB', '2026-11-05')`,
+         ($1, 'alimentaire', '2026-06-01', 10, 'v1', '2026-05-01'),
+         ($1, 'alimentaire', '2026-06-01', 12.5, 'v2', '2026-05-20'),
+         ($1, 'alimentaire', '2026-06-08', 14, 'v2', '2026-05-20'),
+         ($1, 'cosmetique', '2026-06-15', 3, 'v2', '2026-05-20'),
+         ($2, 'alimentaire', '2026-06-01', 99, 'vB', '2026-05-25')`,
       [COOP_A, COOP_B],
     );
     // Sales of A: week of 11-02 (Sunday 23:30 UTC = Monday 00:30 in Casablanca → week of 11-09),
@@ -73,10 +75,10 @@ describe.each([{ rls: false }, { rls: true }])('previsions & admin (rls: $rls)',
         [COOP_A, o!.id, p!.id, qty, synthetic],
       );
     };
-    await sale('2026-11-03T10:00:00Z', 4);
-    await sale('2026-11-08T23:30:00Z', 2); // Monday 00:30 in Casablanca
-    await sale('2026-11-04T10:00:00Z', 50, 'annulee');
-    await sale('2026-11-10T10:00:00Z', 7, 'livree', true);
+    await sale('2026-06-02T10:00:00Z', 4);
+    await sale('2026-06-07T23:30:00Z', 2); // Sunday 23:30 UTC = Monday 00:30 in Casablanca
+    await sale('2026-06-03T10:00:00Z', 50, 'annulee');
+    await sale('2026-06-09T10:00:00Z', 7, 'livree', true);
 
     app = await createTestApp(db, issuer, {
       clock,
@@ -105,7 +107,7 @@ describe.each([{ rls: false }, { rls: true }])('previsions & admin (rls: $rls)',
 
     it('aligns forecasts with weekly sales (Morocco weeks, no cancelled orders)', async () => {
       const res = await api()
-        .get('/api/v1/previsions?depuis=2026-11-02&jusqua=2026-11-16')
+        .get('/api/v1/previsions?depuis=2026-06-01&jusqua=2026-06-15')
         .set(as('a'))
         .expect(200);
       expect(res.body.version_modele).toBe('v2');
@@ -113,17 +115,17 @@ describe.each([{ rls: false }, { rls: true }])('previsions & admin (rls: $rls)',
         {
           famille: 'alimentaire',
           points: [
-            { semaine: '2026-11-02', quantite_prevue: '12.50', quantite_vendue: 4 },
-            { semaine: '2026-11-09', quantite_prevue: '14.00', quantite_vendue: 9 },
-            { semaine: '2026-11-16', quantite_prevue: null, quantite_vendue: 0 },
+            { semaine: '2026-06-01', quantite_prevue: '12.50', quantite_vendue: 4 },
+            { semaine: '2026-06-08', quantite_prevue: '14.00', quantite_vendue: 9 },
+            { semaine: '2026-06-15', quantite_prevue: null, quantite_vendue: 0 },
           ],
         },
         {
           famille: 'cosmetique',
           points: [
-            { semaine: '2026-11-02', quantite_prevue: null, quantite_vendue: 0 },
-            { semaine: '2026-11-09', quantite_prevue: null, quantite_vendue: 0 },
-            { semaine: '2026-11-16', quantite_prevue: '3.00', quantite_vendue: 0 },
+            { semaine: '2026-06-01', quantite_prevue: null, quantite_vendue: 0 },
+            { semaine: '2026-06-08', quantite_prevue: null, quantite_vendue: 0 },
+            { semaine: '2026-06-15', quantite_prevue: '3.00', quantite_vendue: 0 },
           ],
         },
       ]);
@@ -132,13 +134,13 @@ describe.each([{ rls: false }, { rls: true }])('previsions & admin (rls: $rls)',
     it('selects a model version and hides synthetic sales on request', async () => {
       const res = await api()
         .get(
-          '/api/v1/previsions?depuis=2026-11-02&jusqua=2026-11-09&version_modele=v1&synthetic=exclude',
+          '/api/v1/previsions?depuis=2026-06-01&jusqua=2026-06-08&version_modele=v1&synthetic=exclude',
         )
         .set(as('a'))
         .expect(200);
       expect(res.body.series[0].points).toEqual([
-        { semaine: '2026-11-02', quantite_prevue: '10.00', quantite_vendue: 4 },
-        { semaine: '2026-11-09', quantite_prevue: null, quantite_vendue: 2 },
+        { semaine: '2026-06-01', quantite_prevue: '10.00', quantite_vendue: 4 },
+        { semaine: '2026-06-08', quantite_prevue: null, quantite_vendue: 2 },
       ]);
     });
   });

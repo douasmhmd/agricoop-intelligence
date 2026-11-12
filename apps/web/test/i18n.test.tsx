@@ -35,6 +35,9 @@ describe('i18n', () => {
       Object.entries(o).flatMap(([k, v]) =>
         typeof v === 'object' && v !== null ? keys(v as object, `${p}${k}.`) : [`${p}${k}`],
       );
-    expect(keys(ar).sort()).toEqual(keys(fr).sort());
+    // Arabic has more plural forms (zero/one/two/few/many/other): compare base keys.
+    const base = (list: string[]) =>
+      [...new Set(list.map((k) => k.replace(/_(zero|one|two|few|many|other)$/, '')))].sort();
+    expect(base(keys(ar))).toEqual(base(keys(fr)));
   });
 });

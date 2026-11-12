@@ -18,3 +18,4 @@ export * from './tenant-db.js';
 export * from './clock.js';
 export * from './outbox.js';
 export * from './problem/pg-errors.js';
+export * from './tzdata.js';

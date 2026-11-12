@@ -348,9 +348,9 @@ accents, serial numbers).
   deletes the user too.
 - The shadcn CLI generated `import { cn } from "cn"` (an unrelated npm package) and added `next-themes`:
   both removed.
-- **Data-plane note:** the Postgres 16 image's tzdata puts Africa/Casablanca at UTC+0 in November (it is
-  UTC+1 outside Ramadan). Weekly sales are bucketed in TypeScript instead; any SQL in the data plane that
-  converts to `Africa/Casablanca` in this database is one hour off.
+- ~~Data-plane note: the Postgres image's tzdata is stale for Africa/Casablanca.~~ **Wrong — corrected in
+  phase 8:** Morocco moved to permanent UTC+0 on 2026-09-20 (tzdb 2026c). Postgres was right; the local
+  Node 22.22 (tz data 2026a) was stale.
 
 **Tests:** API `test/previsions-admin.int.test.ts` (6 cases × {without RLS, with RLS}: versions per tenant,
 Morocco-week alignment incl. a Sunday-23:30-UTC order, cancelled orders excluded, version selection,
@@ -370,3 +370,46 @@ path). Lint, typecheck and all test suites green.
 
 **Not covered yet:** Playwright end-to-end tests (phase 9). Custom validation messages written in the
 shared Zod schemas stay in French in the Arabic UI.
+
+## Phase 8 — Storefront UI (2026-11-12)
+
+**Done**
+
+- Back office fix (user report): in Arabic the header switch thumb sat outside its track; the thumb now
+  translates in the inline direction (`rtl:data-[state=checked]:-translate-x-…`).
+- `apps/web` storefront (React 19, TanStack Router + Query, Orval hooks, shadcn/ui, FR / AR RTL):
+  - Coops list, per-coop catalogue (stock-aware quantity stepper, add to cart), cart page.
+  - Cart: client-side, one cooperative per cart (orders are per tenant); adding from another coop asks
+    to replace the cart. Kept in `localStorage`, totals with decimal.js.
+  - Checkout (sign-in required, PKCE via Keycloak client `agricoop-web`): delivery details validated
+    with the shared `coordonneesSchema`, order placed through `/coops/:code/commandes`, redirect to the
+    mock payment page; a 409 lists the products that are short.
+  - Order page: payment result (`?paiement=ok|refuse`), status steps, pay now, cancel while allowed.
+  - Account page: the customer's orders per coop.
+  - `/v/:token`: public QR verification — "Authentique", "Attention" (flagged / deactivated / anomaly)
+    or unknown code; fetched exactly once (a reload counts a new scan, a refocus does not).
+  - Toasts at the bottom: at the top they covered the header cart / account buttons on phones.
+- `mockPaymentPath()` in `@agricoop/shared` (used by the API gateway and the storefront).
+- Keycloak realm: `verifyEmail: true` for self-registered customers (also applied to the running realm).
+
+**Time zone correction**
+
+- Morocco moved to **permanent UTC+0 on 2026-09-20** (IANA tzdb 2026c). The local Node 22.22 ships tz
+  data 2026a and still applies UTC+1; Node 24 images (2026e) and Postgres are right.
+- `@agricoop/nest-kit` logs a warning at boot when `process.versions.tz` predates 2026c.
+- Tests that depend on Casablanca offsets now use instants before 2026-09-20, so they pass on any tz
+  data version.
+
+**Tests:** web 15 (cart operations, FR/AR translation completeness with plural forms, `/v/:token`
+rendered through the router with a single verify call), nest-kit tz data check. All suites: shared 32,
+events 15, outbox-relay 11, nest-kit 9, qr 45, api 116, backoffice 15, web 15. Lint and typecheck green;
+OpenAPI unchanged.
+
+**Verified manually (phone viewport 375×812)**
+
+- COOP02 catalogue → cart (250,00 MAD) → sign-in → checkout → mock payment approved → order page shows
+  "Paiement accepté" (status `payee`).
+- `/v/<token>` shows "Authentique" with the scan recorded (appareil `Android`); Arabic RTL rendering.
+  (A COOP02 test order and a demo QR code now exist in the local dev database.)
+
+**Not covered yet:** Playwright end-to-end tests (phase 9).

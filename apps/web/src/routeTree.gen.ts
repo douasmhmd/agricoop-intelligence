@@ -10,33 +10,116 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CompteRouteImport } from './routes/compte'
+import { Route as PanierRouteImport } from './routes/panier'
+import { Route as VTokenRouteImport } from './routes/v/$token'
+import { Route as CoopsCodeIndexRouteImport } from './routes/coops/$code/index'
+import { Route as CoopsCodeCommanderRouteImport } from './routes/coops/$code/commander'
+import { Route as CoopsCodeCommandesCommandeIdRouteImport } from './routes/coops/$code/commandes/$commandeId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompteRoute = CompteRouteImport.update({
+  id: '/compte',
+  path: '/compte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PanierRoute = PanierRouteImport.update({
+  id: '/panier',
+  path: '/panier',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VTokenRoute = VTokenRouteImport.update({
+  id: '/v/$token',
+  path: '/v/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoopsCodeIndexRoute = CoopsCodeIndexRouteImport.update({
+  id: '/coops/$code/',
+  path: '/coops/$code/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoopsCodeCommanderRoute = CoopsCodeCommanderRouteImport.update({
+  id: '/coops/$code/commander',
+  path: '/coops/$code/commander',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoopsCodeCommandesCommandeIdRoute =
+  CoopsCodeCommandesCommandeIdRouteImport.update({
+    id: '/coops/$code/commandes/$commandeId',
+    path: '/coops/$code/commandes/$commandeId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/compte': typeof CompteRoute
+  '/panier': typeof PanierRoute
+  '/v/$token': typeof VTokenRoute
+  '/coops/$code/commander': typeof CoopsCodeCommanderRoute
+  '/coops/$code/': typeof CoopsCodeIndexRoute
+  '/coops/$code/commandes/$commandeId': typeof CoopsCodeCommandesCommandeIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/compte': typeof CompteRoute
+  '/panier': typeof PanierRoute
+  '/v/$token': typeof VTokenRoute
+  '/coops/$code/commander': typeof CoopsCodeCommanderRoute
+  '/coops/$code': typeof CoopsCodeIndexRoute
+  '/coops/$code/commandes/$commandeId': typeof CoopsCodeCommandesCommandeIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/compte': typeof CompteRoute
+  '/panier': typeof PanierRoute
+  '/v/$token': typeof VTokenRoute
+  '/coops/$code/commander': typeof CoopsCodeCommanderRoute
+  '/coops/$code/': typeof CoopsCodeIndexRoute
+  '/coops/$code/commandes/$commandeId': typeof CoopsCodeCommandesCommandeIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/compte'
+    | '/panier'
+    | '/v/$token'
+    | '/coops/$code/commander'
+    | '/coops/$code/'
+    | '/coops/$code/commandes/$commandeId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/compte'
+    | '/panier'
+    | '/v/$token'
+    | '/coops/$code/commander'
+    | '/coops/$code'
+    | '/coops/$code/commandes/$commandeId'
+  id:
+    | '__root__'
+    | '/'
+    | '/compte'
+    | '/panier'
+    | '/v/$token'
+    | '/coops/$code/commander'
+    | '/coops/$code/'
+    | '/coops/$code/commandes/$commandeId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CompteRoute: typeof CompteRoute
+  PanierRoute: typeof PanierRoute
+  VTokenRoute: typeof VTokenRoute
+  CoopsCodeCommanderRoute: typeof CoopsCodeCommanderRoute
+  CoopsCodeIndexRoute: typeof CoopsCodeIndexRoute
+  CoopsCodeCommandesCommandeIdRoute: typeof CoopsCodeCommandesCommandeIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +131,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compte': {
+      id: '/compte'
+      path: '/compte'
+      fullPath: '/compte'
+      preLoaderRoute: typeof CompteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/panier': {
+      id: '/panier'
+      path: '/panier'
+      fullPath: '/panier'
+      preLoaderRoute: typeof PanierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/v/$token': {
+      id: '/v/$token'
+      path: '/v/$token'
+      fullPath: '/v/$token'
+      preLoaderRoute: typeof VTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coops/$code/': {
+      id: '/coops/$code/'
+      path: '/coops/$code'
+      fullPath: '/coops/$code/'
+      preLoaderRoute: typeof CoopsCodeIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coops/$code/commander': {
+      id: '/coops/$code/commander'
+      path: '/coops/$code/commander'
+      fullPath: '/coops/$code/commander'
+      preLoaderRoute: typeof CoopsCodeCommanderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coops/$code/commandes/$commandeId': {
+      id: '/coops/$code/commandes/$commandeId'
+      path: '/coops/$code/commandes/$commandeId'
+      fullPath: '/coops/$code/commandes/$commandeId'
+      preLoaderRoute: typeof CoopsCodeCommandesCommandeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CompteRoute: CompteRoute,
+  PanierRoute: PanierRoute,
+  VTokenRoute: VTokenRoute,
+  CoopsCodeCommanderRoute: CoopsCodeCommanderRoute,
+  CoopsCodeIndexRoute: CoopsCodeIndexRoute,
+  CoopsCodeCommandesCommandeIdRoute: CoopsCodeCommandesCommandeIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { AppProblem } from '@agricoop/nest-kit';
-import { money, toMoneyString } from '@agricoop/shared';
+import { mockPaymentPath, money, toMoneyString } from '@agricoop/shared';
 
 /** A verified payment notification from the provider. */
 export interface PaymentCallback {
@@ -42,7 +42,7 @@ export class CmiMockGateway implements PaymentGateway {
   constructor(private readonly secret: string) {}
 
   checkoutUrl(coopCode: string, commandeId: string): string {
-    return `/api/v1/coops/${encodeURIComponent(coopCode)}/paiements/mock/${commandeId}`;
+    return mockPaymentPath(coopCode, commandeId);
   }
 
   private storeKey(coopCode: string): Buffer {

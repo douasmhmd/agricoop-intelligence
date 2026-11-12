@@ -3,6 +3,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Logger } from 'nestjs-pino';
 import type { Registry } from 'prom-client';
 import { createHttpHistogram, METRICS_REGISTRY } from './metrics.module.js';
+import { tzDataWarning } from './tzdata.js';
 
 export interface ConfigureAppOptions {
   /** e.g. "api/v1" or "qr/v1". Health and metrics stay at the root. */
@@ -12,7 +13,10 @@ export interface ConfigureAppOptions {
 
 /** Applies the cross-cutting setup shared by every NestJS service (also used by tests). */
 export function configureApp(app: NestFastifyApplication, options: ConfigureAppOptions): void {
-  app.useLogger(app.get(Logger));
+  const logger = app.get(Logger);
+  app.useLogger(logger);
+  const tzWarning = tzDataWarning();
+  if (tzWarning) logger.warn(tzWarning, 'TimeZone');
   app.setGlobalPrefix(options.globalPrefix, {
     exclude: [
       { path: 'health/live', method: RequestMethod.GET },

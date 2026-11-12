@@ -9,9 +9,11 @@ import {
 
 describe('dates', () => {
   it('uses the Moroccan calendar day, not UTC', () => {
-    // 23:30 UTC on 31 Dec is already 1 Jan in Casablanca (UTC+1).
-    expect(isoDateInZone(new Date('2026-12-31T23:30:00Z'))).toBe('2027-01-01');
-    expect(isoDateInZone(new Date('2026-12-31T22:30:00Z'))).toBe('2026-12-31');
+    // 23:30 UTC on 31 Dec 2025 is already 1 Jan in Casablanca (UTC+1 then). Instants before
+    // 2026-09-20 are used on purpose: from that date Morocco is on permanent UTC+0 (tzdb 2026c),
+    // and runtimes with older tz data still apply UTC+1 — the test must not depend on that.
+    expect(isoDateInZone(new Date('2025-12-31T23:30:00Z'))).toBe('2026-01-01');
+    expect(isoDateInZone(new Date('2025-12-31T22:30:00Z'))).toBe('2025-12-31');
   });
 
   it('adds days across months and leap years', () => {

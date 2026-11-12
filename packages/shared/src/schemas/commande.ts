@@ -138,3 +138,11 @@ export const statutChangeSchema = z.object({
   statut: z.enum(['payee', 'expediee', 'livree', 'annulee']),
 });
 export type StatutChange = z.infer<typeof statutChangeSchema>;
+
+/**
+ * Hosted payment page of the CMI-style mock for an order (same origin as the storefront). Used by the
+ * API (checkout redirect) and by the storefront ("pay again" after a refused payment).
+ */
+export function mockPaymentPath(coopCode: string, commandeId: string): string {
+  return `/api/v1/coops/${encodeURIComponent(coopCode)}/paiements/mock/${commandeId}`;
+}
