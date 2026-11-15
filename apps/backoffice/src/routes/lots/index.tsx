@@ -46,6 +46,9 @@ import { lotTone } from '@/lib/tones';
 import { usePreferences } from '@/state/preferences';
 
 export const Route = createFileRoute('/lots/')({
+  // ?nouveau=1 opens the "new lot" dialog (command palette action).
+  validateSearch: (search: Record<string, unknown>): { nouveau?: 1 } =>
+    search.nouveau ? { nouveau: 1 } : {},
   component: LotsPage,
 });
 
@@ -56,7 +59,10 @@ function LotsPage() {
   const { synthetic } = usePreferences();
   const [statut, setStatut] = useState<LotStatut | 'tous'>('tous');
   const [page, setPage] = useState(1);
-  const [creating, setCreating] = useState(false);
+  const [creatingState, setCreating] = useState(false);
+  const { nouveau } = Route.useSearch();
+  const creating = creatingState || nouveau === 1;
+  const navigate = useNavigate();
 
   const list = useLotsList({
     page,
@@ -151,7 +157,14 @@ function LotsPage() {
           <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onPage={setPage} />
         </>
       )}
-      {creating && <LotDialog onClose={() => setCreating(false)} />}
+      {creating && (
+        <LotDialog
+          onClose={() => {
+            setCreating(false);
+            if (nouveau) void navigate({ to: '/lots', search: {}, replace: true });
+          }}
+        />
+      )}
     </>
   );
 }

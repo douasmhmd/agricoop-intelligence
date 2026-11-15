@@ -1,146 +1,112 @@
-import { Link, useRouterState } from '@tanstack/react-router';
-import {
-  Boxes,
-  Building2,
-  ChartLine,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Package,
-  QrCode,
-  ShoppingCart,
-  TriangleAlert,
-} from 'lucide-react';
+import { Button, cn, Sheet, SheetContent, SheetTitle } from '@agricoop/ui';
+import { useRouterState } from '@tanstack/react-router';
+import { Database, X } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from 'react-oidc-context';
-import { useCooperativesAdminList } from '@/api/generated/admin/admin';
-import { ok } from '@/api/ok';
 import { useSession } from '@/auth/session';
-import { NativeSelect } from '@/components/common';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { Button, Switch } from '@agricoop/ui';
-import { cn } from '@/lib/utils';
 import { usePreferences } from '@/state/preferences';
-
-interface NavItem {
-  to: string;
-  label: string;
-  icon: typeof Package;
-  adminOnly?: boolean;
-}
+import { CommandPaletteProvider } from './shell/CommandPalette';
+import { CollapseButton, PaletteButton, SidebarBrand, SidebarNav } from './shell/Sidebar';
+import { TopBar } from './shell/TopBar';
 
 /** Routes that do not need a cooperative to be selected (saas_admin). */
-const TENANTLESS = ['/admin'];
+const TENANTLESS = ['/admin', '/styleguide'];
+const COLLAPSE_KEY = 'agricoop.backoffice.sidebarCollapsed';
 
+function readCollapsed(): boolean {
+  try {
+    return window.localStorage.getItem(COLLAPSE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * "Pro dashboard" shell: collapsible sidebar (desktop; a sheet on smaller screens), glass top bar
+ * with breadcrumbs, command palette (Ctrl/⌘ K), synthetic-data banner.
+ */
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
-  const auth = useAuth();
   const session = useSession();
   const prefs = usePreferences();
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const nav: NavItem[] = [
-    { to: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
-    { to: '/produits', label: t('nav.produits'), icon: Package },
-    { to: '/lots', label: t('nav.lots'), icon: Boxes },
-    { to: '/stock/alertes', label: t('nav.alertes'), icon: TriangleAlert },
-    { to: '/commandes', label: t('nav.commandes'), icon: ShoppingCart },
-    { to: '/qr', label: t('nav.qr'), icon: QrCode },
-    { to: '/previsions', label: t('nav.previsions'), icon: ChartLine },
-    { to: '/admin/cooperatives', label: t('nav.admin'), icon: Building2, adminOnly: true },
-  ];
+  const toggleCollapsed = () => {
+    setCollapsed((c) => {
+      try {
+        window.localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1');
+      } catch {
+        // Not remembered: fine.
+      }
+      return !c;
+    });
+  };
   const needsCoop =
     session?.isAdmin && !prefs.adminCoopId && !TENANTLESS.some((p) => pathname.startsWith(p));
 
   return (
-    <div className="flex min-h-dvh">
-      <aside
-        className={cn(
-          'fixed inset-y-0 start-0 z-30 w-64 border-e bg-card p-4 transition-transform lg:static',
-          // Off-canvas drawer below lg only (an unscoped rtl: offset would beat lg:translate-x-0).
-          open ? 'translate-x-0' : 'max-lg:-translate-x-full max-lg:rtl:translate-x-full',
-        )}
-      >
-        <div className="mb-6 px-2 text-lg font-semibold text-primary">{t('app.name')}</div>
-        <nav className="grid gap-1">
-          {nav
-            .filter((item) => !item.adminOnly || session?.isAdmin)
-            .map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setOpen(false)}
-                activeOptions={{ exact: item.to === '/' }}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                activeProps={{ className: 'bg-accent font-medium text-accent-foreground' }}
-              >
-                <item.icon className="size-4" />
-                {item.label}
-              </Link>
-            ))}
-        </nav>
-      </aside>
-      {open && (
-        <div className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={() => setOpen(false)} />
-      )}
+    <CommandPaletteProvider>
+      <div className="flex min-h-dvh bg-background">
+        {/* Desktop sidebar. Its width transitions (the one layout animation, asked for by the
+            design: labels fade, icons stay put). */}
+        <aside
+          className={cn(
+            'sticky top-0 hidden h-dvh shrink-0 flex-col gap-4 border-e border-sidebar-border bg-sidebar px-3 py-4 transition-[width] duration-300 ease-out-expo lg:flex',
+            collapsed ? 'w-[4.25rem]' : 'w-64',
+          )}
+        >
+          <SidebarBrand collapsed={collapsed} />
+          <PaletteButton collapsed={collapsed} />
+          <div className="-mx-1 flex-1 overflow-y-auto px-1">
+            <SidebarNav collapsed={collapsed} layoutGroup="sidebar-desktop" />
+          </div>
+          <CollapseButton collapsed={collapsed} onToggle={toggleCollapsed} />
+        </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex flex-wrap items-center gap-3 border-b bg-background/95 px-4 py-2 backdrop-blur">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setOpen(true)}
-            aria-label={t('nav.menu')}
+        {/* Below lg: the same navigation in a sheet (mounted only while open). */}
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetContent
+            side="start"
+            closeLabel={t('common.close')}
+            className="gap-4 bg-sidebar px-3 py-4"
           >
-            <Menu className="size-5" />
-          </Button>
-          {session?.isAdmin && <CoopSwitcher />}
-          <label className="ms-auto flex items-center gap-2 text-sm">
-            <Switch
-              checked={prefs.showSynthetic}
-              onCheckedChange={prefs.setShowSynthetic}
-              aria-label={t('synthetic.toggle')}
-            />
-            <span className="hidden sm:inline">{t('synthetic.toggle')}</span>
-          </label>
-          <LanguageSwitcher />
-          <span className="hidden text-sm text-muted-foreground md:inline">{session?.name}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => void auth.signoutRedirect()}
-            aria-label={t('auth.signOut')}
-          >
-            <LogOut className="size-4 rtl:rotate-180" />
-          </Button>
-        </header>
-        <main className="mx-auto w-full max-w-7xl flex-1 p-4 md:p-6">
-          {needsCoop ? <p className="text-muted-foreground">{t('admin.chooseCoop')}</p> : children}
-        </main>
+            <SheetTitle className="sr-only">{t('nav.menu')}</SheetTitle>
+            <SidebarBrand collapsed={false} />
+            <PaletteButton collapsed={false} />
+            <SidebarNav layoutGroup="sidebar-mobile" onNavigate={() => setMobileOpen(false)} />
+          </SheetContent>
+        </Sheet>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopBar onOpenMenu={() => setMobileOpen(true)} />
+          {prefs.showSynthetic && <SyntheticBanner onHide={() => prefs.setShowSynthetic(false)} />}
+          <main className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            {needsCoop ? (
+              <p className="text-muted-foreground">{t('admin.chooseCoop')}</p>
+            ) : (
+              children
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </CommandPaletteProvider>
   );
 }
 
-/** saas_admin: pick the cooperative to act on (sent as X-Coop-Id, audited by the API). */
-function CoopSwitcher() {
+function SyntheticBanner({ onHide }: { onHide: () => void }) {
   const { t } = useTranslation();
-  const prefs = usePreferences();
-  const coops = ok(useCooperativesAdminList().data) ?? [];
   return (
-    <NativeSelect
-      aria-label={t('admin.coop')}
-      value={prefs.adminCoopId ?? ''}
-      onChange={(e) => prefs.setAdminCoopId(e.target.value || undefined)}
-      className="max-w-56"
+    <div
+      role="note"
+      className="flex items-center gap-3 border-b border-dashed border-muted-foreground/30 bg-[repeating-linear-gradient(135deg,color-mix(in_oklch,var(--muted-foreground)_7%,transparent)_0_6px,transparent_6px_12px)] px-4 py-1.5 text-xs text-muted-foreground sm:px-6 lg:px-8"
     >
-      <option value="">{t('admin.chooseCoopShort')}</option>
-      {coops.map((c) => (
-        <option key={c.coop_id} value={c.coop_id}>{`${c.code} — ${c.nom}`}</option>
-      ))}
-    </NativeSelect>
+      <Database className="size-3.5 shrink-0" aria-hidden />
+      <span className="min-w-0 flex-1 truncate">{t('synthetic.banner')}</span>
+      <Button variant="ghost" size="xs" onClick={onHide} className="text-muted-foreground">
+        <X aria-hidden /> {t('synthetic.hide')}
+      </Button>
+    </div>
   );
 }

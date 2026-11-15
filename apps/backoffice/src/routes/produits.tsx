@@ -7,7 +7,7 @@ import {
   produitUpdateSchema,
 } from '@agricoop/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -51,6 +51,9 @@ import {
 import { usePreferences } from '@/state/preferences';
 
 export const Route = createFileRoute('/produits')({
+  // ?nouveau=1 opens the "new product" dialog (command palette action).
+  validateSearch: (search: Record<string, unknown>): { nouveau?: 1 } =>
+    search.nouveau ? { nouveau: 1 } : {},
   component: ProduitsPage,
 });
 
@@ -62,6 +65,13 @@ function ProduitsPage() {
   const { synthetic } = usePreferences();
   const [famille, setFamille] = useState<(typeof FAMILLES)[number] | ''>('');
   const [editing, setEditing] = useState<Produit | 'new' | null>(null);
+  const { nouveau } = Route.useSearch();
+  const navigate = useNavigate();
+  const dialog = editing ?? (nouveau ? 'new' : null);
+  const closeDialog = () => {
+    setEditing(null);
+    if (nouveau) void navigate({ to: '/produits', search: {}, replace: true });
+  };
   const queryClient = useQueryClient();
   const errorMessage = useErrorMessage();
 
@@ -195,12 +205,12 @@ function ProduitsPage() {
         </div>
       )}
 
-      {editing && (
+      {dialog && (
         <ProduitDialog
-          produit={editing === 'new' ? undefined : editing}
-          onClose={() => setEditing(null)}
+          produit={dialog === 'new' ? undefined : dialog}
+          onClose={closeDialog}
           onSaved={() => {
-            setEditing(null);
+            closeDialog();
             void refresh();
           }}
         />

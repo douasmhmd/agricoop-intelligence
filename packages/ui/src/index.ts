@@ -13,6 +13,7 @@ export * from './components/badge';
 export * from './components/brand';
 export * from './components/button';
 export * from './components/card';
+export * from './components/command';
 export * from './components/dialog';
 export * from './components/dropdown-menu';
 export * from './components/input';

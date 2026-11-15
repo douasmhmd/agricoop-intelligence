@@ -17,7 +17,21 @@
     "commandes": "الطلبيات",
     "qr": "رموز QR",
     "previsions": "التوقعات",
-    "admin": "التعاونيات"
+    "admin": "التعاونيات",
+    "groups": {
+      "pilotage": "القيادة",
+      "catalogue": "الكتالوج",
+      "ventes": "المبيعات",
+      "tracabilite": "التتبع",
+      "plateforme": "المنصة"
+    },
+    "collapse": "طي القائمة",
+    "expand": "توسيع القائمة",
+    "breadcrumb": "مسار التنقل",
+    "backoffice": "لوحة الإدارة",
+    "lot": "الدفعة",
+    "commande": "الطلبية",
+    "styleguide": "نظام التصميم"
   },
   "auth": {
     "signingIn": "جارٍ تسجيل الدخول…",
@@ -48,7 +62,9 @@
   "synthetic": {
     "toggle": "البيانات الاصطناعية",
     "badge": "اصطناعي",
-    "hint": "بيانات مولّدة (مجموعة عرض توضيحي) وليست بيانات حقيقية"
+    "hint": "بيانات مولّدة (مجموعة عرض توضيحي) وليست بيانات حقيقية",
+    "banner": "تُعرض البيانات التجريبية وتحمل شارة «اصطناعي».",
+    "hide": "إخفاء"
   },
   "dashboard": {
     "title": "لوحة القيادة",
@@ -58,7 +74,34 @@
     "expired": "دفعات منتهية الصلاحية في المخزون",
     "expiring30": "دفعات تنتهي صلاحيتها خلال 30 يومًا",
     "recentOrders": "آخر الطلبيات",
-    "expiryAlerts": "تنبيهات انتهاء الصلاحية"
+    "expiryAlerts": "تنبيهات انتهاء الصلاحية",
+    "hello": "مرحبًا {{name}}",
+    "revenue": "رقم المعاملات",
+    "orders": "الطلبيات",
+    "stockValue": "قيمة المخزون",
+    "stockValueHint": "بسعر التكلفة، الدفعات المتوفرة",
+    "lotsWatch": "دفعات للمراقبة",
+    "lotsWatchHint": "منتهية الصلاحية أو خلال أقل من 30 يومًا",
+    "scans": "عمليات مسح QR",
+    "last30": "آخر 30 يومًا",
+    "vsPrevious": "مقارنة بالـ30 يومًا السابقة",
+    "partial": "محسوب على أحدث {{count}} طلبية.",
+    "salesVsForecast": "المبيعات والتوقعات",
+    "salesVsForecastHint": "الوحدات المبيعة أسبوعيًا، كل الفئات",
+    "sold": "المبيعة",
+    "forecast": "المتوقعة",
+    "stockByFamille": "المخزون حسب الفئة",
+    "stockByFamilleHint": "الوحدات المخزنة في الدفعات المتوفرة",
+    "scansByCity": "عمليات المسح حسب المدينة",
+    "noData": "لا بيانات بعد.",
+    "viewAll": "عرض الكل",
+    "units_zero": "لا وحدات",
+    "units_one": "وحدة واحدة",
+    "units_two": "وحدتان",
+    "units_few": "{{count}} وحدات",
+    "units_many": "{{count}} وحدة",
+    "units_other": "{{count}} وحدة",
+    "noChange": "مستقر"
   },
   "famille": {
     "alimentaire": "غذائي",
@@ -348,5 +391,26 @@
     "glass": "زجاج مصنفر",
     "ornament": "زخرفة",
     "checkout": "إتمام الطلب"
+  },
+  "palette": {
+    "open": "بحث…",
+    "placeholder": "انتقل إلى صفحة أو نفّذ إجراءً…",
+    "empty": "لا نتائج.",
+    "navigation": "التنقل",
+    "actions": "إجراءات",
+    "preferences": "التفضيلات",
+    "cooperatives": "التعاونيات",
+    "showSynthetic": "إظهار البيانات الاصطناعية",
+    "hideSynthetic": "إخفاء البيانات الاصطناعية",
+    "theme": "المظهر: {{theme}}",
+    "language": "اللغة: {{language}}",
+    "hint": "Ctrl K"
+  },
+  "user": {
+    "menu": "قائمة الحساب",
+    "role": {
+      "manager": "مسيّر التعاونية",
+      "admin": "مسؤول المنصة"
+    }
   }
 }

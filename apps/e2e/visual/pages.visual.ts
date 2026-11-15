@@ -12,6 +12,8 @@ import {
 /** Pages to capture. Grows with each redesign phase. */
 const PAGES: { name: string; url: string; auth?: boolean; ready: string; open?: string }[] = [
   { name: 'styleguide', url: `${BACKOFFICE_URL}/styleguide`, auth: true, ready: 'h1' },
+  { name: 'bo-dashboard', url: `${BACKOFFICE_URL}/`, auth: true, ready: 'h1' },
+  { name: 'bo-produits', url: `${BACKOFFICE_URL}/produits`, auth: true, ready: 'h1' },
   { name: 'web-home', url: `${WEB_URL}/`, ready: 'h1' },
   { name: 'web-catalogue', url: `${WEB_URL}/coops/COOP02`, ready: 'article h2' },
   {
@@ -32,6 +34,9 @@ for (const p of PAGES) {
       const context = await browser.newContext({
         storageState: p.auth ? STORAGE_STATE : undefined,
         colorScheme: v.theme,
+        // Final states, not mid-animation (full-page captures resize the page, which replays
+        // chart entry animations). Motion design is reviewed in the browser, not here.
+        reducedMotion: 'reduce',
       });
       const page = await context.newPage();
       await applyVariant(page, v);

@@ -607,3 +607,33 @@ under the production CSP: no violation. Screenshots: `apps/e2e/screenshots/redes
 
 **Limits (API, not UI):** product pages cannot show lot or expiry dates (the public catalogue has
 none; the QR page shows them), and product photos are per category until products have their own.
+
+## UI redesign — phase 4: back-office shell, command palette, dashboard (2026-11-13)
+
+**Done**
+
+- Shell: collapsible sidebar (icon-only mode remembered per browser; labels stay as screen-reader
+  text so links keep their names; nav grouped Pilotage / Catalogue / Ventes / Traçabilité /
+  Plateforme; active highlight sliding with Motion `layoutId`, gold marker), the same navigation in a
+  sheet below `lg`, glass top bar with breadcrumbs, coop switcher (saas_admin), synthetic-data switch,
+  theme toggle, language switch and user menu; striped banner while synthetic data is shown.
+- Command palette (`@agricoop/ui` Command on cmdk, Ctrl/⌘ K): every page, "Nouveau produit" /
+  "Nouveau lot" (new optional `?nouveau=1` on `/produits` and `/lots` opens the create dialog),
+  cooperatives (saas_admin), synthetic data, theme, language, sign out.
+- Dashboard: KPI cards with NumberFlow count-up (revenue and orders over 30 days with change vs the
+  previous 30 days and daily sparklines, stock value at cost, lots to watch, QR scans with change),
+  action pills (orders to ship / awaiting payment), Recharts restyled (sales vs forecast: gradient
+  area + dashed forecast; stock by famille; scans by city; brand tooltip, animated entry off with
+  reduced motion), recent orders and expiry alerts.
+- No aggregate endpoint exists, so figures are computed in the browser from the existing lists with
+  bounded paging (`src/dashboard/metrics.ts`, unit-tested: exact money, Casablanca days, deltas,
+  stock value, scan windows, forecast gaps); a note appears if the order history is truncated.
+
+**Fixes found while reviewing the screenshots**
+
+- Brand title repeated "Back-office"; empty comparisons showed "— —"; KPI grid left a gap at 1440 px;
+  forecast legend shown without forecast data; dark switch thumb looked "off".
+- Screenshot captures now use reduced motion (full-page captures replayed chart animations).
+
+**Tests:** back office 21 (6 new). All suites green, Playwright e2e 3/3 (no selector change), the
+back-office image checked under the production CSP (no violation).

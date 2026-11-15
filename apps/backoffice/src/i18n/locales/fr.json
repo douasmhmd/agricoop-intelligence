@@ -17,7 +17,21 @@
     "commandes": "Commandes",
     "qr": "QR codes",
     "previsions": "Prévisions",
-    "admin": "Coopératives"
+    "admin": "Coopératives",
+    "groups": {
+      "pilotage": "Pilotage",
+      "catalogue": "Catalogue",
+      "ventes": "Ventes",
+      "tracabilite": "Traçabilité",
+      "plateforme": "Plateforme"
+    },
+    "collapse": "Réduire le menu",
+    "expand": "Déplier le menu",
+    "breadcrumb": "Fil d'Ariane",
+    "backoffice": "Back-office",
+    "lot": "Lot",
+    "commande": "Commande",
+    "styleguide": "Système de design"
   },
   "auth": {
     "signingIn": "Connexion…",
@@ -44,7 +58,9 @@
   "synthetic": {
     "toggle": "Données synthétiques",
     "badge": "Synthétique",
-    "hint": "Donnée générée (jeu de démonstration), pas une donnée réelle"
+    "hint": "Donnée générée (jeu de démonstration), pas une donnée réelle",
+    "banner": "Les données de démonstration sont affichées et portent le badge « Synthétique ».",
+    "hide": "Masquer"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -54,7 +70,30 @@
     "expired": "Lots périmés en stock",
     "expiring30": "Lots périmant sous 30 jours",
     "recentOrders": "Dernières commandes",
-    "expiryAlerts": "Alertes de péremption"
+    "expiryAlerts": "Alertes de péremption",
+    "hello": "Bonjour {{name}}",
+    "revenue": "Chiffre d'affaires",
+    "orders": "Commandes",
+    "stockValue": "Valeur du stock",
+    "stockValueHint": "au coût de revient, lots disponibles",
+    "lotsWatch": "Lots à surveiller",
+    "lotsWatchHint": "périmés ou à moins de 30 jours",
+    "scans": "Scans QR",
+    "last30": "30 derniers jours",
+    "vsPrevious": "vs 30 jours précédents",
+    "partial": "Calculé sur les {{count}} commandes les plus récentes.",
+    "salesVsForecast": "Ventes et prévisions",
+    "salesVsForecastHint": "Unités vendues par semaine, toutes familles",
+    "sold": "Vendues",
+    "forecast": "Prévues",
+    "stockByFamille": "Stock par famille",
+    "stockByFamilleHint": "Unités en stock dans les lots disponibles",
+    "scansByCity": "Scans par ville",
+    "noData": "Pas encore de données.",
+    "viewAll": "Tout voir",
+    "units_one": "{{count}} unité",
+    "units_other": "{{count}} unités",
+    "noChange": "stable"
   },
   "famille": {
     "alimentaire": "Alimentaire",
@@ -344,5 +383,26 @@
     "glass": "Verre dépoli",
     "ornament": "Ornement",
     "checkout": "Commander"
+  },
+  "palette": {
+    "open": "Rechercher…",
+    "placeholder": "Aller à une page, lancer une action…",
+    "empty": "Aucun résultat.",
+    "navigation": "Navigation",
+    "actions": "Actions",
+    "preferences": "Préférences",
+    "cooperatives": "Coopératives",
+    "showSynthetic": "Afficher les données synthétiques",
+    "hideSynthetic": "Masquer les données synthétiques",
+    "theme": "Thème : {{theme}}",
+    "language": "Langue : {{language}}",
+    "hint": "Ctrl K"
+  },
+  "user": {
+    "menu": "Menu du compte",
+    "role": {
+      "manager": "Gestionnaire de coopérative",
+      "admin": "Administrateur de la plateforme"
+    }
   }
 }

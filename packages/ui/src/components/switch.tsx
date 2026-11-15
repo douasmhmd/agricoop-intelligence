@@ -24,7 +24,7 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          'pointer-events-none block rounded-full bg-card shadow-[0_1px_3px_oklch(0_0_0/0.25)] ring-0 transition-transform duration-300 ease-spring',
+          'pointer-events-none block rounded-full bg-white shadow-[0_1px_3px_oklch(0_0_0/0.25)] ring-0 transition-transform duration-300 ease-spring',
           'group-data-[size=default]/switch:size-5 group-data-[size=sm]/switch:size-4',
           'data-[state=unchecked]:translate-x-0',
           'group-data-[size=default]/switch:data-[state=checked]:translate-x-4 rtl:group-data-[size=default]/switch:data-[state=checked]:-translate-x-4',
