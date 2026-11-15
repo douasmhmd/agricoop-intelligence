@@ -34,3 +34,15 @@ export const qrAlerteTone: Record<QrAlerte, Tone> = {
   scans_multiples: 'warning',
   villes_multiples: 'danger',
 };
+
+export const stockTone: Record<'rupture' | 'critique' | 'attention' | 'ok', Tone> = {
+  rupture: 'danger',
+  critique: 'warning',
+  attention: 'info',
+  ok: 'success',
+};
+
+export const qrNiveauTone: Record<'signale' | 'a_verifier', Tone> = {
+  signale: 'danger',
+  a_verifier: 'warning',
+};

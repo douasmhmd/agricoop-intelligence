@@ -1,6 +1,7 @@
 import {
   Boxes,
   Building2,
+  ChartColumn,
   ChartLine,
   LayoutDashboard,
   type LucideIcon,
@@ -34,6 +35,7 @@ export function useNavGroups(): NavGroup[] {
       label: t('nav.groups.pilotage'),
       items: [
         { to: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
+        { to: '/analyses', label: t('nav.analyses'), icon: ChartColumn },
         { to: '/previsions', label: t('nav.previsions'), icon: ChartLine },
       ],
     },
@@ -78,6 +80,7 @@ export function useBreadcrumbs(pathname: string): { label: string; to?: string }
     ['/stock/alertes', t('nav.alertes')],
     ['/commandes', t('nav.commandes'), t('nav.commande')],
     ['/qr', t('nav.qr')],
+    ['/analyses', t('nav.analyses')],
     ['/previsions', t('nav.previsions')],
     ['/admin/cooperatives', t('nav.admin')],
     ['/styleguide', t('nav.styleguide')],

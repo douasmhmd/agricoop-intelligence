@@ -14,6 +14,14 @@ const PAGES: { name: string; url: string; auth?: boolean; ready: string; open?: 
   { name: 'styleguide', url: `${BACKOFFICE_URL}/styleguide`, auth: true, ready: 'h1' },
   { name: 'bo-dashboard', url: `${BACKOFFICE_URL}/`, auth: true, ready: 'h1' },
   { name: 'bo-produits', url: `${BACKOFFICE_URL}/produits`, auth: true, ready: 'h1' },
+  // Gold-layer data: run with VISUAL_USER=manager.coop01 after `pnpm db:restore`.
+  { name: 'bo-analyses-ventes', url: `${BACKOFFICE_URL}/analyses`, auth: true, ready: 'h1' },
+  ...(['stocks', 'clients', 'qr'] as const).map((onglet) => ({
+    name: `bo-analyses-${onglet}`,
+    url: `${BACKOFFICE_URL}/analyses?onglet=${onglet}`,
+    auth: true,
+    ready: 'h1',
+  })),
   { name: 'web-home', url: `${WEB_URL}/`, ready: 'h1' },
   { name: 'web-catalogue', url: `${WEB_URL}/coops/COOP02`, ready: 'article h2' },
   {
@@ -47,6 +55,11 @@ for (const p of PAGES) {
       }
       await expect(page.locator(p.ready).first()).toBeVisible({ timeout: 30_000 });
       await expect(page.locator('html')).toHaveAttribute('dir', v.lang === 'ar' ? 'rtl' : 'ltr');
+      // Back office: data loaded once no <Loading> indicator is left (the storefront uses
+      // role="status" for lasting messages too).
+      if (p.auth) {
+        await expect(page.locator('main [role="status"]')).toHaveCount(0, { timeout: 30_000 });
+      }
       await settle(page);
       // Quality bar: no horizontal scroll at any width.
       const overflow = await page.evaluate(

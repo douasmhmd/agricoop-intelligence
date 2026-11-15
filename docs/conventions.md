@@ -234,6 +234,10 @@ generate` regenerates the TS types.
 - Dev proxies and nginx forward only `/api/v1/` and `/qr/v1/`: app routes like `/qr` stay with the SPA.
 - After sign-in the user returns to the page they asked for (`returnTo` in the OIDC state, validated
   by `safeReturnPath`).
+- `/analyses` reads the gold layer (`useAnalytics*` hooks, `src/analytics/`). Its amounts are JSON
+  numbers: sum with `sumAmounts`, display with `formatAmount` (signed), never `<Money>` (strings
+  only, non-negative). Model labels (segments, QR levels) go through `segmentKey` / `qrNiveauKey`.
+  Its data is COOP01's (shared seed): check it as `manager.coop01`.
 
 ## Storefront (apps/web)
 

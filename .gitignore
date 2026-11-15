@@ -36,6 +36,8 @@ coverage/
 .env.local
 .env.*.local
 playwright-report/
+# TanStack Router generator scratch files
+.tanstack/
 test-results/
 apps/*/openapi.json
 

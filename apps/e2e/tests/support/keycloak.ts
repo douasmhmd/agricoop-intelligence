@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 /** Demo users of apps/keycloak/realm-agricoop.json (password: KC_DEMO_PASSWORD, local only). */
-export type DemoUser = 'client.demo' | 'manager.coop02';
+export type DemoUser = 'client.demo' | 'manager.coop01' | 'manager.coop02';
 
 export function demoPassword(): string {
   const password = process.env.KC_DEMO_PASSWORD;

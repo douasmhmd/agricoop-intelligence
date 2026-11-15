@@ -719,3 +719,35 @@ timed out once while every suite ran in parallel beside the stack; it passed twi
 **Notes for the teammate:** please keep COOP01's id stable in future dumps (the Keycloak tenant is
 bound to it). The two forecast versions have the same `date_calcul`, so "latest version" picks the
 production model (one future week); the backtest is selectable in the back office.
+
+## Back-office analytics pages (2026-11-15)
+
+New page **Analyses** (`/analyses`, nav group Pilotage, command palette, breadcrumb) on the data
+plane's `/api/analytics/*` endpoints (generated Orval hooks, no API or contract change). Four tabs, the
+current one in the URL (`?onglet=stocks|clients|qr`):
+
+- **Ventes:** campaign picker (October → September, grouped client-side from `kpi-mensuels`), six
+  figures (revenue, margin, margin rate, orders, average basket, new customers), monthly
+  revenue/margin bars with the order count, monthly table with totals.
+- **Stocks:** counts per alert level, products by urgency (rupture → critique → attention → ok, then
+  shortest cover), lots near expiry, unsold-stock risk (labelled as an estimate, with its total),
+  stock quality check ("Aucune anomalie" when empty). Shows the API's `X-Date-Reference` date.
+- **Clientèle:** share of customers vs share of revenue per segment (chart + table); "Voir" opens a
+  side sheet with the segment's customers (pseudonymous id, recency, frequency, amount; largest first,
+  200 rows max). No contact details: the analytics role cannot read `client_pii`.
+- **Contrefaçon QR:** model alerts filtered by level (all / signalé / à vérifier), with a link to the
+  QR codes page. Flagging stays a manager decision there.
+
+**Choices:** analytics amounts come as JSON numbers (contract); sums go through decimal.js and a
+signed formatter (`formatAmount`; `formatMad` accepts non-negative amounts only). Segment and QR
+level labels from the model are mapped to FR/AR keys (`analyses.segments.*`, `analyses.qr.niveaux.*`);
+the anomaly text stays as the data plane writes it (French). Month labels use `fr-FR` (`fr-MA`
+abbreviates June and July alike). New error key `analytics_indisponible` (503 when the gold layer is
+not configured). The visual suite takes `VISUAL_USER=manager.coop01` to capture the analytics tabs
+on the shared seed.
+
+**Tests:** `apps/backoffice/test/analytics.test.ts` (campaigns, exact totals, severity order, segment
+order and keys, month labels, negative amounts, reference date header). All checks green, Playwright
+e2e 3/3; screenshots of the four tabs × desktop/mobile × light/dark × FR/AR with no horizontal
+overflow (`VISUAL_PHASE=analyses`). As before, the relay integration test timed out once in the
+parallel run and passed alone.

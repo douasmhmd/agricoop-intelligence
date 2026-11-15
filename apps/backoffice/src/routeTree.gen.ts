@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnalysesRouteImport } from './routes/analyses'
 import { Route as PrevisionsRouteImport } from './routes/previsions'
 import { Route as ProduitsRouteImport } from './routes/produits'
 import { Route as QrRouteImport } from './routes/qr'
@@ -24,6 +25,11 @@ import { Route as StockAlertesRouteImport } from './routes/stock/alertes'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysesRoute = AnalysesRouteImport.update({
+  id: '/analyses',
+  path: '/analyses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrevisionsRoute = PrevisionsRouteImport.update({
@@ -79,6 +85,7 @@ const StockAlertesRoute = StockAlertesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analyses': typeof AnalysesRoute
   '/previsions': typeof PrevisionsRoute
   '/produits': typeof ProduitsRoute
   '/qr': typeof QrRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analyses': typeof AnalysesRoute
   '/previsions': typeof PrevisionsRoute
   '/produits': typeof ProduitsRoute
   '/qr': typeof QrRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analyses': typeof AnalysesRoute
   '/previsions': typeof PrevisionsRoute
   '/produits': typeof ProduitsRoute
   '/qr': typeof QrRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analyses'
     | '/previsions'
     | '/produits'
     | '/qr'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analyses'
     | '/previsions'
     | '/produits'
     | '/qr'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/analyses'
     | '/previsions'
     | '/produits'
     | '/qr'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalysesRoute: typeof AnalysesRoute
   PrevisionsRoute: typeof PrevisionsRoute
   ProduitsRoute: typeof ProduitsRoute
   QrRoute: typeof QrRoute
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analyses': {
+      id: '/analyses'
+      path: '/analyses'
+      fullPath: '/analyses'
+      preLoaderRoute: typeof AnalysesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/previsions': {
@@ -257,6 +277,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalysesRoute: AnalysesRoute,
   PrevisionsRoute: PrevisionsRoute,
   ProduitsRoute: ProduitsRoute,
   QrRoute: QrRoute,

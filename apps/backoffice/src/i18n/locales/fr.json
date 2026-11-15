@@ -11,6 +11,7 @@
   "nav": {
     "menu": "Menu",
     "dashboard": "Tableau de bord",
+    "analyses": "Analyses",
     "produits": "Produits",
     "lots": "Lots et stock",
     "alertes": "Alertes péremption",
@@ -269,6 +270,122 @@
     "vendue": "Vendu",
     "weekOf": "Semaine du {{date}}"
   },
+  "analyses": {
+    "title": "Analyses",
+    "subtitle": "Indicateurs calculés par la plateforme de données (ventes, stocks, clientèle, traçabilité).",
+    "tabs": {
+      "ventes": "Ventes",
+      "stocks": "Stocks",
+      "clients": "Clientèle",
+      "qr": "Contrefaçon QR"
+    },
+    "empty": "Pas encore de données pour cette analyse.",
+    "total": "Total",
+    "dataAt": "Données au",
+    "ventes": {
+      "campagne": "Campagne",
+      "period_one": "Campagne oléicole d'octobre à septembre · {{count}} mois de données",
+      "period_other": "Campagne oléicole d'octobre à septembre · {{count}} mois de données",
+      "ca": "Chiffre d'affaires",
+      "marge": "Marge",
+      "tauxMarge": "Taux de marge",
+      "commandes": "Commandes",
+      "panierMoyen": "Panier moyen",
+      "nouveauxClients": "Nouveaux clients",
+      "clientsActifs": "Clients actifs",
+      "mois": "Mois",
+      "chart": "Chiffre d'affaires et marge par mois",
+      "chartHint": "Barres en MAD, ligne : nombre de commandes.",
+      "detail": "Détail mensuel"
+    },
+    "stocks": {
+      "intro": "Couverture = stock disponible ÷ ventes moyennes par jour.",
+      "title": "Couverture du stock par produit",
+      "hint": "Les produits les plus urgents en premier.",
+      "niveau": "Niveau",
+      "produit": "Produit",
+      "famille": "Famille",
+      "disponible": "Disponible",
+      "venteJour": "Ventes / jour",
+      "couverture": "Couverture (jours)",
+      "niveaux": {
+        "rupture": "Rupture",
+        "critique": "Critique",
+        "attention": "Attention",
+        "ok": "Correct"
+      }
+    },
+    "lots": {
+      "title": "Lots à surveiller",
+      "hint": "Lots en stock proches de leur date de péremption.",
+      "none": "Aucun lot proche de la péremption.",
+      "lot": "Lot",
+      "peremption": "Péremption",
+      "jours": "Jours restants",
+      "stock": "Stock"
+    },
+    "risque": {
+      "title": "Risque d'invendus (estimation)",
+      "hint": "Unités qui ne seront probablement pas vendues avant péremption au rythme actuel.",
+      "none": "Aucun lot à risque au rythme de vente actuel.",
+      "unites": "Unités à risque",
+      "valeur": "Valeur à risque"
+    },
+    "anomalies": {
+      "title": "Contrôle qualité du stock",
+      "hint": "Lots dont le stock calculé est incohérent : à corriger, jamais masqués.",
+      "none": "Aucune anomalie de stock.",
+      "anomalie": "Anomalie"
+    },
+    "clients": {
+      "chart": "Poids de chaque segment",
+      "chartHint": "Part des clients comparée à la part du chiffre d'affaires.",
+      "title": "Segments de clientèle",
+      "hint_one": "{{count}} client segmenté par récence, fréquence et montant.",
+      "hint_other": "{{count}} clients segmentés par récence, fréquence et montant.",
+      "segment": "Segment",
+      "clients": "Clients",
+      "partClients": "Part des clients",
+      "partCa": "Part du CA",
+      "voir": "Voir",
+      "privacy": "Identifiants pseudonymes uniquement : aucune coordonnée n'est exposée par les analyses.",
+      "sheetSummary_one": "{{count}} client",
+      "sheetSummary_other": "{{count}} clients",
+      "client": "Client",
+      "recence": "Récence (jours)",
+      "frequence": "Commandes",
+      "montant": "Montant",
+      "truncated": "Seuls les {{count}} plus gros clients sont affichés."
+    },
+    "segments": {
+      "revendeurs": "Revendeurs",
+      "fideles": "Fidèles",
+      "a_reactiver": "À réactiver",
+      "recents": "Récents",
+      "occasionnels_inactifs": "Occasionnels inactifs"
+    },
+    "qr": {
+      "title": "Contrefaçon présumée",
+      "hint": "QR codes scannés dans des villes éloignées en peu de temps (modèle de détection). Le signalement reste votre décision, depuis la page QR codes.",
+      "tous": "Toutes",
+      "niveaux": {
+        "signale": "Signalé",
+        "a_verifier": "À vérifier"
+      },
+      "open": "Ouvrir les QR codes",
+      "count_one": "{{count}} alerte",
+      "count_other": "{{count}} alertes",
+      "none": "Aucune alerte.",
+      "niveau": "Niveau",
+      "qr": "QR code",
+      "scans": "Scans",
+      "villes": "Villes",
+      "distance": "Distance max.",
+      "duree": "Durée (jours)",
+      "date": "Analysé le",
+      "km": "{{value}} km"
+    }
+  },
   "admin": {
     "title": "Coopératives",
     "subtitle": "Locataires de la plateforme",
@@ -314,7 +431,8 @@
     "email_non_verifie": "Adresse e-mail non vérifiée.",
     "montant_incorrect": "Montant incorrect.",
     "signature_invalide": "Signature invalide.",
-    "qr_inconnu": "QR code inconnu."
+    "qr_inconnu": "QR code inconnu.",
+    "analytics_indisponible": "Les analyses ne sont pas disponibles pour le moment (plateforme de données non connectée)."
   },
   "theme": {
     "group": "Thème",

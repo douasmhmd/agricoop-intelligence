@@ -16,14 +16,13 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { AXIS } from './chart-style';
 import type { ForecastPoint } from './metrics';
 
 /*
  * Recharts restyled: soft grid, no axis lines, gradient areas, branded tooltip, animated entry
  * (off with reduced motion). Charts stay left-to-right inside Arabic pages (time reads LTR).
  */
-
-const AXIS = { fontSize: 11, fill: 'var(--muted-foreground)' } as const;
 
 export function ChartCard({
   title,
@@ -69,7 +68,7 @@ interface TooltipEntry {
   color?: string;
 }
 
-function BrandTooltip({
+export function BrandTooltip({
   active,
   payload,
   label,
