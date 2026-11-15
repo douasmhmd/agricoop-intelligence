@@ -86,3 +86,18 @@ export async function ownerQuery<R extends pg.QueryResultRow = pg.QueryResultRow
     await client.end();
   }
 }
+
+/** Runs SQL with any connection URL (e.g. a restricted role). */
+export async function queryUrl<R extends pg.QueryResultRow = pg.QueryResultRow>(
+  url: string,
+  text: string,
+  values: unknown[] = [],
+): Promise<R[]> {
+  const client = new pg.Client({ connectionString: url });
+  await client.connect();
+  try {
+    return (await client.query<R>(text, values)).rows;
+  } finally {
+    await client.end();
+  }
+}

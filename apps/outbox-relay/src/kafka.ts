@@ -1,4 +1,4 @@
-import { EVENT_TYPES, topicFor } from '@agricoop/events';
+import { EVENT_TOPIC } from '@agricoop/events';
 import { Kafka, logLevel, Partitioners, type Producer } from 'kafkajs';
 import type { Logger } from 'pino';
 import { DEAD_LETTER_TOPIC, type EventPublisher, type OutboundMessage } from './relay';
@@ -11,13 +11,13 @@ export interface KafkaPublisherOptions {
 
 export interface KafkaPublisher extends EventPublisher {
   connected(): boolean;
-  /** Creates the v1 topics + dead letter if missing (idempotent). */
+  /** Creates the event topic + dead letter if missing (idempotent). */
   ensureTopics(partitions: number, replicationFactor: number): Promise<void>;
   disconnect(): Promise<void>;
 }
 
 /** All topics the relay may write to. */
-export const RELAY_TOPICS = [...EVENT_TYPES.map((t) => topicFor(t)), DEAD_LETTER_TOPIC];
+export const RELAY_TOPICS = [EVENT_TOPIC, DEAD_LETTER_TOPIC];
 
 /**
  * KafkaJS producer for Redpanda: idempotent, acks = all, Java-compatible murmur2 partitioner (so the

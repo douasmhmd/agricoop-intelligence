@@ -2,7 +2,7 @@
  * Outbox relay against real Postgres (with and without RLS) and Redpanda (Testcontainers).
  */
 import { randomUUID } from 'node:crypto';
-import { assertValidEvent, type EventEnvelope, topicFor } from '@agricoop/events';
+import { assertValidEvent, EVENT_TOPIC, type EventEnvelope } from '@agricoop/events';
 import { ownerQuery, startTestDatabase, type TestDatabase } from '@agricoop/testing';
 import { RedpandaContainer, type StartedRedpandaContainer } from '@testcontainers/redpanda';
 import { Kafka, logLevel } from 'kafkajs';
@@ -16,14 +16,15 @@ const COOP_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const COOP_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const logger = pino({ level: 'silent' });
 
-const lotCree = (numero: string) => ({
+/** A stock_modifie payload as in the shared contract; `code_produit` tells test rows apart. */
+const stockModifie = (code: string) => ({
+  mouvement_id: randomUUID(),
   lot_id: randomUUID(),
   produit_id: randomUUID(),
-  numero,
-  date_fabrication: '2026-11-01',
-  date_peremption: '2028-04-24',
-  quantite_initiale: 10,
-  niveau_qr: 'lot',
+  code_produit: code,
+  type_mouvement: 'entree',
+  quantite: 10,
+  date_mouvement: '2026-11-01T09:00:00.000Z',
 });
 
 async function insertEvent(db: TestDatabase, coop: string, type: string, payload: unknown) {
@@ -112,16 +113,16 @@ describe.each([{ rls: false }, { rls: true }])('outbox relay (rls: $rls)', ({ rl
     await Promise.all([db?.stop(), redpanda?.stop()]);
   });
 
-  it('publishes envelopes keyed by coop_id, marks rows published, and is a no-op when drained', async () => {
-    const a1 = await insertEvent(db, COOP_A, 'lot_cree', lotCree('A-1'));
-    const b1 = await insertEvent(db, COOP_B, 'lot_cree', lotCree('B-1'));
-    const a2 = await insertEvent(db, COOP_A, 'lot_cree', lotCree('A-2'));
+  it('publishes contract envelopes to agricoop.events keyed by coop_id, marks rows published, and is a no-op when drained', async () => {
+    const a1 = await insertEvent(db, COOP_A, 'stock_modifie', stockModifie('A-1'));
+    const b1 = await insertEvent(db, COOP_B, 'stock_modifie', stockModifie('B-1'));
+    const a2 = await insertEvent(db, COOP_A, 'stock_modifie', stockModifie('A-2'));
 
     expect(await relayBatch({ pool, publisher, batchSize: 100, logger })).toBe(3);
     expect(await unpublished(db)).toBe(0);
     expect(await relayBatch({ pool, publisher, batchSize: 100, logger })).toBe(0);
 
-    const messages = await consume(brokers, [topicFor('lot_cree')], 3);
+    const messages = await consume(brokers, [EVENT_TOPIC], 3);
     const byId = new Map(
       messages.map((m) => [(JSON.parse(m.value) as EventEnvelope).event_id, m] as const),
     );
@@ -132,15 +133,21 @@ describe.each([{ rls: false }, { rls: true }])('outbox relay (rls: $rls)', ({ rl
       expect(m.key).toBe(envelope.coop_id);
       expect(m.headers).toMatchObject({
         event_id: envelope.event_id,
-        type: 'lot_cree',
+        type: 'stock_modifie',
         version: '1',
       });
-      expect(envelope).toMatchObject({ version: 1, is_synthetic: false });
+      // Exactly the envelope of the shared contract: nothing else (e.g. no is_synthetic).
+      expect(Object.keys(envelope).sort()).toEqual(
+        ['coop_id', 'event_id', 'occurred_at', 'payload', 'type', 'version'].sort(),
+      );
     }
   });
 
   it('dead-letters invalid events without their payload, and keeps the queue moving', async () => {
-    const bad = await insertEvent(db, COOP_A, 'lot_cree', { ...lotCree('BAD'), email: 'x@y.ma' });
+    const bad = await insertEvent(db, COOP_A, 'stock_modifie', {
+      ...stockModifie('BAD'),
+      email: 'x@y.ma',
+    });
     const unknown = await insertEvent(db, COOP_B, 'inconnu', { foo: 1 });
     expect(await relayBatch({ pool, publisher, batchSize: 100, logger })).toBe(2);
     expect(await unpublished(db)).toBe(0);
@@ -153,7 +160,7 @@ describe.each([{ rls: false }, { rls: true }])('outbox relay (rls: $rls)', ({ rl
   });
 
   it('leaves rows unpublished when publishing fails (at-least-once)', async () => {
-    await insertEvent(db, COOP_A, 'lot_cree', lotCree('RETRY'));
+    await insertEvent(db, COOP_A, 'stock_modifie', stockModifie('RETRY'));
     const failing = { publish: () => Promise.reject(new Error('broker down')) };
     await expect(relayBatch({ pool, publisher: failing, batchSize: 100, logger })).rejects.toThrow(
       'broker down',
@@ -166,7 +173,9 @@ describe.each([{ rls: false }, { rls: true }])('outbox relay (rls: $rls)', ({ rl
   it('concurrent relays (SKIP LOCKED) publish every event exactly once', async () => {
     const ids = new Set<string>();
     for (let i = 0; i < 40; i++) {
-      ids.add(await insertEvent(db, i % 2 ? COOP_A : COOP_B, 'lot_cree', lotCree(`C-${i}`)));
+      ids.add(
+        await insertEvent(db, i % 2 ? COOP_A : COOP_B, 'stock_modifie', stockModifie(`C-${i}`)),
+      );
     }
     const seen: string[] = [];
     const recording = {

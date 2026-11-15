@@ -11,6 +11,370 @@ servers:
   - url: /
 tags: []
 paths:
+  /api/analytics/alertes-qr:
+    get:
+      operationId: Analytics_alertesQr
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: niveau
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - signalé
+              - à vérifier
+      responses:
+        "200":
+          description: Latest alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlerteQr"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - analytics
+  /api/analytics/anomalies-stock:
+    get:
+      operationId: Analytics_anomaliesStock
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lots in anomaly
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnomalieStock"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - analytics
+  /api/analytics/kpi-mensuels:
+    get:
+      operationId: Analytics_kpiMensuels
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: campagne
+          required: false
+          in: query
+          schema:
+            pattern: ^\d{4}-\d{4}$
+            type: string
+      responses:
+        "200":
+          description: One item per month
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KpiMensuel"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - analytics
+  /api/analytics/lots-a-surveiller:
+    get:
+      operationId: Analytics_lotsASurveiller
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: X-Date-Reference
+          in: header
+          description: Reference date of the analysis
+          schema:
+            type: string
+      responses:
+        "200":
+          description: By expiry date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LotSurveille"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - analytics
+  /api/analytics/previsions:
+    get:
+      operationId: Analytics_previsions
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: famille
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - alimentaire
+              - cosmetique
+              - coffret
+      responses:
+        "200":
+          description: Per famille and week
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrevisionAnalytics"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - analytics
+  /api/analytics/risque-invendus:
+    get:
+      operationId: Analytics_risqueInvendus
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: X-Date-Reference
+          in: header
+          description: Reference date of the analysis
+          schema:
+            type: string
+      responses:
+        "200":
+          description: By value at risk
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RisqueInvendu"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - analytics
+  /api/analytics/segments:
+    get:
+      operationId: Analytics_segments
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: One item per segment
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Segment"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - analytics
+  /api/analytics/segments/{segment}/clients:
+    get:
+      operationId: Analytics_clientsDuSegment
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: segment
+          required: true
+          in: path
+          schema:
+            type: string
+            enum:
+              - Revendeurs
+              - Fidèles
+              - À réactiver
+              - Récents
+              - Occasionnels inactifs
+      responses:
+        "200":
+          description: By amount
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClientSegment"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - analytics
+  /api/analytics/stocks:
+    get:
+      operationId: Analytics_stocks
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: X-Date-Reference
+          in: header
+          description: Reference date of the analysis
+          schema:
+            type: string
+      responses:
+        "200":
+          description: One item per product
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockProduit"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - analytics
   /api/v1/admin/cooperatives:
     get:
       operationId: CooperativesAdmin_list
@@ -1516,6 +1880,85 @@ components:
         - jours_restants
         - niveau
       additionalProperties: false
+    AlerteQr:
+      type: object
+      properties:
+        qr_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        niveau:
+          type: string
+          enum:
+            - signalé
+            - à vérifier
+        nb_scans:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        nb_villes:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        distance_max_km:
+          type: number
+        duree_jours:
+          type: number
+        date_analyse:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+      required:
+        - qr_id
+        - niveau
+        - nb_scans
+        - nb_villes
+        - distance_max_km
+        - duree_jours
+        - date_analyse
+      additionalProperties: false
+    AnomalieStock:
+      type: object
+      properties:
+        produit:
+          type: string
+        lot:
+          type: string
+        stock_actuel:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        anomalie:
+          type: string
+      required:
+        - produit
+        - lot
+        - stock_actuel
+        - anomalie
+      additionalProperties: false
+    ClientSegment:
+      type: object
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        recence_j:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        frequence:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        montant_mad:
+          type: number
+      required:
+        - client_id
+        - recence_j
+        - frequence
+        - montant_mad
+      additionalProperties: false
     Commande:
       type: object
       properties:
@@ -2044,6 +2487,43 @@ components:
         - nom
         - province
       additionalProperties: false
+    KpiMensuel:
+      type: object
+      properties:
+        mois:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        commandes:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        ca_mad:
+          type: number
+        marge_mad:
+          type: number
+        taux_marge:
+          type: number
+        panier_moyen_mad:
+          type: number
+        clients_actifs:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        nouveaux_clients:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - mois
+        - commandes
+        - ca_mad
+        - marge_mad
+        - taux_marge
+        - panier_moyen_mad
+        - clients_actifs
+        - nouveaux_clients
+      additionalProperties: false
     Lot:
       type: object
       properties:
@@ -2214,6 +2694,32 @@ components:
         - page
         - pageSize
       additionalProperties: false
+    LotSurveille:
+      type: object
+      properties:
+        produit:
+          type: string
+        lot:
+          type: string
+        date_peremption:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        stock_actuel:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        jours_avant_peremption:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+      required:
+        - produit
+        - lot
+        - date_peremption
+        - stock_actuel
+        - jours_avant_peremption
+      additionalProperties: false
     Me:
       type: object
       properties:
@@ -2324,6 +2830,42 @@ components:
       required:
         - mouvement
         - stock_apres
+      additionalProperties: false
+    PrevisionAnalytics:
+      type: object
+      properties:
+        famille:
+          type: string
+          enum:
+            - alimentaire
+            - cosmetique
+            - coffret
+        semaine:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        quantite_prevue:
+          type: number
+        ventes:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        ecart:
+          type: number
+          nullable: true
+        semaine_a_venir:
+          type: boolean
+        version_modele:
+          type: string
+      required:
+        - famille
+        - semaine
+        - quantite_prevue
+        - ventes
+        - ecart
+        - semaine_a_venir
+        - version_modele
       additionalProperties: false
     Previsions:
       type: object
@@ -2811,6 +3353,38 @@ components:
             - signale
       required:
         - statut
+    RisqueInvendu:
+      type: object
+      properties:
+        produit:
+          type: string
+        lot:
+          type: string
+        date_peremption:
+          type: string
+          format: date
+          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))$
+        stock_actuel:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        vente_moy_jour:
+          type: number
+        unites_a_risque:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        valeur_a_risque_mad:
+          type: number
+      required:
+        - produit
+        - lot
+        - date_peremption
+        - stock_actuel
+        - vente_moy_jour
+        - unites_a_risque
+        - valeur_a_risque_mad
+      additionalProperties: false
     Scan:
       type: object
       properties:
@@ -2855,6 +3429,25 @@ components:
         - nb_scans
         - nb_qr
       additionalProperties: false
+    Segment:
+      type: object
+      properties:
+        segment:
+          type: string
+        clients:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        part_clients:
+          type: number
+        part_ca:
+          type: number
+      required:
+        - segment
+        - clients
+        - part_clients
+        - part_ca
+      additionalProperties: false
     StatutChange:
       type: object
       properties:
@@ -2867,6 +3460,43 @@ components:
             - annulee
       required:
         - statut
+    StockProduit:
+      type: object
+      properties:
+        produit:
+          type: string
+        famille:
+          type: string
+          enum:
+            - alimentaire
+            - cosmetique
+            - coffret
+        stock_disponible:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        vente_moy_jour:
+          type: number
+        couverture_jours:
+          type: integer
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+          nullable: true
+        niveau_alerte:
+          type: string
+          enum:
+            - rupture
+            - critique
+            - attention
+            - ok
+      required:
+        - produit
+        - famille
+        - stock_disponible
+        - vente_moy_jour
+        - couverture_jours
+        - niveau_alerte
+      additionalProperties: false
     Verification:
       type: object
       properties:

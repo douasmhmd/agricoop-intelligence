@@ -17,6 +17,7 @@
     "format:check": "prettier --check .",
     "db:pull": "pnpm --filter @agricoop/db db:pull",
     "db:seed": "docker compose -f docker-compose.yml -f docker-compose.apps.yml run --rm db-seed",
+    "db:gold": "pnpm --filter @agricoop/testing build && node packages/testing/scripts/load-gold.mjs",
     "contracts:openapi": "turbo run openapi:export --filter=@agricoop/api --filter=@agricoop/qr && node scripts/merge-openapi.mjs && turbo run api:generate",
     "api:generate": "turbo run api:generate",
     "prepare": "husky"

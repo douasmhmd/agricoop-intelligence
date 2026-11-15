@@ -80,12 +80,33 @@ How to work in this repo: the binding conventions for the application scope.
 
 ## Events
 
-- Types v1: `commande_creee`, `commande_statut_modifie`, `stock_modifie`, `lot_cree`, `qr_scanne`.
-- Envelope: `{ event_id, type, version, coop_id, occurred_at, is_synthetic, payload }`; JSON Schema per type in
-  `contracts/events/<type>.v1.schema.json`, documented in `contracts/events/README.md`.
-- Topic `agricoop.<type>.v1`, key = `coop_id`, at-least-once (consumers dedupe on `event_id`).
-- The event contract is consumed by the data plane (Redpanda Connect → Azure): changing it needs the
-  teammate's approval. A unit test fails if any PII key appears in a payload.
+- Contract (written by the data plane, the source of truth): `contracts/events/evenements.schema.json`,
+  explained in `contracts/events/README.md`. `@agricoop/events` generates its types from it and
+  validates with Ajv; the Python pipeline (`data/pipelines/`) validates against the same file.
+- Types: `commande_creee`, `stock_modifie` (one per `mouvement_stock` row), `qr_scanne`. No other
+  types (status changes and lot creation have no event of their own).
+- Envelope: exactly `{ event_id, coop_id, type, version: 1, occurred_at, payload }`
+  (no `is_synthetic`); payloads have no extra field (`additionalProperties: false`).
+- Topic `agricoop.events`, key `coop_id`, at least once (consumers dedupe on `event_id`); invalid rows
+  go to `agricoop.events.dead_letter` without payload. Run one relay at a time (ours or
+  `data/pipelines/relais_outbox.py`: same output).
+- Amounts are JSON numbers in events (`prix_unitaire_mad`): convert from the decimal string at the
+  boundary only. Never personal data (unit-tested).
+- Changing the contract needs both planes (CODEOWNERS). Keep `contracts/api/analytics.yaml` and
+  `evenements.schema.json` byte-for-byte as the teammate wrote them (they are in `.prettierignore`).
+
+## Analytics (data plane gold layer)
+
+- `contracts/api/analytics.yaml` (data plane) defines read-only endpoints at `/api/analytics/*`,
+  OUTSIDE `/api/v1` (`ANALYTICS_PREFIX_EXCLUDE` passed to `configureApp`; dev proxy and nginx
+  forward `/api/analytics/`). Implemented in `apps/api/src/analytics/`.
+- The API reads the `gold` views through a separate pool as `analytics_reader` (SELECT on `gold`
+  only, never application tables or `client_pii`), env `ANALYTICS_DATABASE_URL`; without it the
+  endpoints answer 503 `analytics_indisponible`. Every query filters on the request tenant.
+- The gold layer is built by the data plane's SQL (`data/bi/01..04`), which needs the ML tables of
+  the notebooks first: `pnpm db:gold` (dev) and `loadGoldLayer()` (tests) create them with the DDL
+  extracted from `data/ml/*.ipynb`, then run the SQL unchanged. Never edit `data/`.
+- Responses follow the contract: numbers as JSON numbers, `X-Date-Reference` header on stock routes.
 
 ## Workflow
 
@@ -252,7 +273,9 @@ generate` regenerates the TS types.
 
 - `cp .env.example .env`, then
   `docker compose -f docker-compose.yml -f docker-compose.apps.yml up -d` (infra: Postgres 5433,
-  Keycloak 8080, Redpanda 19092, Console 8088, Mailpit 8025) and `pnpm dev`.
+  Keycloak 8080, Redpanda 19092, Console 8088, Mailpit 8025) and `pnpm dev`. Postgres and Redpanda are
+  defined in the root `docker-compose.yml` (data plane, read-only for us); `docker-compose.apps.yml`
+  only references them.
   Add `--profile apps` to also run the app images.
 - Demo coops `COOP01` / `COOP02` have fixed ids (`apps/dev/seed`), matching the Keycloak group
   attribute `tenant_id`. Demo users are listed in `.env.example`.

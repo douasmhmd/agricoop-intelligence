@@ -216,13 +216,14 @@ describe.each([{ rls: false }, { rls: true }])('catalogue & stock (rls: $rls)', 
         'SELECT type, payload FROM outbox WHERE coop_id = $1 ORDER BY created_at',
         [COOP_A],
       );
-      expect(events.map((e) => e.type)).toEqual(['lot_cree', 'stock_modifie']);
-      expect(events[1]?.payload).toMatchObject({
+      // Shared contract: a new lot is published as its production entry (no lot event).
+      expect(events.map((e) => e.type)).toEqual(['stock_modifie']);
+      expect(events[0]?.payload).toMatchObject({
         lot_id: ids.lot1,
         type_mouvement: 'entree',
-        stock_apres: 120,
-        motif: 'creation_lot',
+        quantite: 120,
       });
+      expect(typeof events[0]?.payload.code_produit).toBe('string');
     });
 
     it('creates serial units 1..N for unit-level QR products', async () => {
@@ -424,7 +425,7 @@ describe.each([{ rls: false }, { rls: true }])('catalogue & stock (rls: $rls)', 
   });
 
   describe('outbox', () => {
-    it('every event is a valid v1 envelope without personal data', async () => {
+    it('every event is a valid envelope of the shared contract, without personal data', async () => {
       const rows = await ownerQuery<{
         event_id: string;
         type: EventType;
@@ -441,7 +442,6 @@ describe.each([{ rls: false }, { rls: true }])('catalogue & stock (rls: $rls)', 
             version: 1,
             coop_id: row.coop_id,
             occurred_at: row.created_at.toISOString(),
-            is_synthetic: false,
             payload: row.payload,
           }),
         ).not.toThrow();

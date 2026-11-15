@@ -40,6 +40,13 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    # Analytics API (contracts/api/analytics.yaml): same api service, outside /api/v1.
+    location /api/analytics/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     location /qr/v1/ {
         proxy_pass ${QR_UPSTREAM};
         proxy_set_header Host $host;

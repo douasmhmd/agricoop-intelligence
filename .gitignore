@@ -48,3 +48,8 @@ apps/*/src/api/generated/
 # Visual review output and Playwright auth state
 apps/e2e/screenshots/
 apps/e2e/.auth/
+
+# Data plane (teammate): MLflow tracking and the local lake
+data/ml/mlflow.db
+data/ml/mlruns/
+data/lake/

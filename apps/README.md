@@ -59,7 +59,7 @@ Both options use the same ports (stop one before starting the other).
 | http://localhost:3000/docs         | API Swagger UI (dev mode only)               |
 | http://localhost:3001/docs         | QR service Swagger UI (dev mode only)        |
 | http://localhost:8080              | Keycloak (admin: `KC_ADMIN_USER` / `KC_ADMIN_PASSWORD`) |
-| http://localhost:8088              | Redpanda Console (topics `agricoop.*.v1`)    |
+| http://localhost:8088              | Redpanda Console (topic `agricoop.events`)   |
 | http://localhost:8025              | Mailpit (e-mails sent by the apps)           |
 | `localhost:5433`                   | Postgres (root `docker-compose.yml`)         |
 
@@ -82,6 +82,26 @@ pnpm db:seed
   http://localhost:5173/v/DemoTokenSignale000001 (flagged by the cooperative).
 
 Payments use a CMI-style mock: checkout redirects to a local page where you approve or decline.
+
+### Analytics (data plane gold layer)
+
+The back office's analytics endpoints (`/api/analytics/*`, contract `contracts/api/analytics.yaml`)
+read the data plane's `gold` views as the read-only role `analytics_reader`. Build the layer once
+(and again after the data plane changes `data/bi/`):
+
+```bash
+pnpm db:gold
+```
+
+It creates the notebooks' ML tables if missing (they stay empty until the data plane runs
+`data/ml/*.ipynb`) and runs `data/bi/01..04_*.sql` unchanged.
+
+### Events
+
+The apps write `commande_creee`, `stock_modifie` and `qr_scanne` events to the outbox following the
+data plane's contract (`contracts/events/evenements.schema.json`); `outbox-relay` publishes them to
+the `agricoop.events` topic. The data plane's own tools (`data/pipelines/`: Python relay,
+pseudonymiser, order simulator) work on the same outbox and topic: run one relay at a time.
 
 ## Checks
 

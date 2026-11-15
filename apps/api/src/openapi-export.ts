@@ -4,6 +4,7 @@
  * No database connection is opened: the pg pool is lazy.
  */
 import 'reflect-metadata';
+import { ANALYTICS_PREFIX_EXCLUDE } from './analytics/analytics.module';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildOpenApiDocument, configureApp, parseEnv } from '@agricoop/nest-kit';
@@ -24,7 +25,10 @@ async function exportOpenApi(): Promise<void> {
     new FastifyAdapter(),
     { logger: false },
   );
-  configureApp(app, { globalPrefix: GLOBAL_PREFIX });
+  configureApp(app, {
+    globalPrefix: GLOBAL_PREFIX,
+    prefixExclude: ANALYTICS_PREFIX_EXCLUDE,
+  });
   await app.init();
   const document = buildOpenApiDocument(app, OPENAPI_INFO);
   writeFileSync(join(process.cwd(), 'openapi.json'), `${JSON.stringify(document, null, 2)}\n`);

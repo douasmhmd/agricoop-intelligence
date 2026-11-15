@@ -637,3 +637,56 @@ none; the QR page shows them), and product photos are per category until product
 
 **Tests:** back office 21 (6 new). All suites green, Playwright e2e 3/3 (no selector change), the
 back-office image checked under the production CSP (no violation).
+
+## Data-plane sync: event contract, analytics API, shared infra (2026-11-15)
+
+The teammate added the data plane's work (BI SQL, ML notebooks, Python pipeline) and two shared
+contracts. Imported unchanged: `data/bi`, `data/ml`, `data/pipelines`, `contracts/api/analytics.yaml`,
+`contracts/events/evenements.schema.json`, and their root `docker-compose.yml` (now with Redpanda).
+`.gitignore` / `.gitattributes` merged (their entries added, ours kept); their two contract files
+are in `.prettierignore` so our tooling never reformats them.
+
+**Event contract — apps aligned to the data plane's** (`evenements.schema.json`; their relay,
+pseudonymiser and simulator validate against it):
+
+- One topic `agricoop.events` (was one topic per type, `agricoop.<type>.v1`), key `coop_id`.
+- Envelope exactly `event_id, coop_id, type, version (1), occurred_at, payload` (no `is_synthetic`).
+- Three types with their exact payloads: `commande_creee` (lines with `code_produit`, unit price as a
+  JSON number), `stock_modifie` (adds `code_produit`; no `stock_apres` / `motif` / `commande_id`),
+  `qr_scanne` (scan only: no verdict, never the token).
+- No longer emitted (not in the contract): `commande_statut_modifie`, `lot_cree`. A new lot is still
+  published as its `stock_modifie` entry; a cancellation as its `stock_modifie` re-entries.
+- `@agricoop/events` now generates its types from that single file (`$defs` per type) and validates
+  with Ajv; our per-type schemas were removed; `contracts/events/README.md` rewritten.
+- `outbox-relay` publishes the contract envelope to `agricoop.events`; invalid rows go to
+  `agricoop.events.dead_letter` without payload. Our relay and theirs are interchangeable (run one).
+
+**Analytics API** (`contracts/api/analytics.yaml`): the nine read-only endpoints implemented in
+`apps/api/src/analytics/` at `/api/analytics/*` (outside `/api/v1`, as the contract says), for coop
+managers, filtered on the request tenant, reading the `gold` views through a separate pool as
+`analytics_reader` (`ANALYTICS_DATABASE_URL`; 503 `analytics_indisponible` without it), numbers as
+JSON numbers, `X-Date-Reference` on stock routes, alert levels computed by the API. Response schemas
+in `@agricoop/shared` (`schemas/analytics.ts`), OpenAPI regenerated. Dev proxy and nginx forward
+`/api/analytics/`.
+
+**Gold layer in dev and tests**: their SQL needs the notebooks' ML tables first. `loadGoldLayer()`
+(`@agricoop/testing`) and `pnpm db:gold` create them with the DDL extracted from `data/ml/*.ipynb` at
+run time, then run `data/bi/01..04_*.sql` unchanged.
+
+**Compose**: Redpanda now comes from the root file (`agricoop-redpanda`, v24.2.7); our duplicate
+service and its volume were removed from `docker-compose.apps.yml`. Locally, the old Redpanda data
+volume (written by v26) made v24 refuse to start ("incompatible downgrade"): Redpanda was recreated
+with fresh storage; the old volume `agricoop-intelligence-main_redpanda-data` is no longer used.
+
+**Tests:** events 14 (contract file = embedded copy, types match the contract, payloads and
+envelopes valid/invalid, no PII), relay (contract envelope on `agricoop.events`, dead letter), API
+order/stock/QR event assertions updated, analytics 8 integration tests against the real gold SQL
+(exact KPIs, coverage levels, lots, risk, anomalies, forecasts, segments, QR alerts, tenant isolation,
+`analytics_reader` denied on application tables and `client_pii`, 503, paths), shared 34. All 42
+tasks green, Playwright e2e 3/3. Verified on the running stack: a QR scan and the teammate's
+`evenements_test.sql` → the valid event on `agricoop.events`, the one with a phone number on the dead
+letter without payload; real orders / lots published contract-shaped events.
+
+**For the teammate:** the contract's security note says the token carries `coop_id` and `role`;
+our Keycloak tokens carry `tenant_id` and realm roles, and the API maps them (no change needed on
+their side). `prevision` keeps being read by `/api/v1/previsions` as before.

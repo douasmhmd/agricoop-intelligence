@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertNoPii, findPiiKeys, PiiInPayloadError, topicFor } from '../src/index.js';
+import { assertNoPii, EVENT_TOPIC, findPiiKeys, PiiInPayloadError } from '../src/index.js';
 
 describe('PII guard', () => {
   it('accepts a payload with IDs, city and amounts', () => {
@@ -33,9 +33,8 @@ describe('PII guard', () => {
   });
 });
 
-describe('topicFor', () => {
-  it('builds agricoop.<type>.v<version>', () => {
-    expect(topicFor('commande_creee')).toBe('agricoop.commande_creee.v1');
-    expect(topicFor('qr_scanne', 2)).toBe('agricoop.qr_scanne.v2');
+describe('EVENT_TOPIC', () => {
+  it('is the topic the data plane consumes', () => {
+    expect(EVENT_TOPIC).toBe('agricoop.events');
   });
 });

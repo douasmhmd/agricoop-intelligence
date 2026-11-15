@@ -1,18 +1,18 @@
 import {
   assertValidEvent,
   CURRENT_EVENT_VERSION,
+  EVENT_TOPIC,
   EVENT_TYPES,
   type EventEnvelope,
   type EventType,
   InvalidEventError,
-  topicFor,
 } from '@agricoop/events';
 import type { Pool } from 'pg';
 import type { Logger } from 'pino';
 import { Counter, Gauge, type Registry } from 'prom-client';
 
 /** Events that cannot be published as-is (unknown type, invalid payload) go here, WITHOUT payload. */
-export const DEAD_LETTER_TOPIC = 'agricoop.dead_letter.v1';
+export const DEAD_LETTER_TOPIC = `${EVENT_TOPIC}.dead_letter`;
 
 export interface OutboundMessage {
   topic: string;
@@ -73,15 +73,18 @@ interface OutboxJson {
   published_at?: string | null;
 }
 
-/** Builds the published envelope from an outbox row (contracts/events/README.md). */
+/**
+ * Builds the published envelope from an outbox row: exactly the fields of the shared contract
+ * (contracts/events/evenements.schema.json), nothing more — optional outbox columns such as
+ * `is_synthetic` (proposal 002) stay in the database.
+ */
 export function toEnvelope(row: OutboxJson): EventEnvelope {
   return {
     event_id: row.event_id,
-    type: row.type as EventType,
-    version: row.version ?? CURRENT_EVENT_VERSION,
     coop_id: row.coop_id,
+    type: row.type as EventType,
+    version: CURRENT_EVENT_VERSION,
     occurred_at: new Date(row.created_at).toISOString(),
-    is_synthetic: row.is_synthetic ?? false,
     payload: row.payload,
   };
 }
@@ -100,7 +103,7 @@ function toMessage(row: OutboxJson): { message: OutboundMessage; deadLetter: boo
     assertValidEvent(envelope as EventEnvelope & Record<string, unknown>);
     return {
       message: {
-        topic: topicFor(envelope.type, envelope.version),
+        topic: EVENT_TOPIC,
         key: row.coop_id,
         value: JSON.stringify(envelope),
         headers,

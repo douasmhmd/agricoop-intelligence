@@ -119,19 +119,15 @@ export class VerificationService {
       );
       const resultat = alertes.length === 0 ? 'authentique' : 'alerte';
 
+      // Shared contract (contracts/events/evenements.schema.json): the scan itself, never the
+      // token. The verdict is not published (the data plane derives anomalies on its side).
       await appendEvent(scope, 'qr_scanne', {
         scan_id: scan.scan_id,
         qr_id: q.qr_id,
         niveau,
-        lot_id: l.lot_id,
-        unite_id: q.unite_id,
-        produit_id: p.produit_id,
         date_scan: toIsoTimestamp(scan.date_scan),
         ville,
         appareil,
-        statut_qr: statut,
-        resultat,
-        alertes,
       });
 
       return {

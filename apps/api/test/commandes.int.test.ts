@@ -153,23 +153,39 @@ describe.each([{ rls: false }, { rls: true }])('orders (rls: $rls)', ({ rls }) =
         0, 8, 50,
       ]);
 
-      const events = await ownerQuery<{ type: string; payload: Record<string, unknown> }>(
+      // Shared contract: one commande_creee with every line (code, FEFO lot, unit price as a
+      // number), and one stock_modifie per stock exit, in the same transaction.
+      const [created] = await ownerQuery<{ payload: Record<string, unknown> }>(
         db,
-        `SELECT type, payload FROM outbox WHERE payload->>'commande_id' = $1 ORDER BY created_at`,
+        `SELECT payload FROM outbox WHERE type = 'commande_creee' AND payload->>'commande_id' = $1`,
         [id.order1],
       );
-      expect(events.map((e) => e.type)).toEqual([
-        'commande_creee',
-        'stock_modifie',
-        'stock_modifie',
-        'stock_modifie',
-      ]);
-      expect(events.slice(1).map((e) => e.payload.stock_apres)).toEqual([0, 8, 3]);
-      expect(events[0]?.payload).toMatchObject({
+      expect(created?.payload).toMatchObject({
         type_client: 'particulier',
         ville: 'Rabat',
         canal: 'web',
       });
+      expect(
+        (
+          created?.payload.lignes as {
+            code_produit: string;
+            quantite: number;
+            prix_unitaire_mad: number;
+          }[]
+        )
+          .map((l) => `${l.code_produit}:${l.quantite}:${l.prix_unitaire_mad}`)
+          .sort(),
+      ).toEqual(['HVE-1L:2:75', 'HVE-1L:3:75', 'SAV-100:2:25']);
+      const exits = await ownerQuery<{ payload: Record<string, unknown> }>(
+        db,
+        `SELECT o.payload FROM outbox o
+           JOIN mouvement_stock m ON m.mouvement_id = (o.payload->>'mouvement_id')::uuid
+           JOIN commande c ON c.date_commande = m.date_mouvement
+          WHERE o.type = 'stock_modifie' AND m.type_mouvement = 'sortie' AND c.commande_id = $1
+          ORDER BY o.created_at`,
+        [id.order1],
+      );
+      expect(exits.map((e) => e.payload.quantite)).toEqual([3, 2, 2]);
     });
 
     it('never puts personal data in events', async () => {
@@ -296,11 +312,12 @@ describe.each([{ rls: false }, { rls: true }])('orders (rls: $rls)', ({ rls }) =
         .set(as('manager'))
         .expect(200);
       expect(detail.body.statut).toBe('payee');
+      // Status changes have no event in the shared contract: nothing else was written.
       expect(
         await count(
-          `SELECT count(*)::int AS n FROM outbox WHERE type = 'commande_statut_modifie' AND payload->>'commande_id' = '${id.order1}'`,
+          `SELECT count(*)::int AS n FROM outbox WHERE type NOT IN ('commande_creee', 'stock_modifie', 'qr_scanne')`,
         ),
-      ).toBe(1);
+      ).toBe(0);
       await new Promise((r) => setTimeout(r, 200)); // notification is sent after commit
       expect(notifications.sent.map((n) => `${n.channel}:${n.to}`)).toEqual([
         'email:alice@example.ma',
@@ -339,6 +356,11 @@ describe.each([{ rls: false }, { rls: true }])('orders (rls: $rls)', ({ rls }) =
 
     it('cancellation restocks the lots once, with compensating events', async () => {
       const before = await stockOf(id.l2!);
+      const entreeEvents = () =>
+        count(
+          `SELECT count(*)::int AS n FROM outbox WHERE type = 'stock_modifie' AND payload->>'type_mouvement' = 'entree' AND payload->>'lot_id' = '${id.l2}'`,
+        );
+      const eventsBefore = await entreeEvents();
       const res = await api()
         .post(`/api/v1/coops/COOPA/commandes/${id.order2}/annulation`)
         .set(as('alice'))
@@ -351,11 +373,7 @@ describe.each([{ rls: false }, { rls: true }])('orders (rls: $rls)', ({ rls }) =
         .set(as('alice'))
         .expect(200);
       expect(await stockOf(id.l2!)).toBe(before + 1);
-      expect(
-        await count(
-          `SELECT count(*)::int AS n FROM outbox WHERE type = 'stock_modifie' AND payload->>'motif' = 'annulation_commande' AND payload->>'commande_id' = '${id.order2}'`,
-        ),
-      ).toBe(1);
+      expect(await entreeEvents()).toBe(eventsBefore + 1);
       // Someone else's order cannot be cancelled.
       await api()
         .post(`/api/v1/coops/COOPA/commandes/${id.order1}/annulation`)

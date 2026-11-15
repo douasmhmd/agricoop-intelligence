@@ -5,7 +5,6 @@ import {
   ligne_commande,
   lockLotsForAllocation,
   lot,
-  lotStock,
   mouvement_stock,
   produit,
   type TenantScope,
@@ -124,8 +123,8 @@ export class CommandesService {
         date: string;
         lotId: string;
         produitId: string;
+        codeProduit: string;
         quantite: number;
-        stockApres: number;
       }[] = [];
       for (const a of allocations) {
         const p = produitById.get(a.produit_id)!;
@@ -160,18 +159,18 @@ export class CommandesService {
           date: toIsoTimestamp(mvt.date_mouvement),
           lotId: l.lot_id,
           produitId: p.produit_id,
+          codeProduit: p.code,
           quantite: a.quantite,
-          stockApres: l.stock,
         });
       }
-      const montant = sumMoney(lignes.map((l) => l.montant_mad));
+      // Event payloads follow the shared contract (contracts/events/evenements.schema.json).
+      // Amounts are JSON numbers there: converted from the exact decimal strings at the boundary.
       const evtLignes = lignes.map((l) => ({
-        ligne_id: l.ligne_id,
         produit_id: l.produit_id,
-        lot_id: l.lot_id!,
+        code_produit: l.produit_code,
+        lot_id: l.lot_id,
         quantite: l.quantite,
-        prix_unitaire_mad: l.prix_unitaire_mad,
-        montant_mad: l.montant_mad,
+        prix_unitaire_mad: Number(l.prix_unitaire_mad),
       }));
       // An order always has at least one line (allocations of a non-empty demand).
       const [premiere, ...autres] = evtLignes;
@@ -184,8 +183,6 @@ export class CommandesService {
         ville: acheteur.ville,
         canal,
         date_commande: toIsoTimestamp(cmd.date_commande),
-        statut: 'creee',
-        montant_total_mad: montant,
         lignes: [premiere, ...autres],
       });
       for (const s of sorties) {
@@ -193,11 +190,9 @@ export class CommandesService {
           mouvement_id: s.mouvementId,
           lot_id: s.lotId,
           produit_id: s.produitId,
+          code_produit: s.codeProduit,
           type_mouvement: 'sortie',
           quantite: s.quantite,
-          stock_apres: s.stockApres,
-          motif: 'commande',
-          commande_id: cmd.commande_id,
           date_mouvement: s.date,
         });
       }
@@ -347,40 +342,36 @@ export class CommandesService {
       where: eq(ligne_commande.commande_id, commandeId),
     });
 
-    if (to === 'annulee') await this.restock(scope, cmd, lignes, now);
+    if (to === 'annulee') await this.restock(scope, lignes, now);
 
     const [updated] = await scope.update(
       commande,
       { statut: to },
       eq(commande.commande_id, commandeId),
     );
-    await appendEvent(scope, 'commande_statut_modifie', {
-      commande_id: commandeId,
-      client_id: cmd.client_id,
-      ancien_statut: from,
-      nouveau_statut: to,
-      date_changement: now,
-      montant_total_mad: sumMoney(lignes.map((l) => lineTotal(l.prix_unitaire_mad, l.quantite))),
-    });
+    // The shared event contract has no status-change event: only the stock effect of a
+    // cancellation is published (stock_modifie, in restock()).
     return { commande: updated ?? cmd, changed: true };
   }
 
   /** Compensating `entree` movements for a cancelled order. Locks lots in the global FEFO order. */
   private async restock(
     scope: TenantScope,
-    cmd: CommandeRow,
     lignes: (typeof ligne_commande.$inferSelect)[],
     now: string,
   ): Promise<void> {
     const withLot = lignes.filter((l): l is typeof l & { lot_id: string } => l.lot_id !== null);
     if (withLot.length === 0) return;
-    const lots = await scope.list(lot, {
+    // Lock the lots in the global FEFO order (same order as order placement: no deadlock).
+    await scope.list(lot, {
       where: inArray(lot.lot_id, [...new Set(withLot.map((l) => l.lot_id))]),
       orderBy: [asc(lot.date_peremption), asc(lot.lot_id)],
       forUpdate: true,
     });
-    const stock = new Map<string, number>();
-    for (const l of lots) stock.set(l.lot_id, await lotStock(scope, l.lot_id));
+    const produits = await scope.list(produit, {
+      where: inArray(produit.produit_id, [...new Set(withLot.map((l) => l.produit_id))]),
+    });
+    const codeById = new Map(produits.map((p) => [p.produit_id, p.code]));
     for (const ligne of withLot) {
       const mvt = await scope.insert(mouvement_stock, {
         lot_id: ligne.lot_id,
@@ -388,17 +379,13 @@ export class CommandesService {
         quantite: ligne.quantite,
         date_mouvement: now,
       });
-      const after = (stock.get(ligne.lot_id) ?? 0) + ligne.quantite;
-      stock.set(ligne.lot_id, after);
       await appendEvent(scope, 'stock_modifie', {
         mouvement_id: mvt.mouvement_id,
         lot_id: ligne.lot_id,
         produit_id: ligne.produit_id,
+        code_produit: codeById.get(ligne.produit_id) ?? '',
         type_mouvement: 'entree',
         quantite: ligne.quantite,
-        stock_apres: after,
-        motif: 'annulation_commande',
-        commande_id: cmd.commande_id,
         date_mouvement: toIsoTimestamp(mvt.date_mouvement),
       });
     }

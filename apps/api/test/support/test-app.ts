@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { ANALYTICS_PREFIX_EXCLUDE } from '../../src/analytics/analytics.module';
 import {
   CLOCK,
   type Clock,
@@ -25,6 +26,8 @@ export interface TestAppOverrides {
   notifications?: NotificationProvider;
   /** Any other provider replacement, e.g. the identity admin. */
   providers?: { token: symbol | string; value: unknown }[];
+  /** Read-only connection to the `gold` schema (enables /api/analytics). */
+  analyticsUrl?: string;
 }
 
 export async function createTestApp(
@@ -37,6 +40,7 @@ export async function createTestApp(
     LOG_LEVEL: 'silent',
     OIDC_ISSUER: issuer.issuer,
     OIDC_AUDIENCE: issuer.audience,
+    ...(overrides.analyticsUrl ? { ANALYTICS_DATABASE_URL: overrides.analyticsUrl } : {}),
   });
   let builder = Test.createTestingModule({ imports: [AppModule.register(env)] })
     .overrideProvider(JWT_VERIFIER)
@@ -51,7 +55,10 @@ export async function createTestApp(
   const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
     logger: false,
   });
-  configureApp(app, { globalPrefix: GLOBAL_PREFIX });
+  configureApp(app, {
+    globalPrefix: GLOBAL_PREFIX,
+    prefixExclude: ANALYTICS_PREFIX_EXCLUDE,
+  });
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
   return app;

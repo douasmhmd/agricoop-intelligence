@@ -17,6 +17,9 @@ export const apiEnv = baseEnv
     KEYCLOAK_REALM: z.string().default('agricoop'),
     KC_PROVISIONER_CLIENT_ID: z.string().default('agricoop-provisioner'),
     KC_PROVISIONER_SECRET: z.string().optional(),
+    /** Read-only connection to the data plane's `gold` schema (role analytics_reader, see
+     *  data/bi/04_role_lecture.sql). Without it the /api/analytics endpoints answer 503. */
+    ANALYTICS_DATABASE_URL: z.url().optional(),
   })
   .refine(
     (e) => e.NODE_ENV !== 'production' || e.PAYMENT_MOCK_SECRET !== 'dev-only-payment-mock-secret',

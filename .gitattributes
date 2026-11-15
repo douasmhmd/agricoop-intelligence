@@ -4,3 +4,8 @@
 *.pdf binary
 *.ico binary
 *.woff2 binary
+*.pbix binary
+# Explicit for the data plane (teammate), already covered by the LF rule above
+*.ipynb text eol=lf
+*.sh text eol=lf
+*.sql text eol=lf

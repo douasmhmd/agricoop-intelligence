@@ -164,24 +164,14 @@ export class LotsService {
             FROM generate_series(1, ${input.quantite_initiale}::int) AS g`);
         }
 
-        await appendEvent(scope, 'lot_cree', {
-          lot_id: created.lot_id,
-          produit_id: p.produit_id,
-          numero: created.numero,
-          date_fabrication: created.date_fabrication,
-          date_peremption: created.date_peremption,
-          quantite_initiale: created.quantite_initiale,
-          niveau_qr: p.niveau_qr as 'lot' | 'unite',
-        });
+        // Shared contract: a new lot is published as its production `entree` (no lot event).
         await appendEvent(scope, 'stock_modifie', {
           mouvement_id: entree.mouvement_id,
           lot_id: created.lot_id,
           produit_id: p.produit_id,
+          code_produit: p.code,
           type_mouvement: 'entree',
           quantite: entree.quantite,
-          stock_apres: entree.quantite,
-          motif: 'creation_lot',
-          commande_id: null,
           date_mouvement: toIsoTimestamp(entree.date_mouvement),
         });
 
@@ -234,15 +224,16 @@ export class LotsService {
         date_mouvement: now,
       });
       const stockApres = locked.stock - input.quantite;
+      const [prod] = await scope.list(produit, {
+        where: eq(produit.produit_id, locked.lot.produit_id),
+      });
       await appendEvent(scope, 'stock_modifie', {
         mouvement_id: row.mouvement_id,
         lot_id: lotId,
         produit_id: locked.lot.produit_id,
+        code_produit: prod?.code ?? '',
         type_mouvement: 'perte',
         quantite: row.quantite,
-        stock_apres: stockApres,
-        motif: 'perte',
-        commande_id: null,
         date_mouvement: toIsoTimestamp(row.date_mouvement),
       });
       return { mouvement: toMouvement(row), stock_apres: stockApres };

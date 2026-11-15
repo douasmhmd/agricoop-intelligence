@@ -4,11 +4,12 @@
 #   docker compose -f docker-compose.yml -f docker-compose.apps.yml up -d                 # infra only
 #   docker compose -f docker-compose.yml -f docker-compose.apps.yml --profile apps up -d  # + app images
 #
-# Infra (always on): db-seed (one shot), keycloak, redpanda, redpanda-console, mailpit.
+# Infra (always on): db-seed (one shot), keycloak, redpanda-console, mailpit. Postgres and Redpanda
+# come from the root docker-compose.yml (data plane, shared): this file only references them.
 # App images (profile "apps"): api, qr, outbox-relay, web, backoffice. During development you usually
 # run them with `pnpm dev` instead, against this infra.
 #
-# Ports: postgres 5433 (root file) · keycloak 8080 · redpanda 19092 (Kafka API) · console 8088 ·
+# Ports: postgres 5433 (root file) · keycloak 8080 · redpanda 19092 (Kafka API, root file) · console 8088 ·
 #        mailpit 8025 (UI) / 1025 (SMTP) · api 3000 · qr 3001 · relay 3002 · web 5173 · backoffice 5174
 
 # Hardening shared by every app container: no privilege escalation, no Linux capabilities, an init
@@ -82,31 +83,6 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  redpanda:
-    image: redpandadata/redpanda:v26.2.6
-    command:
-      - redpanda
-      - start
-      - --mode=dev-container
-      - --smp=1
-      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
-      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:19092
-      - --schema-registry-addr=internal://0.0.0.0:8081,external://0.0.0.0:18081
-      - --rpc-addr=redpanda:33145
-      - --advertise-rpc-addr=redpanda:33145
-    ports:
-      - '19092:19092'
-      - '18081:18081'
-      - '9644:9644'
-    volumes:
-      - redpanda-data:/var/lib/redpanda/data
-    healthcheck:
-      test: ['CMD-SHELL', "rpk cluster health | grep -qE 'Healthy:.+true'"]
-      interval: 10s
-      timeout: 5s
-      retries: 15
-    restart: unless-stopped
-
   redpanda-console:
     image: redpandadata/console:v3.14.0
     environment:
@@ -148,6 +124,9 @@ services:
       # Platform admin provisions cooperatives in Keycloak through its Admin API.
       KEYCLOAK_ADMIN_URL: http://keycloak:8080
       KC_PROVISIONER_SECRET: ${KC_PROVISIONER_SECRET:?set KC_PROVISIONER_SECRET in .env (see .env.example)}
+      # Read-only role on the data plane's gold schema (data/bi/04_role_lecture.sql, local default
+      # password). Build the layer first: pnpm db:gold.
+      ANALYTICS_DATABASE_URL: postgres://analytics_reader:${ANALYTICS_READER_PASSWORD:-analytics_dev}@postgres:5432/agricoop
     ports:
       - '3000:3000'
     healthcheck: &node-health
@@ -245,6 +224,3 @@ services:
       qr:
         condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  redpanda-data:

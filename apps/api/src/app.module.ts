@@ -13,6 +13,7 @@ import type { ApiEnv } from './env';
 import { MeController } from './me/me.controller';
 import { PrevisionsModule } from './previsions/previsions.controller';
 import { AdminModule } from './admin/admin.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { CatalogueModule } from './catalogue/catalogue.module';
 import { CommandesModule } from './commandes/commandes.module';
 import { StockModule } from './stock/stock.module';
@@ -54,6 +55,7 @@ export class AppModule {
         CommandesModule.register(env),
         PrevisionsModule,
         AdminModule.register(env),
+        AnalyticsModule.register(env),
       ],
       controllers: [MeController],
     };

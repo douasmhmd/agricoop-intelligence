@@ -246,11 +246,14 @@ describe.each([{ rls: false }, { rls: true }])('QR service (rls: $rls)', ({ rls 
         created_at: Date;
         payload: Record<string, unknown>;
       }>(db, `SELECT * FROM outbox WHERE type = 'qr_scanne' ORDER BY created_at LIMIT 1`);
+      // Shared contract: the scan only (no verdict, never the token).
+      expect(Object.keys(row!.payload).sort()).toEqual(
+        ['appareil', 'date_scan', 'niveau', 'qr_id', 'scan_id', 'ville'].sort(),
+      );
       expect(row?.payload).toMatchObject({
         niveau: 'unite',
         ville: 'Casablanca',
         appareil: 'iPhone',
-        resultat: 'authentique',
       });
       expect(() =>
         assertValidEvent({
@@ -259,7 +262,6 @@ describe.each([{ rls: false }, { rls: true }])('QR service (rls: $rls)', ({ rls 
           version: 1,
           coop_id: row!.coop_id,
           occurred_at: row!.created_at.toISOString(),
-          is_synthetic: false,
           payload: row!.payload,
         }),
       ).not.toThrow();

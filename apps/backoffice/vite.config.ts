@@ -15,6 +15,8 @@ export default defineConfig({
     proxy: {
       // Versioned API prefixes only: app routes such as /qr must stay with the SPA.
       '/api/v1/': process.env.API_URL ?? 'http://localhost:3000',
+      // Analytics API (contracts/api/analytics.yaml), served by the api outside /api/v1.
+      '/api/analytics/': process.env.API_URL ?? 'http://localhost:3000',
       '/qr/v1/': process.env.QR_URL ?? 'http://localhost:3001',
     },
   },
