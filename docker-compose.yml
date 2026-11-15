@@ -1,4 +1,4 @@
-# Environnement local de developpement : PostgreSQL + schema AgriCoop
+# Environnement local de developpement : PostgreSQL + Redpanda (compatible Kafka)
 services:
   postgres:
     image: postgres:16
@@ -17,6 +17,26 @@ services:
       test: ["CMD-SHELL", "pg_isready -U agricoop -d agricoop"]
       interval: 5s
       timeout: 3s
+      retries: 10
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    container_name: agricoop-redpanda
+    restart: unless-stopped
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container        # un seul broker, réglages de développement
+      - --smp=1
+      - --memory=1G
+      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"               # accès depuis ton PC (scripts Python)
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 10
 
 volumes:
