@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agricoop.ma/contracts/events/evenements.schema.json",
+  "title": "AgriCoop Intelligence — événements métier (outbox → Redpanda)",
+  "description": "Contrat des événements écrits par l'application dans la table outbox, puis publiés dans le topic agricoop.events. L'enveloppe (event_id, coop_id, type, occurred_at) correspond aux colonnes de la table outbox ; le champ payload correspond à la colonne outbox.payload. RÈGLE : aucune donnée personnelle (nom, téléphone, email, adresse) dans un événement. additionalProperties=false garantit qu'aucun champ non prévu ne peut sortir.",
+  "type": "object",
+  "required": ["event_id", "coop_id", "type", "version", "occurred_at", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "coop_id": { "type": "string", "format": "uuid", "description": "Tenant. Sert aussi de clé de partition dans Redpanda." },
+    "type": { "enum": ["commande_creee", "stock_modifie", "qr_scanne"] },
+    "version": { "const": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    { "if": { "properties": { "type": { "const": "commande_creee" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/commande_creee" } } } },
+    { "if": { "properties": { "type": { "const": "stock_modifie" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/stock_modifie" } } } },
+    { "if": { "properties": { "type": { "const": "qr_scanne" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/qr_scanne" } } } }
+  ],
+  "$defs": {
+    "commande_creee": {
+      "type": "object",
+      "description": "Écrit par la Business API dans la même transaction que la commande et ses lignes.",
+      "required": ["commande_id", "client_id", "type_client", "ville", "canal", "date_commande", "lignes"],
+      "additionalProperties": false,
+      "properties": {
+        "commande_id": { "type": "string", "format": "uuid" },
+        "client_id": { "type": "string", "format": "uuid", "description": "Remplacé par un jeton à clé avant de quitter le Maroc." },
+        "type_client": { "enum": ["particulier", "revendeur"] },
+        "ville": { "type": "string", "description": "Ville seulement, jamais l'adresse." },
+        "canal": { "enum": ["web", "revendeur", "direct"] },
+        "date_commande": { "type": "string", "format": "date-time" },
+        "lignes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["produit_id", "code_produit", "quantite", "prix_unitaire_mad"],
+            "additionalProperties": false,
+            "properties": {
+              "produit_id": { "type": "string", "format": "uuid" },
+              "code_produit": { "type": "string" },
+              "lot_id": { "type": ["string", "null"], "format": "uuid" },
+              "quantite": { "type": "integer", "minimum": 1 },
+              "prix_unitaire_mad": { "type": "number", "exclusiveMinimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "stock_modifie": {
+      "type": "object",
+      "description": "Écrit à chaque mouvement de stock (entrée de production, sortie, perte).",
+      "required": ["mouvement_id", "lot_id", "produit_id", "code_produit", "type_mouvement", "quantite", "date_mouvement"],
+      "additionalProperties": false,
+      "properties": {
+        "mouvement_id": { "type": "string", "format": "uuid" },
+        "lot_id": { "type": "string", "format": "uuid" },
+        "produit_id": { "type": "string", "format": "uuid" },
+        "code_produit": { "type": "string" },
+        "type_mouvement": { "enum": ["entree", "sortie", "perte"] },
+        "quantite": { "type": "integer", "minimum": 1 },
+        "date_mouvement": { "type": "string", "format": "date-time" }
+      }
+    },
+    "qr_scanne": {
+      "type": "object",
+      "description": "Écrit par le service de vérification à chaque scan. Le jeton du QR n'est JAMAIS inclus.",
+      "required": ["scan_id", "qr_id", "niveau", "date_scan"],
+      "additionalProperties": false,
+      "properties": {
+        "scan_id": { "type": "string", "format": "uuid" },
+        "qr_id": { "type": "string", "format": "uuid" },
+        "niveau": { "enum": ["lot", "unite"] },
+        "date_scan": { "type": "string", "format": "date-time" },
+        "ville": { "type": ["string", "null"] },
+        "appareil": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
