@@ -1,0 +1,321 @@
+openapi: 3.1.0
+info:
+  title: AgriCoop Intelligence — API analytique (backoffice)
+  version: 1.0.0
+  description: |
+    Endpoints en lecture seule qui exposent la couche Gold (schéma `gold`) au backoffice.
+
+    Règles communes, à respecter par l'implémentation :
+    - **Isolation par coopérative.** Le `coop_id` est lu dans le jeton OIDC (Keycloak) de
+      l'utilisateur connecté, JAMAIS dans un paramètre de la requête. Chaque requête SQL
+      filtre sur `coop_id = :coop_id_du_jeton`.
+    - **Lecture seule.** L'API se connecte avec un utilisateur PostgreSQL dédié
+      (`analytics_reader`) qui n'a que le droit SELECT sur le schéma `gold`.
+    - **Aucune donnée personnelle.** Ces endpoints ne renvoient que des identifiants
+      techniques (UUID). Pour contacter un client (relance d'un segment, par exemple),
+      le backoffice fait la jointure avec `client_pii` dans le plan opérationnel.
+    - **Date de référence.** Les « photos » (stocks, risques, alertes) sont calculées à la
+      date de référence de la coopérative (`gold.v_date_reference`), renvoyée dans
+      l'en-tête `X-Date-Reference`.
+servers:
+  - url: http://localhost:8080
+    description: Développement local
+security:
+  - keycloak: []
+
+paths:
+  /api/analytics/kpi-mensuels:
+    get:
+      summary: Indicateurs mensuels (CA, marge, commandes, panier moyen, clients)
+      description: "Source : `gold.v_kpi_mensuel`."
+      parameters:
+        - $ref: '#/components/parameters/Campagne'
+      responses:
+        '200':
+          description: Un élément par mois, du plus ancien au plus récent.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/KpiMensuel' }
+        '401': { $ref: '#/components/responses/NonAuthentifie' }
+
+  /api/analytics/stocks:
+    get:
+      summary: Stock disponible et couverture par produit
+      description: |
+        Source : `gold.v_stock_produit`. Le niveau d'alerte est calculé par l'API :
+        `rupture` (stock nul), `critique` (moins de 14 jours de couverture),
+        `attention` (14 à 30 jours), `ok` (plus de 30 jours ou aucune vente récente).
+      responses:
+        '200':
+          description: Un élément par produit.
+          headers:
+            X-Date-Reference: { $ref: '#/components/headers/DateReference' }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/StockProduit' }
+        '401': { $ref: '#/components/responses/NonAuthentifie' }
+
+  /api/analytics/lots-a-surveiller:
+    get:
+      summary: Lots encore en stock qui périment dans les 60 jours
+      description: "Source : `gold.v_stock_lot` (statut = 'à surveiller' et stock_actuel > 0)."
+      responses:
+        '200':
+          description: Lots triés par date de péremption croissante.
+          headers:
+            X-Date-Reference: { $ref: '#/components/headers/DateReference' }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Lot' }
+        '401': { $ref: '#/components/responses/NonAuthentifie' }
+
+  /api/analytics/risque-invendus:
+    get:
+      summary: Lots qui risquent de périmer avant d'être vendus
+      description: |
+        Source : `gold.v_risque_invendus` (unites_a_risque > 0). Estimation fondée sur le
+        rythme de vente des 28 derniers jours : à présenter comme une estimation.
+      responses:
+        '200':
+          description: Lots triés par valeur à risque décroissante.
+          headers:
+            X-Date-Reference: { $ref: '#/components/headers/DateReference' }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RisqueInvendu' }
+        '401': { $ref: '#/components/responses/NonAuthentifie' }
+
+  /api/analytics/previsions:
+    get:
+      summary: Prévisions de la demande face aux ventes réelles
+      description: |
+        Source : `gold.v_prevision_vs_ventes`. Les semaines à venir ont `ventes` et `ecart`
+        à `null`. La prévision est produite par le modèle versionné dans MLflow
+        (`version_modele`).
+      parameters:
+        - name: famille
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Famille' }
+      responses:
+        '200':
+          description: Un élément par famille et par semaine.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Prevision' }
+        '401': { $ref: '#/components/responses/NonAuthentifie' }
+
+  /api/analytics/alertes-qr:
+    get:
+      summary: QR codes suspects (copies probables)
+      description: |
+        Source : `gold.v_alertes_qr_actuelles`. Le passage d'un QR au statut `signale`
+        dans `qr_code` reste une décision du gestionnaire, prise dans le backoffice.
+      parameters:
+        - name: niveau
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ['signalé', 'à vérifier']
+      responses:
+        '200':
+          description: Alertes de la dernière analyse.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AlerteQr' }
+        '401': { $ref: '#/components/responses/NonAuthentifie' }
+
+  /api/analytics/segments:
+    get:
+      summary: Répartition des clients par segment
+      description: "Source : `gold.v_segments_actuels`, agrégée par segment."
+      responses:
+        '200':
+          description: Un élément par segment.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Segment' }
+        '401': { $ref: '#/components/responses/NonAuthentifie' }
+
+  /api/analytics/segments/{segment}/clients:
+    get:
+      summary: Identifiants des clients d'un segment (pour une relance)
+      description: |
+        Source : `gold.v_segments_actuels`. Renvoie des identifiants techniques ; le
+        backoffice récupère les coordonnées dans `client_pii` pour envoyer la relance.
+      parameters:
+        - name: segment
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: ['Revendeurs', 'Fidèles', 'À réactiver', 'Récents', 'Occasionnels inactifs']
+      responses:
+        '200':
+          description: Clients du segment, triés par montant décroissant.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ClientSegment' }
+        '401': { $ref: '#/components/responses/NonAuthentifie' }
+
+  /api/analytics/anomalies-stock:
+    get:
+      summary: Anomalies de stock à corriger (contrôle qualité)
+      description: "Source : `gold.v_anomalies_stock`. Une liste vide est le résultat attendu."
+      responses:
+        '200':
+          description: Lots en anomalie.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AnomalieStock' }
+        '401': { $ref: '#/components/responses/NonAuthentifie' }
+
+components:
+  securitySchemes:
+    keycloak:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Jeton OIDC émis par Keycloak, qui porte les claims `coop_id` et `role`.
+
+  parameters:
+    Campagne:
+      name: campagne
+      in: query
+      required: false
+      description: Campagne oléicole, d'octobre à septembre (exemple 2025-2026).
+      schema:
+        type: string
+        pattern: '^\d{4}-\d{4}$'
+
+  headers:
+    DateReference:
+      description: Date de référence de l'analyse (format AAAA-MM-JJ).
+      schema: { type: string, format: date }
+
+  responses:
+    NonAuthentifie:
+      description: Jeton absent, invalide, ou sans claim `coop_id`.
+
+  schemas:
+    Famille:
+      type: string
+      enum: [alimentaire, cosmetique, coffret]
+
+    KpiMensuel:
+      type: object
+      required: [mois, commandes, ca_mad, marge_mad, taux_marge, panier_moyen_mad, clients_actifs, nouveaux_clients]
+      properties:
+        mois: { type: string, format: date }
+        commandes: { type: integer }
+        ca_mad: { type: number }
+        marge_mad: { type: number }
+        taux_marge: { type: number, description: Entre 0 et 1. }
+        panier_moyen_mad: { type: number }
+        clients_actifs: { type: integer }
+        nouveaux_clients: { type: integer }
+
+    StockProduit:
+      type: object
+      required: [produit, famille, stock_disponible, vente_moy_jour, niveau_alerte]
+      properties:
+        produit: { type: string, examples: [CREME-50ML] }
+        famille: { $ref: '#/components/schemas/Famille' }
+        stock_disponible: { type: integer }
+        vente_moy_jour: { type: number }
+        couverture_jours: { type: [integer, 'null'], description: Null si aucune vente récente. }
+        niveau_alerte:
+          type: string
+          enum: [rupture, critique, attention, ok]
+
+    Lot:
+      type: object
+      required: [produit, lot, date_peremption, stock_actuel, jours_avant_peremption]
+      properties:
+        produit: { type: string }
+        lot: { type: string }
+        date_peremption: { type: string, format: date }
+        stock_actuel: { type: integer }
+        jours_avant_peremption: { type: integer }
+
+    RisqueInvendu:
+      type: object
+      required: [produit, lot, date_peremption, stock_actuel, unites_a_risque, valeur_a_risque_mad]
+      properties:
+        produit: { type: string }
+        lot: { type: string }
+        date_peremption: { type: string, format: date }
+        stock_actuel: { type: integer }
+        vente_moy_jour: { type: number }
+        unites_a_risque: { type: integer }
+        valeur_a_risque_mad: { type: number }
+
+    Prevision:
+      type: object
+      required: [famille, semaine, quantite_prevue, semaine_a_venir, version_modele]
+      properties:
+        famille: { $ref: '#/components/schemas/Famille' }
+        semaine: { type: string, format: date, description: Lundi de la semaine. }
+        quantite_prevue: { type: number }
+        ventes: { type: [integer, 'null'] }
+        ecart: { type: [number, 'null'] }
+        semaine_a_venir: { type: boolean }
+        version_modele: { type: string }
+
+    AlerteQr:
+      type: object
+      required: [qr_id, niveau, nb_scans, nb_villes, date_analyse]
+      properties:
+        qr_id: { type: string, format: uuid }
+        niveau: { type: string, enum: ['signalé', 'à vérifier'] }
+        nb_scans: { type: integer }
+        nb_villes: { type: integer }
+        distance_max_km: { type: number }
+        duree_jours: { type: number }
+        date_analyse: { type: string, format: date }
+
+    Segment:
+      type: object
+      required: [segment, clients, part_clients, part_ca]
+      properties:
+        segment: { type: string }
+        clients: { type: integer }
+        part_clients: { type: number }
+        part_ca: { type: number }
+
+    ClientSegment:
+      type: object
+      required: [client_id, recence_j, frequence, montant_mad]
+      properties:
+        client_id: { type: string, format: uuid }
+        recence_j: { type: integer }
+        frequence: { type: integer }
+        montant_mad: { type: number }
+
+    AnomalieStock:
+      type: object
+      required: [produit, lot, stock_actuel, anomalie]
+      properties:
+        produit: { type: string }
+        lot: { type: string }
+        stock_actuel: { type: integer }
+        anomalie: { type: string }
