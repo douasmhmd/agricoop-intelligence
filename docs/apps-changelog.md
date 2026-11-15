@@ -690,3 +690,32 @@ letter without payload; real orders / lots published contract-shaped events.
 **For the teammate:** the contract's security note says the token carries `coop_id` and `role`;
 our Keycloak tokens carry `tenant_id` and realm roles, and the API maps them (no change needed on
 their side). `prevision` keeps being read by `/api/v1/previsions` as before.
+
+## Shared seed from the data plane (2026-11-15)
+
+The teammate shared `agricoop_seed.dump` (pg_dump 16, custom format; not in git): COOP01 with every
+table (11 products, 363 lots, 3,660 QR codes, 5,466 scans, 1,982 customers, 6,644 orders from
+2023-10-01 to 2026-09-30, 12,374 stock movements, all synthetic), the model outputs (159 forecasts in
+two versions, 1,982 segment rows, 92 QR alerts) and the gold schema. No roles or grants inside.
+
+**Done**
+
+- `pnpm db:restore -- <dump>` (`scripts/restore-seed.mjs`): replaces the local database with the dump,
+  then runs the apps seeds (COOP02) and `pnpm db:gold` (gold grants for `analytics_reader`).
+- COOP01's id in the dump (`56783517-58a9-42ee-b9d5-c8b946b6b6e3`) differs from the fixed id we had
+  chosen. The dump is the shared reference, so our side follows it: `apps/dev/seed/001_demo_coops.sql`,
+  the Keycloak realm export (group `/coops/COOP01`, attribute `tenant_id`), and the running local
+  Keycloak (admin CLI). COOP02 keeps its id.
+- Dashboard: a forecast with one or two weeks only (the production model forecasts the next week)
+  now shows as dots instead of an invisible line.
+
+**Verified** as `manager.coop01` on the restored data: the dashboard (sales history, stock value
+29,561.63 MAD at cost, 41 orders to ship, synthetic badges), the forecasts page with the walk-forward
+version against weekly sales, and every `/api/analytics/*` endpoint (12 months of KPIs for 2025-2026,
+11 products with alert levels, 5 segments, 92 QR alerts, 159 forecasts, no stock anomaly,
+`X-Date-Reference` 2026-10-01). All checks green, Playwright e2e 3/3. One relay integration test
+timed out once while every suite ran in parallel beside the stack; it passed twice in a row alone.
+
+**Notes for the teammate:** please keep COOP01's id stable in future dumps (the Keycloak tenant is
+bound to it). The two forecast versions have the same `date_calcul`, so "latest version" picks the
+production model (one future week); the backtest is selectable in the back office.

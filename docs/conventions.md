@@ -277,8 +277,12 @@ generate` regenerates the TS types.
   defined in the root `docker-compose.yml` (data plane, read-only for us); `docker-compose.apps.yml`
   only references them.
   Add `--profile apps` to also run the app images.
-- Demo coops `COOP01` / `COOP02` have fixed ids (`apps/dev/seed`), matching the Keycloak group
-  attribute `tenant_id`. Demo users are listed in `.env.example`.
+- Data: the data plane shares a seed dump (pg_dump: all tables, ML outputs, gold views), not in
+  git. `pnpm db:restore -- <path/to/agricoop_seed.dump>` replaces the local database with it, then
+  re-adds COOP02 (`apps/dev/seed`) and the gold grants. COOP01 (`56783517-58a9-42ee-b9d5-c8b946b6b6e3`)
+  belongs to the dump; COOP02 (`22222222-…`) is the apps' own demo coop. Both ids are the Keycloak
+  group attribute `tenant_id` (realm file AND the running Keycloak: change both together).
+  Demo users are listed in `.env.example`.
 - Demo data: `apps/dev/seed/*.sql` (run by `db-seed` on every `up`, or `pnpm db:seed`; idempotent,
   `is_synthetic = true`). Seed **COOP02 only**: the synthetic generator owns every COOP01 row and
   validates them. Full guide: `apps/README.md`.

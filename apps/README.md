@@ -68,13 +68,25 @@ Both options use the same ports (stop one before starting the other).
 Demo users (password `KC_DEMO_PASSWORD` from `.env`): `manager.coop01`, `manager.coop02` (cooperative
 managers), `client.demo` (customer), `revendeur.demo` (reseller), `admin.saas` (platform admin).
 
+**Shared seed (recommended).** The data plane provides a dump of the whole database (COOP01: three
+campaigns of synthetic sales, stock, QR scans, plus forecasts, customer segments and QR alerts from
+their models). Load it into the local database (replaces everything in it):
+
+```bash
+pnpm db:restore -- <path/to/agricoop_seed.dump>
+```
+
+It then re-adds the apps' demo cooperative COOP02 and the analytics grants. Sign in as
+`manager.coop01` to see the data plane's data.
+
 The `db-seed` service runs `apps/dev/seed/*.sql` on every `up` (idempotent). Re-run it any time:
 
 ```bash
 pnpm db:seed
 ```
 
-- `001_demo_coops.sql`: COOP01 and COOP02 with the fixed ids used by the Keycloak realm.
+- `001_demo_coops.sql`: COOP01 (if missing; its id is the one in the shared dump) and COOP02, with
+  the ids used by the Keycloak realm.
 - `002_demo_catalogue.sql`: for **COOP02** only, a catalogue, lots (one expiring within 30 days, one
   expired), stock movements, three orders and two demo QR codes. All rows are `is_synthetic = true`.
   COOP01 is left to the synthetic generator (`data/synthetic-factory`), which owns all its rows.

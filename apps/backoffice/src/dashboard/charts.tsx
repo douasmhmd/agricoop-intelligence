@@ -156,7 +156,13 @@ export function SalesForecastChart({ data }: { data: ForecastPoint[] }) {
             stroke="var(--chart-2)"
             strokeWidth={2}
             strokeDasharray="6 5"
-            dot={false}
+            // A model that forecasts only the next week or two would draw no visible line: show
+            // its points as dots instead.
+            dot={
+              data.filter((d) => d.prevues !== null).length <= 2
+                ? { r: 4, fill: 'var(--chart-2)', strokeWidth: 0 }
+                : false
+            }
             connectNulls={false}
             isAnimationActive={!reduced}
             animationDuration={1000}
