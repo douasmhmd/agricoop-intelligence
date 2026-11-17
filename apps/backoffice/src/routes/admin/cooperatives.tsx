@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { cooperativeCreateSchema } from '@agricoop/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Plus } from 'lucide-react';
+import { Building2, Check, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -13,17 +13,20 @@ import { ok } from '@/api/ok';
 import { useSession } from '@/auth/session';
 import {
   DateText,
+  EmptyState,
   ErrorAlert,
   Field,
-  Loading,
   PageHeader,
   SyntheticBadge,
   useErrorMessage,
 } from '@/components/common';
+import { DataCard, TableSkeleton } from '@/components/data';
 import {
   Button,
+  cn,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -48,7 +51,13 @@ function AdminCooperativesPage() {
   const [creating, setCreating] = useState(false);
   const list = useCooperativesAdminList({ query: { enabled: Boolean(session?.isAdmin) } });
 
-  if (!session?.isAdmin) return <p className="text-muted-foreground">{t('auth.adminOnly')}</p>;
+  if (!session?.isAdmin)
+    return (
+      <EmptyState icon={Building2} title={t('admin.title')}>
+        {t('auth.adminOnly')}
+      </EmptyState>
+    );
+  const coops = ok(list.data) ?? [];
 
   return (
     <>
@@ -57,16 +66,20 @@ function AdminCooperativesPage() {
         description={t('admin.subtitle')}
         actions={
           <Button onClick={() => setCreating(true)}>
-            <Plus className="size-4" /> {t('admin.new')}
+            <Plus /> {t('admin.new')}
           </Button>
         }
       />
       {list.isPending ? (
-        <Loading />
+        <TableSkeleton columns={5} rows={3} />
       ) : list.error ? (
         <ErrorAlert error={list.error} />
+      ) : coops.length === 0 ? (
+        <EmptyState icon={Building2} title={t('admin.emptyTitle')}>
+          {t('admin.empty')}
+        </EmptyState>
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-card">
+        <DataCard>
           <Table>
             <TableHeader>
               <TableRow>
@@ -78,30 +91,37 @@ function AdminCooperativesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(ok(list.data) ?? []).map((c) => (
-                <TableRow key={c.coop_id}>
-                  <TableCell className="font-mono text-xs">
-                    {c.code} <SyntheticBadge show={c.is_synthetic} />
-                  </TableCell>
-                  <TableCell>{c.nom}</TableCell>
-                  <TableCell>{c.province}</TableCell>
-                  <TableCell>
-                    <DateText value={c.created_at} />
-                  </TableCell>
-                  <TableCell className="text-end">
-                    <Button
-                      variant={prefs.adminCoopId === c.coop_id ? 'secondary' : 'outline'}
-                      size="sm"
-                      onClick={() => prefs.setAdminCoopId(c.coop_id)}
-                    >
-                      {prefs.adminCoopId === c.coop_id ? t('admin.actingOn') : t('admin.actOn')}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {coops.map((c) => {
+                const acting = prefs.adminCoopId === c.coop_id;
+                return (
+                  <TableRow key={c.coop_id} className={cn(acting && 'bg-accent/50')}>
+                    <TableCell className="font-mono text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="font-medium text-foreground">{c.code}</span>
+                        <SyntheticBadge show={c.is_synthetic} />
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-medium">{c.nom}</TableCell>
+                    <TableCell>{c.province}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      <DateText value={c.created_at} />
+                    </TableCell>
+                    <TableCell className="text-end">
+                      <Button
+                        variant={acting ? 'secondary' : 'outline'}
+                        size="sm"
+                        onClick={() => prefs.setAdminCoopId(c.coop_id)}
+                      >
+                        {acting && <Check />}
+                        {acting ? t('admin.actingOn') : t('admin.actOn')}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
-        </div>
+        </DataCard>
       )}
       {creating && <CreateDialog onClose={() => setCreating(false)} />}
     </>
@@ -137,6 +157,7 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('admin.new')}</DialogTitle>
+          <DialogDescription>{t('admin.newHint')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => void onSubmit(e)} className="grid gap-4" noValidate>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -150,8 +171,10 @@ function CreateDialog({ onClose }: { onClose: () => void }) {
           <Field label={t('admin.nom')} error={errors.nom?.message}>
             <Input {...form.register('nom')} />
           </Field>
-          <fieldset className="grid gap-4 rounded-lg border p-3">
-            <legend className="px-1 text-sm font-medium">{t('admin.gestionnaire')}</legend>
+          <fieldset className="grid gap-4 rounded-xl border bg-muted/30 p-4">
+            <legend className="px-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              {t('admin.gestionnaire')}
+            </legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('admin.prenom')} error={errors.gestionnaire?.prenom?.message}>
                 <Input {...form.register('gestionnaire.prenom')} />

@@ -30,7 +30,7 @@ test('a manager adds a product and a lot, then ships a paid order', async ({ pag
   await productForm.getByRole('combobox', { name: /^Traçabilité QR/ }).selectOption('lot');
   await productForm.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(productForm).toBeHidden();
-  await expect(page.getByRole('cell', { name: code })).toBeVisible();
+  await expect(page.getByRole('cell', { name: code, exact: true })).toBeVisible();
 
   // Production lot: creating it records a stock entry of the initial quantity.
   await nav.getByRole('link', { name: 'Lots et stock' }).click();
@@ -49,7 +49,8 @@ test('a manager adds a product and a lot, then ships a paid order', async ({ pag
 
   // Ship the most recent paid order.
   await nav.getByRole('link', { name: 'Commandes' }).click();
-  await page.getByRole('combobox', { name: 'Statut' }).selectOption('payee');
+  await page.getByRole('button', { name: 'Statut' }).click();
+  await page.getByRole('menuitemradio', { name: 'Payée' }).click();
   await page.getByRole('row').nth(1).getByRole('link').click();
   await page.getByRole('button', { name: 'Marquer expédiée' }).click();
   await expect(page.getByText('Commande mise à jour')).toBeVisible();

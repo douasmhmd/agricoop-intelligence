@@ -239,7 +239,7 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <motion.div variants={stagger(0)} className="lg:col-span-2">
+        <motion.div variants={stagger(0)} className="min-w-0 lg:col-span-2">
           <Card className="h-full gap-0 py-0">
             <CardHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
               <CardTitle className="text-base">{t('dashboard.recentOrders')}</CardTitle>
@@ -266,7 +266,7 @@ function Dashboard() {
                       <Package className="size-4" aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2 font-medium">
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium">
                         {c.ville} <SyntheticBadge show={c.is_synthetic} />
                       </span>
                       <span className="block text-xs text-muted-foreground">
@@ -276,7 +276,7 @@ function Dashboard() {
                     <Badge variant={statutVariant[c.statut]} dot className="max-sm:hidden">
                       {t(`statut.${c.statut}`)}
                     </Badge>
-                    <span className="w-28 text-end font-semibold">
+                    <span className="shrink-0 text-end font-semibold sm:w-28">
                       <Money value={c.montant_total_mad} />
                     </span>
                   </Link>

@@ -1,6 +1,7 @@
-import { Button, cn, Sheet, SheetContent, SheetTitle } from '@agricoop/ui';
+import { Button, cn, Sheet, SheetContent, SheetTitle, useDirection } from '@agricoop/ui';
 import { useRouterState } from '@tanstack/react-router';
 import { Database, X } from 'lucide-react';
+import { Direction } from 'radix-ui';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSession } from '@/auth/session';
@@ -32,6 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const dir = useDirection();
 
   const toggleCollapsed = () => {
     setCollapsed((c) => {
@@ -47,51 +49,56 @@ export function AppShell({ children }: { children: ReactNode }) {
     session?.isAdmin && !prefs.adminCoopId && !TENANTLESS.some((p) => pathname.startsWith(p));
 
   return (
-    <CommandPaletteProvider>
-      <div className="flex min-h-dvh bg-background">
-        {/* Desktop sidebar. Its width transitions (the one layout animation, asked for by the
+    // Radix menus, tabs and sheets follow the page direction (alignment, arrow keys).
+    <Direction.Provider dir={dir}>
+      <CommandPaletteProvider>
+        <div className="flex min-h-dvh bg-background">
+          {/* Desktop sidebar. Its width transitions (the one layout animation, asked for by the
             design: labels fade, icons stay put). */}
-        <aside
-          className={cn(
-            'sticky top-0 hidden h-dvh shrink-0 flex-col gap-4 border-e border-sidebar-border bg-sidebar px-3 py-4 transition-[width] duration-300 ease-out-expo lg:flex',
-            collapsed ? 'w-[4.25rem]' : 'w-64',
-          )}
-        >
-          <SidebarBrand collapsed={collapsed} />
-          <PaletteButton collapsed={collapsed} />
-          <div className="-mx-1 flex-1 overflow-y-auto px-1">
-            <SidebarNav collapsed={collapsed} layoutGroup="sidebar-desktop" />
-          </div>
-          <CollapseButton collapsed={collapsed} onToggle={toggleCollapsed} />
-        </aside>
-
-        {/* Below lg: the same navigation in a sheet (mounted only while open). */}
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent
-            side="start"
-            closeLabel={t('common.close')}
-            className="gap-4 bg-sidebar px-3 py-4"
-          >
-            <SheetTitle className="sr-only">{t('nav.menu')}</SheetTitle>
-            <SidebarBrand collapsed={false} />
-            <PaletteButton collapsed={false} />
-            <SidebarNav layoutGroup="sidebar-mobile" onNavigate={() => setMobileOpen(false)} />
-          </SheetContent>
-        </Sheet>
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar onOpenMenu={() => setMobileOpen(true)} />
-          {prefs.showSynthetic && <SyntheticBanner onHide={() => prefs.setShowSynthetic(false)} />}
-          <main className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            {needsCoop ? (
-              <p className="text-muted-foreground">{t('admin.chooseCoop')}</p>
-            ) : (
-              children
+          <aside
+            className={cn(
+              'sticky top-0 hidden h-dvh shrink-0 flex-col gap-4 border-e border-sidebar-border bg-sidebar px-3 py-4 transition-[width] duration-300 ease-out-expo lg:flex',
+              collapsed ? 'w-[4.25rem]' : 'w-64',
             )}
-          </main>
+          >
+            <SidebarBrand collapsed={collapsed} />
+            <PaletteButton collapsed={collapsed} />
+            <div className="-mx-1 flex-1 overflow-y-auto px-1">
+              <SidebarNav collapsed={collapsed} layoutGroup="sidebar-desktop" />
+            </div>
+            <CollapseButton collapsed={collapsed} onToggle={toggleCollapsed} />
+          </aside>
+
+          {/* Below lg: the same navigation in a sheet (mounted only while open). */}
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetContent
+              side="start"
+              closeLabel={t('common.close')}
+              className="gap-4 bg-sidebar px-3 py-4"
+            >
+              <SheetTitle className="sr-only">{t('nav.menu')}</SheetTitle>
+              <SidebarBrand collapsed={false} />
+              <PaletteButton collapsed={false} />
+              <SidebarNav layoutGroup="sidebar-mobile" onNavigate={() => setMobileOpen(false)} />
+            </SheetContent>
+          </Sheet>
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar onOpenMenu={() => setMobileOpen(true)} />
+            {prefs.showSynthetic && (
+              <SyntheticBanner onHide={() => prefs.setShowSynthetic(false)} />
+            )}
+            <main className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+              {needsCoop ? (
+                <p className="text-muted-foreground">{t('admin.chooseCoop')}</p>
+              ) : (
+                children
+              )}
+            </main>
+          </div>
         </div>
-      </div>
-    </CommandPaletteProvider>
+      </CommandPaletteProvider>
+    </Direction.Provider>
   );
 }
 

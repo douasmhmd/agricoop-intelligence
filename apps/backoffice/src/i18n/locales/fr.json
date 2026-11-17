@@ -54,7 +54,17 @@
     "next": "Page suivante",
     "total_one": "{{count}} élément",
     "total_other": "{{count}} éléments",
-    "close": "Fermer"
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "daysShort_one": "{{count}} j",
+    "daysShort_other": "{{count}} j",
+    "noMatch": "Aucun résultat",
+    "noMatchHint": "Aucun élément ne correspond à ces filtres. Retirez-en un pour élargir la recherche.",
+    "page": "Page {{page}} / {{pages}}",
+    "range": "{{from}}–{{to}} sur {{total}}",
+    "removeFilter": "Retirer le filtre {{label}}",
+    "resetFilters": "Réinitialiser",
+    "required": "Champ obligatoire."
   },
   "synthetic": {
     "toggle": "Données synthétiques",
@@ -126,7 +136,20 @@
     "niveauQrHint": "Par unité : un QR code par bouteille ou coffret",
     "actif": "Actif",
     "confirmDelete": "Supprimer le produit {{code}} ?",
-    "deleted": "Produit supprimé"
+    "deleted": "Produit supprimé",
+    "actifs": "Actifs",
+    "activer": "Activer",
+    "deleteHint": "Impossible si des lots ou des commandes l'utilisent : désactivez-le plutôt.",
+    "desactiver": "Désactiver",
+    "emptyTitle": "Aucun produit",
+    "etat": "État",
+    "inactifs": "Inactifs",
+    "margePreview": "Marge unitaire :",
+    "newHint": "Le produit apparaît dans la boutique dès qu'un lot est en stock.",
+    "produit": "Produit",
+    "sectionIdentite": "Identité",
+    "sectionPrix": "Prix",
+    "sectionTracabilite": "Conservation et traçabilité"
   },
   "lotStatut": {
     "disponible": "Disponible",
@@ -162,7 +185,14 @@
     "type": "Type",
     "declarePerte": "Déclarer une perte",
     "recordPerte": "Enregistrer",
-    "perteRecorded": "Perte enregistrée"
+    "perteRecorded": "Perte enregistrée",
+    "emptyTitle": "Aucun lot",
+    "mouvementsHint": "Entrées, sorties (commandes) et pertes : le stock en est la somme.",
+    "newHint": "La quantité produite est enregistrée comme entrée de stock.",
+    "open": "Voir le lot",
+    "perteHint": "Casse, produit abîmé ou détruit : la quantité sort du stock.",
+    "perteInvalid": "Entre 1 et {{max}}.",
+    "restant": "{{pct}} % de la production encore en stock"
   },
   "alertes": {
     "title": "Alertes de péremption",
@@ -176,7 +206,10 @@
       "j30": "≤ 30 j",
       "j60": "≤ 60 j",
       "j90": "≤ 90 j"
-    }
+    },
+    "noneTitle": "Rien à surveiller",
+    "units_one": "{{count}} unité concernée",
+    "units_other": "{{count}} unités concernées"
   },
   "statut": {
     "creee": "Créée",
@@ -219,7 +252,14 @@
       "expediee": "Marquer expédiée",
       "livree": "Marquer livrée",
       "annulee": "Annuler la commande"
-    }
+    },
+    "cancelTitle": "Annuler la commande",
+    "cancelledNotice": "Commande annulée : le stock a été réintégré.",
+    "emptyTitle": "Aucune commande",
+    "lignesHint": "Chaque ligne indique le lot servi (premier périmé, premier sorti).",
+    "lignesTitle": "Articles",
+    "open": "Voir la commande",
+    "progress": "Avancement de la commande"
   },
   "qrStatut": {
     "actif": "Actif",
@@ -257,7 +297,14 @@
       "actif": "Réactiver",
       "desactive": "Désactiver",
       "signale": "Signaler"
-    }
+    },
+    "daysShort": "{{jours}} j",
+    "emptyTitle": "Aucun QR code",
+    "parVilleHint": "Où les clients vérifient vos produits.",
+    "regenerate": "Réémettre",
+    "regenerateTitle": "Réémettre les QR codes ?",
+    "scansCount_one": "{{count}} scan",
+    "scansCount_other": "{{count}} scans"
   },
   "previsions": {
     "title": "Prévisions",
@@ -268,7 +315,10 @@
     "salesOnly": "Le plan analytique n'a pas encore publié de prévisions : seules les ventes sont affichées.",
     "prevue": "Prévu",
     "vendue": "Vendu",
-    "weekOf": "Semaine du {{date}}"
+    "weekOf": "Semaine du {{date}}",
+    "chartHint": "Ventes hebdomadaires et prévisions du modèle.",
+    "emptyTitle": "Pas encore de prévisions",
+    "nextWeek": "Prévu cette semaine : {{quantite}} unités"
   },
   "analyses": {
     "title": "Analyses",
@@ -404,7 +454,10 @@
     "chooseCoop": "Choisissez une coopérative dans la barre du haut pour consulter ses données (accès audité).",
     "chooseCoopShort": "Choisir une coopérative",
     "actOn": "Consulter",
-    "actingOn": "Sélectionnée"
+    "actingOn": "Sélectionnée",
+    "empty": "Aucune coopérative pour le moment.",
+    "emptyTitle": "Aucune coopérative",
+    "newHint": "La coopérative et le compte de son gestionnaire sont créés ensemble ; il reçoit un e-mail pour choisir son mot de passe."
   },
   "errors": {
     "generic": "Une erreur est survenue. Réessayez.",
@@ -522,5 +575,6 @@
       "manager": "Gestionnaire de coopérative",
       "admin": "Administrateur de la plateforme"
     }
-  }
+  },
+  "notFoundHint": "Cette page n'existe pas ou a été déplacée."
 }

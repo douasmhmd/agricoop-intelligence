@@ -751,3 +751,49 @@ order and keys, month labels, negative amounts, reference date header). All chec
 e2e 3/3; screenshots of the four tabs × desktop/mobile × light/dark × FR/AR with no horizontal
 overflow (`VISUAL_PHASE=analyses`). As before, the relay integration test timed out once in the
 parallel run and passed alone.
+
+## UI redesign — phase 5: back-office tables, forms, remaining pages (2026-11-17)
+
+Every back-office page now uses the design system; no API, route, auth or generated client changed.
+
+**Shared pieces** (`apps/backoffice/src/components/`):
+
+- `data.tsx`: `DataCard` (table card; from lg up the table scrolls inside it so the header stays
+  sticky), `TableSkeleton` (skeleton rows instead of a spinner), `FilterChip` / `FilterBar` (a filter
+  is a dashed "+ Label" chip that opens its choices, then a tinted "Label : value" chip with ×; chips
+  animate in/out, "Réinitialiser" when any is set), `RowActions` (row "⋯" menu), `ExpiryBar` (days left
+  on a 90-day scale, coloured by the 30/60/90 thresholds, grows from the inline start), `BackLink`,
+  `DetailItem`.
+- `confirm.tsx`: `useConfirm()`, a promise-based branded dialog that replaces every `window.confirm`
+  (delete product, cancel order, re-issue QR labels).
+- `common.tsx`: `StatusBadge` uses the kit's dot badges (the old fixed light colours were unreadable
+  in dark mode), `SyntheticBadge` the striped kit variant, `EmptyState` gets the zellige texture, an
+  icon, a title and an action, `Field` links its message to the control (`aria-invalid`,
+  `aria-describedby`) and animates it in, `Pagination` shows "1–20 sur 363 · Page 1 / 19", `Money`
+  accepts negative amounts (a product with a negative margin made it throw).
+- `lots/labels.ts`: `usePrintLabels()`, label printing shared by the lots list and the lot page.
+
+**Pages:** products (family and active/inactive chips, product + category cell, row menu with edit,
+activate/deactivate and delete, form in sections with a live unit-margin preview), lots (status tabs +
+product chip, expiry bar on available lots, stock "12 / 82", row menu with open and print labels),
+lot page (stock gauge, dates and expiry bar, loss form with inline validation, signed and coloured
+movements), expiry alerts (expiry bar per lot, count per level and units), orders (status and channel
+chips, row menu with the allowed status changes), order page (status timeline Créée → Payée → Expédiée
+→ Livrée or the cancelled notice, client card with icons), QR codes (status chip, lot and serial in one
+cell, row menu, scan history as a timeline, scans per city with the dashboard's bar chart and period
+tabs; the chart sits beside the table only from 2xl), forecasts (the dashboard's area + dashed-line
+chart per family, "this week" forecast), cooperatives (current coop highlighted), sign-in, forbidden
+and 404 screens (brand mark, zellige backdrop).
+
+**Also:** the app shell passes the page direction to Radix (menus, tabs and sheets align and use the
+arrow keys correctly in Arabic). `theme.css` turns off letter-spacing on RTL pages (tracking breaks
+Arabic letter joining; it showed in the uppercase synthetic badge). On phones, tables hide secondary
+columns (orders keep reference, status, amount; lots keep number, expiry, stock, status). An empty
+number field now says "Champ obligatoire." instead of Zod's "NaN reçu". The dashboard's recent-orders
+rows can wrap (the wider synthetic badge overflowed 390 px in French).
+
+**Tests:** all 42 tasks green; Playwright e2e 3/3 (selectors only: the orders status filter is now a
+chip menu, and the product code cell is matched exactly since the row's switch and menu are labelled
+with the code). Visual review (`VISUAL_PHASE=phase5`, `VISUAL_USER=manager.coop01`): every back-office
+page × desktop/mobile × light/dark × FR/AR (128 captures, including the product form showing its
+validation) and the storefront (50), no horizontal overflow.

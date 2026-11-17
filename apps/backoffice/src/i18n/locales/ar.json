@@ -58,7 +58,21 @@
     "total_few": "{{count}} عناصر",
     "total_many": "{{count}} عنصرًا",
     "total_other": "{{count}} عنصر",
-    "close": "إغلاق"
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "daysShort_zero": "0 يوم",
+    "daysShort_one": "يوم واحد",
+    "daysShort_two": "يومان",
+    "daysShort_few": "{{count}} أيام",
+    "daysShort_many": "{{count}} يومًا",
+    "daysShort_other": "{{count}} يوم",
+    "noMatch": "لا توجد نتائج",
+    "noMatchHint": "لا يطابق أي عنصر هذه المرشحات. أزل أحدها لتوسيع البحث.",
+    "page": "الصفحة {{page}} / {{pages}}",
+    "range": "{{from}}–{{to}} من {{total}}",
+    "removeFilter": "إزالة مرشح {{label}}",
+    "resetFilters": "إعادة التعيين",
+    "required": "حقل إلزامي."
   },
   "synthetic": {
     "toggle": "البيانات الاصطناعية",
@@ -134,7 +148,20 @@
     "niveauQrHint": "حسب الوحدة: رمز QR لكل قنينة أو علبة",
     "actif": "نشط",
     "confirmDelete": "حذف المنتج {{code}}؟",
-    "deleted": "تم حذف المنتج"
+    "deleted": "تم حذف المنتج",
+    "actifs": "النشطة",
+    "activer": "تفعيل",
+    "deleteHint": "غير ممكن إذا كانت دفعات أو طلبيات تستخدمه: عطّله بدلًا من ذلك.",
+    "desactiver": "تعطيل",
+    "emptyTitle": "لا توجد منتجات",
+    "etat": "الحالة",
+    "inactifs": "غير النشطة",
+    "margePreview": "الهامش للوحدة:",
+    "newHint": "يظهر المنتج في المتجر بمجرد توفر دفعة في المخزون.",
+    "produit": "المنتج",
+    "sectionIdentite": "الهوية",
+    "sectionPrix": "الأسعار",
+    "sectionTracabilite": "الحفظ والتتبع"
   },
   "lotStatut": {
     "disponible": "متوفر",
@@ -170,7 +197,14 @@
     "type": "النوع",
     "declarePerte": "التصريح بضياع",
     "recordPerte": "تسجيل",
-    "perteRecorded": "تم تسجيل الضياع"
+    "perteRecorded": "تم تسجيل الضياع",
+    "emptyTitle": "لا توجد دفعات",
+    "mouvementsHint": "الإدخالات والإخراجات (الطلبيات) والخسائر: المخزون هو مجموعها.",
+    "newHint": "تُسجَّل الكمية المنتجة كإدخال في المخزون.",
+    "open": "عرض الدفعة",
+    "perteHint": "كسر أو منتج تالف أو متلف: تخرج الكمية من المخزون.",
+    "perteInvalid": "بين 1 و{{max}}.",
+    "restant": "{{pct}}٪ من الإنتاج ما زال في المخزون"
   },
   "alertes": {
     "title": "تنبيهات انتهاء الصلاحية",
@@ -184,7 +218,14 @@
       "j30": "≤ 30 يومًا",
       "j60": "≤ 60 يومًا",
       "j90": "≤ 90 يومًا"
-    }
+    },
+    "noneTitle": "لا شيء للمراقبة",
+    "units_zero": "لا وحدات معنية",
+    "units_one": "وحدة واحدة معنية",
+    "units_two": "وحدتان معنيتان",
+    "units_few": "{{count}} وحدات معنية",
+    "units_many": "{{count}} وحدة معنية",
+    "units_other": "{{count}} وحدة معنية"
   },
   "statut": {
     "creee": "منشأة",
@@ -227,7 +268,14 @@
       "expediee": "تأكيد الشحن",
       "livree": "تأكيد التسليم",
       "annulee": "إلغاء الطلبية"
-    }
+    },
+    "cancelTitle": "إلغاء الطلبية",
+    "cancelledNotice": "أُلغيت الطلبية: أُعيد المخزون.",
+    "emptyTitle": "لا توجد طلبيات",
+    "lignesHint": "يشير كل سطر إلى الدفعة المسلَّمة (الأقرب انتهاءً يخرج أولًا).",
+    "lignesTitle": "المنتجات",
+    "open": "عرض الطلبية",
+    "progress": "تقدم الطلبية"
   },
   "qrStatut": {
     "actif": "نشط",
@@ -265,7 +313,18 @@
       "actif": "إعادة التفعيل",
       "desactive": "تعطيل",
       "signale": "الإبلاغ"
-    }
+    },
+    "daysShort": "{{jours}} ي",
+    "emptyTitle": "لا توجد رموز QR",
+    "parVilleHint": "أين يتحقق الزبائن من منتجاتكم.",
+    "regenerate": "إعادة الإصدار",
+    "regenerateTitle": "إعادة إصدار رموز QR؟",
+    "scansCount_zero": "لا عمليات مسح",
+    "scansCount_one": "عملية مسح واحدة",
+    "scansCount_two": "عمليتا مسح",
+    "scansCount_few": "{{count}} عمليات مسح",
+    "scansCount_many": "{{count}} عملية مسح",
+    "scansCount_other": "{{count}} عملية مسح"
   },
   "previsions": {
     "title": "التوقعات",
@@ -276,7 +335,10 @@
     "salesOnly": "لم تنشر منصة التحليل توقعات بعد: تُعرض المبيعات فقط.",
     "prevue": "المتوقع",
     "vendue": "المبيع",
-    "weekOf": "أسبوع {{date}}"
+    "weekOf": "أسبوع {{date}}",
+    "chartHint": "المبيعات الأسبوعية وتوقعات النموذج.",
+    "emptyTitle": "لا توجد توقعات بعد",
+    "nextWeek": "المتوقع هذا الأسبوع: {{quantite}} وحدة"
   },
   "analyses": {
     "title": "التحليلات",
@@ -428,7 +490,10 @@
     "chooseCoop": "اختر تعاونية من الشريط العلوي للاطلاع على بياناتها (وصول مسجّل).",
     "chooseCoopShort": "اختر تعاونية",
     "actOn": "الاطلاع",
-    "actingOn": "محددة"
+    "actingOn": "محددة",
+    "empty": "لا توجد تعاونيات حاليًا.",
+    "emptyTitle": "لا توجد تعاونيات",
+    "newHint": "تُنشأ التعاونية وحساب مسيّرها معًا؛ ويتلقى رسالة إلكترونية لاختيار كلمة المرور."
   },
   "errors": {
     "generic": "حدث خطأ. أعد المحاولة.",
@@ -546,5 +611,6 @@
       "manager": "مسيّر التعاونية",
       "admin": "مسؤول المنصة"
     }
-  }
+  },
+  "notFoundHint": "هذه الصفحة غير موجودة أو تم نقلها."
 }

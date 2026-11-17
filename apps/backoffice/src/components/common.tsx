@@ -1,9 +1,18 @@
 import { formatMad } from '@agricoop/shared';
-import { AlertTriangle, ChevronLeft, ChevronRight, Inbox, Loader2 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { fadeUpSmall } from '@agricoop/ui/motion';
+import {
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+  Loader2,
+  type LucideIcon,
+} from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { cloneElement, isValidElement, type ReactNode, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '@/api/fetcher';
-import { Badge, Button } from '@agricoop/ui';
+import { Badge, Button, ZelligeBackdrop } from '@agricoop/ui';
 import { cn } from '@/lib/utils';
 
 export function useLocale(): 'fr' | 'ar' {
@@ -14,7 +23,14 @@ export function useLocale(): 'fr' | 'ar' {
 export function Money({ value }: { value: string | null | undefined }) {
   const locale = useLocale();
   if (value === null || value === undefined) return <span>—</span>;
-  return <span className="tabular-nums whitespace-nowrap">{formatMad(value, locale)}</span>;
+  // Margins can be negative ("-3.50"); formatMad takes the absolute amount.
+  const negative = value.startsWith('-');
+  return (
+    <span className="tabular-nums whitespace-nowrap">
+      {negative && '−'}
+      {formatMad(negative ? value.slice(1) : value, locale)}
+    </span>
+  );
 }
 
 export function DateText({
@@ -43,27 +59,28 @@ export function SyntheticBadge({ show }: { show: boolean }) {
   const { t } = useTranslation();
   if (!show) return null;
   return (
-    <Badge
-      variant="outline"
-      className="border-dashed text-muted-foreground"
-      title={t('synthetic.hint')}
-    >
+    <Badge variant="synthetic" className="px-1.5 py-0 text-[0.625rem]" title={t('synthetic.hint')}>
       {t('synthetic.badge')}
     </Badge>
   );
 }
 
-const TONES = {
-  neutral: 'bg-muted text-foreground',
-  info: 'bg-sky-100 text-sky-900',
-  success: 'bg-emerald-100 text-emerald-900',
-  warning: 'bg-amber-100 text-amber-900',
-  danger: 'bg-red-100 text-red-900',
+const TONE_VARIANT = {
+  neutral: 'secondary',
+  info: 'info',
+  success: 'success',
+  warning: 'warning',
+  danger: 'destructive',
 } as const;
-export type Tone = keyof typeof TONES;
+export type Tone = keyof typeof TONE_VARIANT;
 
+/** Status with a coloured dot (order, lot, QR statuses; alert levels). */
 export function StatusBadge({ tone, children }: { tone: Tone; children: ReactNode }) {
-  return <Badge className={cn('border-transparent', TONES[tone])}>{children}</Badge>;
+  return (
+    <Badge variant={TONE_VARIANT[tone]} dot>
+      {children}
+    </Badge>
+  );
 }
 
 export function PageHeader({
@@ -81,7 +98,7 @@ export function PageHeader({
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="flex max-w-full min-w-0 flex-wrap gap-2">{actions}</div>}
     </div>
   );
 }
@@ -95,12 +112,33 @@ export function Loading() {
   );
 }
 
-export function EmptyState({ children }: { children: ReactNode }) {
+/** Empty list: faint zellige texture, an icon medallion, a message and an optional action. */
+export function EmptyState({
+  children,
+  title,
+  icon: Icon = Inbox,
+  action,
+}: {
+  children: ReactNode;
+  title?: string;
+  icon?: LucideIcon;
+  action?: ReactNode;
+}) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-      <Inbox className="size-6" />
-      {children}
-    </div>
+    <motion.div
+      variants={fadeUpSmall}
+      initial="hidden"
+      animate="visible"
+      className="relative isolate flex flex-col items-center gap-3 overflow-hidden rounded-xl border border-dashed bg-card/60 px-6 py-14 text-center"
+    >
+      <ZelligeBackdrop />
+      <span className="grid size-12 place-items-center rounded-full border bg-card text-primary shadow-soft">
+        <Icon className="size-5" aria-hidden />
+      </span>
+      {title && <p className="font-display text-lg font-semibold">{title}</p>}
+      <p className="max-w-sm text-sm text-muted-foreground">{children}</p>
+      {action}
+    </motion.div>
   );
 }
 
@@ -126,7 +164,7 @@ export function ErrorAlert({ error }: { error: unknown }) {
   return (
     <div
       role="alert"
-      className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900"
+      className="flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
     >
       <AlertTriangle className="mt-0.5 size-4 shrink-0" />
       <span>{message(error)}</span>
@@ -147,9 +185,11 @@ export function Pagination({
 }) {
   const { t } = useTranslation();
   const pages = Math.max(1, Math.ceil(total / pageSize));
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(total, page * pageSize);
   return (
-    <div className="mt-4 flex items-center justify-between gap-2 text-sm text-muted-foreground">
-      <span>{t('common.total', { count: total })}</span>
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 px-1 text-sm text-muted-foreground">
+      <span className="tabular-nums">{t('common.range', { from, to, total })}</span>
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
@@ -160,8 +200,8 @@ export function Pagination({
         >
           <ChevronLeft className="size-4 rtl:rotate-180" />
         </Button>
-        <span className="tabular-nums">
-          {page} / {pages}
+        <span className="min-w-14 text-center text-xs tabular-nums">
+          {t('common.page', { page, pages })}
         </span>
         <Button
           variant="outline"
@@ -177,7 +217,7 @@ export function Pagination({
   );
 }
 
-/** Label + control + validation message. */
+/** Label + control + hint or validation message (animated in, linked to the control). */
 export function Field({
   label,
   error,
@@ -189,12 +229,48 @@ export function Field({
   hint?: string;
   children: ReactNode;
 }) {
+  const id = useId();
+  const messageId = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+  const control = isValidElement<Record<string, unknown>>(children)
+    ? cloneElement(children, {
+        'aria-invalid': error ? true : undefined,
+        'aria-describedby': messageId,
+      })
+    : children;
   return (
-    <label className="grid gap-1.5 text-sm">
+    <label className="grid content-start gap-1.5 text-sm">
       <span className="font-medium">{label}</span>
-      {children}
-      {hint && !error && <span className="text-xs text-muted-foreground">{hint}</span>}
-      {error && <span className="text-xs text-red-700">{error}</span>}
+      {control}
+      <AnimatePresence initial={false} mode="wait">
+        {error ? (
+          <motion.span
+            key="error"
+            id={messageId}
+            variants={fadeUpSmall}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="flex items-center gap-1 text-xs text-destructive"
+          >
+            <AlertTriangle className="size-3 shrink-0" aria-hidden />
+            {error}
+          </motion.span>
+        ) : (
+          hint && (
+            <motion.span
+              key="hint"
+              id={messageId}
+              variants={fadeUpSmall}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="text-xs text-muted-foreground"
+            >
+              {hint}
+            </motion.span>
+          )
+        )}
+      </AnimatePresence>
     </label>
   );
 }
@@ -205,7 +281,7 @@ export function NativeSelect(props: React.SelectHTMLAttributes<HTMLSelectElement
     <select
       {...props}
       className={cn(
-        'h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+        'h-9 rounded-lg border border-input bg-background px-3 text-sm shadow-xs transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive',
         props.className,
       )}
     />

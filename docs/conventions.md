@@ -234,9 +234,14 @@ generate` regenerates the TS types.
 - Dev proxies and nginx forward only `/api/v1/` and `/qr/v1/`: app routes like `/qr` stay with the SPA.
 - After sign-in the user returns to the page they asked for (`returnTo` in the OIDC state, validated
   by `safeReturnPath`).
+- Data pages use `src/components/data.tsx` (`DataCard`, `TableSkeleton`, `FilterChip`/`FilterBar`,
+  `RowActions`, `ExpiryBar`, `BackLink`) and `useConfirm()` (`components/confirm.tsx`) — never
+  `window.confirm`. Status values render with `<StatusBadge tone>` (tones in `lib/tones.ts`). On
+  phones, hide secondary table columns with `max-md:hidden` rather than letting the table scroll.
+- No letter-spacing in Arabic: `theme.css` resets it under `[dir=rtl]` (tracking breaks letter joining).
 - `/analyses` reads the gold layer (`useAnalytics*` hooks, `src/analytics/`). Its amounts are JSON
-  numbers: sum with `sumAmounts`, display with `formatAmount` (signed), never `<Money>` (strings
-  only, non-negative). Model labels (segments, QR levels) go through `segmentKey` / `qrNiveauKey`.
+  numbers: sum with `sumAmounts`, display with `formatAmount` (signed), never `<Money>` (it takes
+  money strings). Model labels (segments, QR levels) go through `segmentKey` / `qrNiveauKey`.
   Its data is COOP01's (shared seed): check it as `manager.coop01`.
 
 ## Storefront (apps/web)

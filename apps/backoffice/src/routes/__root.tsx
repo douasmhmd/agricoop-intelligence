@@ -1,12 +1,13 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router';
+import { Compass, Loader2, ShieldAlert } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { hasAuthParams, useAuth } from 'react-oidc-context';
 import { useSession } from '@/auth/session';
 import { AppShell } from '@/components/AppShell';
-import { Button } from '@agricoop/ui';
+import { BrandMark, Button, ZelligeBackdrop } from '@agricoop/ui';
+import { EmptyState } from '@/components/common';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -39,7 +40,9 @@ function Root() {
 
   if (auth.isLoading || auth.activeNavigator || !auth.isAuthenticated) {
     return (
-      <div className="flex min-h-dvh items-center justify-center gap-2 text-muted-foreground">
+      <div className="relative isolate flex min-h-dvh flex-col items-center justify-center gap-4 overflow-hidden bg-background text-muted-foreground">
+        <ZelligeBackdrop />
+        <BrandMark className="size-10 text-primary" />
         {auth.error ? (
           <div className="grid gap-3 text-center">
             <p>{t('auth.error')}</p>
@@ -50,9 +53,9 @@ function Root() {
             </Button>
           </div>
         ) : (
-          <>
-            <Loader2 className="size-5 animate-spin" /> {t('auth.signingIn')}
-          </>
+          <p className="flex items-center gap-2 text-sm" role="status">
+            <Loader2 className="size-4 animate-spin" aria-hidden /> {t('auth.signingIn')}
+          </p>
         )}
       </div>
     );
@@ -60,9 +63,12 @@ function Root() {
 
   if (!session?.isManager && !session?.isAdmin) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
-        <ShieldAlert className="size-8 text-amber-600" />
-        <p className="max-w-md">{t('auth.forbidden')}</p>
+      <div className="relative isolate flex min-h-dvh flex-col items-center justify-center gap-4 overflow-hidden bg-background p-6 text-center">
+        <ZelligeBackdrop />
+        <span className="grid size-14 place-items-center rounded-full border bg-card text-warning-foreground shadow-soft dark:text-warning">
+          <ShieldAlert className="size-6" aria-hidden />
+        </span>
+        <p className="max-w-md text-muted-foreground">{t('auth.forbidden')}</p>
         <Button variant="outline" onClick={() => void auth.signoutRedirect()}>
           {t('auth.signOut')}
         </Button>
@@ -79,5 +85,17 @@ function Root() {
 
 function NotFound() {
   const { t } = useTranslation();
-  return <p className="text-muted-foreground">{t('notFound')}</p>;
+  return (
+    <EmptyState
+      icon={Compass}
+      title={t('notFound')}
+      action={
+        <Button asChild size="sm" variant="outline">
+          <Link to="/">{t('nav.dashboard')}</Link>
+        </Button>
+      }
+    >
+      {t('notFoundHint')}
+    </EmptyState>
+  );
 }

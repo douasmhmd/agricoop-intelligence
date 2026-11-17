@@ -427,3 +427,11 @@
     animation: none !important;
   }
 }
+
+/*
+ * Arabic script is never letter-spaced: tracking (positive or negative) breaks the joining of
+ * letters. Unlayered on purpose, so it wins over the tracking-* and display-size utilities.
+ */
+[dir='rtl'] * {
+  letter-spacing: normal;
+}

@@ -10,10 +10,40 @@ import {
 } from './targets';
 
 /** Pages to capture. Grows with each redesign phase. */
-const PAGES: { name: string; url: string; auth?: boolean; ready: string; open?: string }[] = [
+const PAGES: {
+  name: string;
+  url: string;
+  auth?: boolean;
+  ready: string;
+  open?: string;
+  /** Clicked once the page is ready (e.g. submit an empty form to show validation). */
+  then?: string;
+}[] = [
   { name: 'styleguide', url: `${BACKOFFICE_URL}/styleguide`, auth: true, ready: 'h1' },
   { name: 'bo-dashboard', url: `${BACKOFFICE_URL}/`, auth: true, ready: 'h1' },
   { name: 'bo-produits', url: `${BACKOFFICE_URL}/produits`, auth: true, ready: 'h1' },
+  // Phase 5: data pages (richest with VISUAL_USER=manager.coop01 on the shared seed).
+  { name: 'bo-lots', url: `${BACKOFFICE_URL}/lots`, auth: true, ready: 'h1' },
+  { name: 'bo-lot', url: `${BACKOFFICE_URL}/lots`, auth: true, ready: 'h1', open: 'main tbody a' },
+  { name: 'bo-alertes', url: `${BACKOFFICE_URL}/stock/alertes`, auth: true, ready: 'h1' },
+  { name: 'bo-commandes', url: `${BACKOFFICE_URL}/commandes`, auth: true, ready: 'h1' },
+  {
+    name: 'bo-commande',
+    url: `${BACKOFFICE_URL}/commandes`,
+    auth: true,
+    ready: 'h1',
+    open: 'main tbody a',
+  },
+  { name: 'bo-qr', url: `${BACKOFFICE_URL}/qr`, auth: true, ready: 'h1' },
+  { name: 'bo-previsions', url: `${BACKOFFICE_URL}/previsions`, auth: true, ready: 'h1' },
+  {
+    name: 'bo-produit-form',
+    url: `${BACKOFFICE_URL}/produits?nouveau=1`,
+    auth: true,
+    ready: '[role="dialog"]',
+    then: '[role="dialog"] button[type="submit"]',
+  },
+  { name: 'bo-404', url: `${BACKOFFICE_URL}/nulle-part`, auth: true, ready: 'main p' },
   // Gold-layer data: run with VISUAL_USER=manager.coop01 after `pnpm db:restore`.
   { name: 'bo-analyses-ventes', url: `${BACKOFFICE_URL}/analyses`, auth: true, ready: 'h1' },
   ...(['stocks', 'clients', 'qr'] as const).map((onglet) => ({
@@ -54,6 +84,7 @@ for (const p of PAGES) {
         await page.locator(p.open).first().click();
       }
       await expect(page.locator(p.ready).first()).toBeVisible({ timeout: 30_000 });
+      if (p.then) await page.locator(p.then).first().click();
       await expect(page.locator('html')).toHaveAttribute('dir', v.lang === 'ar' ? 'rtl' : 'ltr');
       // Back office: data loaded once no <Loading> indicator is left (the storefront uses
       // role="status" for lasting messages too).
