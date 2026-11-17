@@ -22,7 +22,7 @@ describe('i18n', () => {
         <LanguageSwitcher />
       </I18nextProvider>,
     );
-    await userEvent.click(screen.getByRole('button', { name: 'العربية' }));
+    await userEvent.click(screen.getByRole('button', { name: /العربية/ }));
     expect(document.documentElement.lang).toBe('ar');
     expect(document.documentElement.dir).toBe('rtl');
     expect(screen.getByRole('group', { name: 'اللغة' })).toBeInTheDocument();

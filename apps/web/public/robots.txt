@@ -1,0 +1,6 @@
+# Storefront. QR verification links (/v/...) carry a secret token per label: never index them.
+User-agent: *
+Allow: /
+Disallow: /v/
+Disallow: /panier
+Disallow: /compte

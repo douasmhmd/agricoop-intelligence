@@ -1,3 +1,5 @@
+import './zod-config.js';
+
 export * from './enums.js';
 export * from './money.js';
 export * from './schemas/common.js';

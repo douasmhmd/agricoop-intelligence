@@ -13,11 +13,11 @@ import { spring } from '@agricoop/ui/motion';
 import { Link, useRouter } from '@tanstack/react-router';
 import { ShoppingBag, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { Drawer } from 'vaul';
 import { useCart, type CartLine } from '@/cart/cart';
+import { useCartDrawer } from '@/cart/drawer-context';
 import { EmptyState, QuantityStepper } from '@/components/common';
 import { Price } from '@/components/Price';
 import { photo, productPhoto } from '@/lib/images';
@@ -25,42 +25,11 @@ import { useMediaQuery } from '@/lib/ui';
 
 /*
  * Cart drawer: a side sheet on desktop, a Vaul bottom sheet on phones (drag to dismiss). The full
- * /panier page stays for direct visits and links opened in a new tab.
+ * /panier page stays for direct visits and links opened in a new tab. Loaded lazily by
+ * CartDrawerProvider the first time the drawer opens.
  */
 
-interface DrawerContextValue {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-}
-
-const DrawerContext = createContext<DrawerContextValue>({ open: false, setOpen: () => undefined });
-
-export function useCartDrawer(): DrawerContextValue {
-  return useContext(DrawerContext);
-}
-
-export function CartDrawerProvider({ children }: { children: ReactNode }) {
-  const [open, setOpenState] = useState(false);
-  const value = useMemo(
-    () => ({
-      open,
-      setOpen: (next: boolean) => {
-        // The "added to cart" toast would sit over the drawer's checkout button on phones.
-        if (next) toast.dismiss();
-        setOpenState(next);
-      },
-    }),
-    [open],
-  );
-  return (
-    <DrawerContext.Provider value={value}>
-      {children}
-      <CartDrawer />
-    </DrawerContext.Provider>
-  );
-}
-
-function CartDrawer() {
+export default function CartDrawer() {
   const { t } = useTranslation();
   const { open, setOpen } = useCartDrawer();
   const desktop = useMediaQuery('(min-width: 768px)');

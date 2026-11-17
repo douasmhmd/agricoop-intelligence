@@ -5,7 +5,7 @@ import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES, setLanguage, type Language } from '@/i18n';
 
-/** Short endonyms for narrow screens; the full name stays the accessible label. */
+/** Short endonyms for narrow screens; the full name is still read by screen readers. */
 const SHORT: Record<Language, string> = { fr: 'FR', ar: 'ع' };
 
 /** Segmented FR / AR switch; the active pill slides between the two (and mirrors in RTL). */
@@ -29,7 +29,6 @@ export function LanguageSwitcher({ className }: { className?: string }) {
             type="button"
             lang={lng}
             aria-pressed={active}
-            aria-label={t(`language.${lng}`)}
             onClick={() => void setLanguage(lng)}
             className="relative h-7 cursor-pointer rounded-full px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:text-primary-foreground"
           >
@@ -41,12 +40,10 @@ export function LanguageSwitcher({ className }: { className?: string }) {
                 transition={spring.snappy}
               />
             )}
-            <span aria-hidden className="relative sm:hidden">
-              {SHORT[lng]}
-            </span>
-            <span aria-hidden className="relative max-sm:hidden">
-              {t(`language.${lng}`)}
-            </span>
+            {/* The accessible name contains the visible text (WCAG 2.5.3): "FR" on phones is
+                followed by the full name for screen readers. */}
+            <span className="relative sm:hidden">{SHORT[lng]}</span>
+            <span className="sr-only sm:not-sr-only sm:relative">{t(`language.${lng}`)}</span>
           </button>
         );
       })}

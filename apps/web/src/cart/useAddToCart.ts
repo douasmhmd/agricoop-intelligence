@@ -2,7 +2,7 @@ import type { ProduitCatalogue } from '@agricoop/shared';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useCart } from '@/cart/cart';
-import { useCartDrawer } from '@/cart/CartDrawer';
+import { useCartDrawer } from '@/cart/drawer-context';
 import { useFlyToCart } from '@/cart/fly';
 
 /**

@@ -8,7 +8,7 @@ import {
   useRouterState,
 } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { CartDrawerProvider } from '@/cart/CartDrawer';
+import { CartDrawerProvider } from '@/cart/CartDrawerProvider';
 import { FlyToCartProvider } from '@/cart/fly';
 import { useErrorMessage } from '@/components/common';
 import { SiteFooter } from '@/components/SiteFooter';

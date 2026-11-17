@@ -797,3 +797,42 @@ chip menu, and the product code cell is matched exactly since the row's switch a
 with the code). Visual review (`VISUAL_PHASE=phase5`, `VISUAL_USER=manager.coop01`): every back-office
 page × desktop/mobile × light/dark × FR/AR (128 captures, including the product form showing its
 validation) and the storefront (50), no horizontal overflow.
+
+## UI redesign — phase 6: polish, reduced motion, RTL, dark mode, Lighthouse (2026-11-17)
+
+**Audits** (both apps and the kit): no physical-direction utilities left (only symmetric centring),
+every directional icon mirrors in RTL, motion x-offsets go through presets; no theme-blind colours
+outside text-over-photo scrims and the dark footer.
+
+**Reduced motion:** `theme.css` now also neutralises tw-animate-css movement (dialogs, sheets,
+menus, accordion fade only), makes transform transitions instant (hover nudges, switch thumb,
+sidebar width) and turns off smooth scrolling. Verified in Chromium: a sheet's entrance offset is
+`100%` normally and `0` with `prefers-reduced-motion: reduce`.
+
+**Performance and quality** (storefront home, production image, Lighthouse 13.6 mobile):
+Performance 47 → median 82 (79 / 82 / 93), Accessibility 100, Best practices 96 → 100, SEO 83 → 100;
+first paint and LCP 7.5 s → 3.4 s, TBT 460 → ~220 ms.
+
+- nginx gzip for text responses (the bundles were sent uncompressed).
+- Hero paragraph (the LCP element) painted at once; below-the-fold home sections use the new
+  `defer-render` utility (`content-visibility: auto`).
+- Cart drawer split: `cart/drawer-context.ts` + `CartDrawerProvider` at the root, the drawer UI
+  (`CartDrawer.tsx`, Vaul) loaded on first open and prefetched on cart-button hover/focus.
+- Lenis loaded when the browser is idle; photo srcsets gain 480/800 widths.
+- `@agricoop/shared` sets Zod to jitless in browsers (`zod-config.ts`, first import): its
+  `new Function` probe was a CSP `script-src` violation in production (the e2e CSP check runs on the
+  dev server, which has no CSP). Node services keep the JIT.
+- `meta description`; `robots.txt` for both apps (storefront never indexes `/v/…` QR links, which
+  carry a secret token; back office disallows everything).
+- Language buttons: the accessible name now contains the visible text ("FR Français", WCAG 2.5.3);
+  unit tests match the name by pattern.
+
+**Remaining:** the median stays under the brief's 90 because the storefront is client-rendered
+(~280 KB gzipped JS before the first paint). Reaching 90 reliably needs the first screen in the
+HTML (pre-rendering the home hero), an architectural change left for a decision.
+
+**Docs:** `docs/ui-design.md` documents tokens, typography, components, motion presets and rules,
+RTL, accessibility and the Lighthouse results and method.
+
+**Tests:** all 42 tasks green, Playwright e2e 3/3, visual suite 181 captures (both apps, every
+page × desktop/mobile × light/dark × FR/AR) without horizontal overflow (`VISUAL_PHASE=phase6`).

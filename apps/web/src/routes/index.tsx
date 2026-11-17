@@ -23,16 +23,20 @@ function Home() {
   return (
     <>
       <Hero />
-      <Story coops={coops.length} produits={produits.length} provinces={provinces} />
-      <Featured produits={featured} pending={coopsQuery.isPending || cataloguesPending} />
-      <Categories groupes={groupes} />
-      <Authenticity />
-      <CoopHighlights
-        summaries={summaries}
-        pending={coopsQuery.isPending}
-        error={coopsQuery.error}
-      />
-      <Newsletter />
+      {/* Below the fold: the browser skips their style, layout and paint until they near the
+          viewport (content-visibility), which keeps the first paint fast on phones. */}
+      <div className="defer-render">
+        <Story coops={coops.length} produits={produits.length} provinces={provinces} />
+        <Featured produits={featured} pending={coopsQuery.isPending || cataloguesPending} />
+        <Categories groupes={groupes} />
+        <Authenticity />
+        <CoopHighlights
+          summaries={summaries}
+          pending={coopsQuery.isPending}
+          error={coopsQuery.error}
+        />
+        <Newsletter />
+      </div>
     </>
   );
 }

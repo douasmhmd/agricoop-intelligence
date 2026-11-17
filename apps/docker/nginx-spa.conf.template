@@ -15,6 +15,16 @@ server {
 
     access_log /dev/stdout agricoop;
 
+    # Compress text responses (the JS and CSS bundles shrink ~3x; on a slow mobile link this is
+    # most of the time to first paint). Proxied API JSON too.
+    gzip on;
+    gzip_comp_level 6;
+    gzip_min_length 1024;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_types text/css text/plain application/javascript application/json image/svg+xml
+        application/manifest+json;
+
     # The OIDC provider is a separate origin: token / discovery calls (connect-src) and silent renew
     # (frame-src). Styles: Radix / sonner inject runtime styles. Images: storefront placeholder photos
     # from images.unsplash.com (apps/web/src/lib/images.ts).

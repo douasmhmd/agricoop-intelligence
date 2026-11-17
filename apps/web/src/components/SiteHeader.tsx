@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
 import { useCart } from '@/cart/cart';
-import { useCartDrawer } from '@/cart/CartDrawer';
+import { preloadCartDrawer, useCartDrawer } from '@/cart/drawer-context';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 /** Home sections reachable from the navigation (ids set on the home page). */
@@ -158,6 +158,8 @@ function CartButton() {
       <Link
         to="/panier"
         data-cart-target
+        onPointerEnter={preloadCartDrawer}
+        onFocus={preloadCartDrawer}
         onClick={(e) => {
           // A plain click opens the drawer; new-tab / modified clicks keep the /panier page.
           if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

@@ -201,7 +201,7 @@ generate` regenerates the TS types.
   `/users/{id}/role-mappings/realm/available`), not `/roles/{name}` (needs view-realm). On any failure,
   delete what was created (user, then group).
 
-## Design system (packages/ui) — UI redesign in progress
+## Design system (packages/ui)
 
 - Both front ends use `@agricoop/ui` (TypeScript source, no build step): tokens and themes in
   `src/styles/theme.css` (Tailwind v4 `@theme`, OKLCH), motion presets in `src/motion.ts`, base
@@ -216,6 +216,13 @@ generate` regenerates the TS types.
 - Motion: presets only (`fadeUp`, `stagger`, `slideInFromStart`…), transform/opacity only, horizontal
   offsets through `inlineOffset()` / `custom={dir}` so they mirror in RTL (`useDirection()`).
   Apps are wrapped in `MotionProvider` (reduced motion keeps fades only).
+- Full reference: `docs/ui-design.md` (tokens, motion rules, RTL, accessibility, Lighthouse).
+- Reduced motion is handled centrally (MotionConfig + `theme.css`): new CSS animations must keep
+  working when their transform is neutralised. Below-the-fold storefront sections use
+  `defer-render`; keep the home's LCP text (hero paragraph) unanimated.
+- The production CSP forbids eval: browser code must not need `new Function` (Zod runs jitless in
+  browsers via `packages/shared/src/zod-config.ts`, the first import of its index). Check
+  production CSP with the app images, not the dev server.
 - Visual review: `pnpm --filter @agricoop/e2e screenshots` (desktop/mobile × light/dark × FR/AR,
   fails on horizontal overflow) → `apps/e2e/screenshots/redesign/<VISUAL_PHASE>/` (git-ignored).
   The back-office `/styleguide` route shows every token and component.

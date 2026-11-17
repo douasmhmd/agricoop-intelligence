@@ -60,12 +60,11 @@ export function Hero() {
             ))}
           </motion.h1>
 
-          <motion.p
-            variants={fadeUp}
-            className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
-          >
+          {/* Static on purpose: this paragraph is the page's largest text (LCP); fading it in
+              would delay the first meaningful paint. The headline still reveals word by word. */}
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
             {t('home.intro')}
-          </motion.p>
+          </p>
 
           <motion.div variants={fadeUp} className="mt-9 flex flex-wrap items-center gap-3">
             <Button asChild size="xl" shape="pill" variant="gold" className="group">

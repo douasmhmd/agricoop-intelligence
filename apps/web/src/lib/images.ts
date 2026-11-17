@@ -23,7 +23,8 @@ export const PHOTOS = {
 
 export type PhotoKey = keyof typeof PHOTOS;
 
-const WIDTHS = [400, 640, 960, 1280, 1600, 2000] as const;
+// Close steps in the phone range (412 px × DPR 1.75–3), so a phone never fetches a much larger file.
+const WIDTHS = [400, 480, 640, 800, 960, 1280, 1600, 2000] as const;
 
 export function photoUrl(key: PhotoKey, width: number, quality = 72): string {
   return `https://images.unsplash.com/photo-${PHOTOS[key]}?auto=format&fit=crop&w=${width}&q=${quality}`;
