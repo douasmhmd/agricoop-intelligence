@@ -284,6 +284,11 @@ generate` regenerates the TS types.
 - Animated money: `<Price>` passes the money STRING to NumberFlow (Intl formats numeric strings
   exactly); never `Number(prix)`.
 - The newsletter form has no backend (it would need an API endpoint): it says so instead of storing.
+- **Pre-rendered home:** the production build renders `SiteHeader` + `Hero` into `index.html`
+  (`scripts/prerender.mjs`, entry `src/prerender/entry.tsx`); `theme-init.js` shows it only on `/`
+  in French. Code those two components use must not touch `window`/`document` at module level or
+  during render, and the hero's intro animations go through `useSkipIntro()`. The dev server has no
+  shell: check it on the app image (`docker compose ... --profile apps up -d --build web`).
 
 ## Local dev
 

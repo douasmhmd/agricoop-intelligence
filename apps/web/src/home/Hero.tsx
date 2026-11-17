@@ -6,6 +6,7 @@ import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { photo } from '@/lib/images';
+import { useSkipIntro } from '@/lib/prerender';
 
 /**
  * Full-height hero: word-by-word serif headline, two CTAs, and the olive grove in a Moroccan arch
@@ -19,6 +20,8 @@ export function Hero() {
   const imageY = useTransform(scrollYProgress, [0, 1], ['0%', '16%']);
   const frameY = useTransform(scrollYProgress, [0, 1], ['0%', '-6%']);
   const words = t('hero.title').split(' ');
+  // Booting over the pre-rendered shell: show the final state at once (no replay).
+  const skipIntro = useSkipIntro();
 
   return (
     <section
@@ -33,7 +36,11 @@ export function Hero() {
       />
 
       <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16 lg:px-8">
-        <motion.div variants={stagger(0.12, 0.05)} initial="hidden" animate="visible">
+        <motion.div
+          variants={stagger(0.12, 0.05)}
+          initial={skipIntro ? false : 'hidden'}
+          animate="visible"
+        >
           <motion.p
             variants={fadeUp}
             className="mb-6 flex items-center gap-3 text-xs font-semibold tracking-[0.2em] text-gold-700 uppercase dark:text-gold"
@@ -99,7 +106,7 @@ export function Hero() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
+          initial={skipIntro ? false : { opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ ...transition.hero, delay: 0.25 }}
           className="relative mx-auto w-full max-w-[26rem] lg:max-w-[30rem]"
@@ -155,9 +162,10 @@ function FloatingChip({
   slow?: boolean;
   children: React.ReactNode;
 }) {
+  const skipIntro = useSkipIntro();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={skipIntro ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ ...transition.reveal, delay }}
       className={`absolute ${className}`}

@@ -20,6 +20,8 @@ function storedLanguage(): Language | undefined {
 
 /** Mirrors the active language on <html lang dir> so the whole layout flips for Arabic (RTL). */
 function applyDocumentDirection(lng: string): void {
+  // No document during the build-time pre-render (src/prerender/entry.tsx).
+  if (typeof document === 'undefined') return;
   document.documentElement.lang = lng;
   document.documentElement.dir = i18n.dir(lng);
   // Zod's built-in validation messages follow the UI language (custom messages stay as written).

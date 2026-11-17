@@ -142,41 +142,44 @@ Rules:
   `VISUAL_USER=manager.coop01` for the back office on the shared seed) →
   `apps/e2e/screenshots/redesign/<phase>/`.
 - Lighthouse targets for the storefront home on mobile: Performance ≥ 90, Accessibility ≥ 95
-  (results in section 8).
+  (met: section 8).
 
-## 8. Lighthouse
+## 8. Lighthouse and the pre-rendered home
 
 Storefront home, **production image** (`docker compose --profile apps`, nginx), Lighthouse 13.6
-mobile defaults (simulated slow 4G, 4× CPU), 2026-11-17:
+mobile defaults (simulated slow 4G, 4× CPU), 2026-11-17, three runs each:
 
-| Category       | Before phase 6 | After (3 runs)           |
-| -------------- | -------------- | ------------------------ |
-| Performance    | 47             | 79 / 82 / 93 (median 82) |
-| Accessibility  | 100            | 100                      |
-| Best practices | 96             | 100                      |
-| SEO            | 83             | 100                      |
+| Category          | Before phase 6 | Phase 6 (client-rendered) | With the pre-rendered shell |
+| ----------------- | -------------- | ------------------------- | --------------------------- |
+| Performance       | 47             | 79 / 82 / 93              | **96 / 99 / 98**            |
+| Accessibility     | 100            | 100                       | 100                         |
+| Best practices    | 96             | 100                       | 100                         |
+| SEO               | 83             | 100                       | 100                         |
+| First paint / LCP | 7.5 s          | 3.4 s                     | **1.1 s**                   |
 
-First paint 7.5 s → 3.4 s (2.0 s on the best run), LCP 7.5 s → 3.4 s, total blocking time
-460 → ~220 ms, CLS ≈ 0. What changed:
+**Pre-rendered shell.** `pnpm --filter @agricoop/web build` runs `vite build`, then
+`scripts/prerender.mjs`: an SSR build of `src/prerender/entry.tsx` (the real `SiteHeader` and
+`Hero`, French, anonymous visitor, empty cart) whose HTML goes into `dist/index.html` inside
+`<div id="root"><div id="prerender">`. So the first screen paints from the HTML, before any app
+JavaScript.
 
-- **nginx gzip** (`apps/docker/nginx-spa.conf.template`): JS and CSS were sent uncompressed
-  (~950 KB → ~310 KB on the wire).
-- The hero paragraph (the LCP element) is no longer faded in; the headline keeps its word reveal.
-- Below-the-fold home sections use `defer-render` (`content-visibility: auto`).
-- The cart drawer UI loads on first open (prefetched on cart-button hover/focus); Lenis loads when
-  the browser is idle.
-- Photo `srcset` has intermediate widths (480, 800) so phones fetch closer to the displayed size.
-- Zod runs jitless in browsers (`packages/shared/src/zod-config.ts`): its `new Function` check was a
-  CSP violation in production.
-- `meta description`, `robots.txt` (QR links `/v/…` carry a secret token: never indexed), language
-  buttons whose accessible name contains their visible text.
+- `theme-init.js` (in `<head>`, before the first paint) shows the shell only on `/` for a French
+  visitor (`html.prerendered`); everywhere else, and for Arabic, an inline style keeps it hidden.
+- `main.tsx` imports `lib/prerender.ts` first (it records whether the shell is on screen) and, over
+  the shell, waits for `router.load()` so React replaces it with the same content in one commit.
+- `useSkipIntro()` makes the hero skip its entrance animations on that first render (and in the
+  pre-render, so the HTML holds the final state); later visits to the home animate as before.
+- Checked on the production image: the hero paragraph is visible from the first paint and never
+  hidden during the takeover (0 of 247 frames), no CSP violation, no console error, e2e green.
+- When the hero or header changes, nothing else to do: the next build re-renders them. Anything
+  they use must render without `window`/`document` at module level (guard browser-only code).
 
-**Remaining gap to 90 (median):** the storefront is client-rendered, so nothing paints until
-~280 KB of gzipped JS (React, router, Motion, Zod, i18next, OIDC client) has downloaded and run.
-Reaching ≥ 90 reliably needs the home page's first screen in the HTML (pre-rendering / SSG of the
-hero), a separate architectural change.
+**Other fixes behind the numbers:** nginx gzip (bundles were sent uncompressed), static hero
+paragraph (the LCP element), `defer-render` on below-the-fold sections, cart drawer UI loaded on
+first open, Lenis on idle, intermediate photo widths, Zod jitless in browsers (CSP), meta
+description, `robots.txt`, language buttons whose name contains their visible text.
 
-How to re-run: build and start the image (`docker compose -f docker-compose.yml -f
-docker-compose.apps.yml --profile apps up -d --build web`, it takes port 5173), then run
-Lighthouse against `http://localhost:5173/` (on Windows, through a Chromium started by
-Playwright with `--remote-debugging-port`, since chrome-launcher cannot spawn Chrome there).
+How to re-run: `docker compose -f docker-compose.yml -f docker-compose.apps.yml --profile apps up
+-d --build web` (it takes port 5173), then Lighthouse against `http://localhost:5173/` (on Windows,
+through a Chromium started by Playwright with `--remote-debugging-port`: chrome-launcher cannot
+spawn Chrome there).

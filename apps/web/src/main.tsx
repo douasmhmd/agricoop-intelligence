@@ -1,3 +1,5 @@
+// First: records whether the pre-rendered home shell is on screen (before React replaces it).
+import { bootedOverShell } from './lib/prerender';
 import './i18n';
 import '@agricoop/ui/fonts';
 import './index.css';
@@ -62,6 +64,10 @@ function ApiBridge() {
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element missing from index.html');
+
+// Over the pre-rendered shell, render once the home route (lazy chunk) is ready, so React swaps
+// the shell for the same content in one commit instead of flashing an empty page.
+if (bootedOverShell) await router.load();
 
 createRoot(rootElement).render(
   <StrictMode>

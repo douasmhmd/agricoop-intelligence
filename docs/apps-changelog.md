@@ -836,3 +836,26 @@ RTL, accessibility and the Lighthouse results and method.
 
 **Tests:** all 42 tasks green, Playwright e2e 3/3, visual suite 181 captures (both apps, every
 page × desktop/mobile × light/dark × FR/AR) without horizontal overflow (`VISUAL_PHASE=phase6`).
+
+## Storefront: pre-rendered home shell (2026-11-17)
+
+Closes the gap left by phase 6: the storefront home now meets the brief's Lighthouse target on
+mobile. Performance 79 / 82 / 93 → **96 / 99 / 98**, first paint and LCP 3.4 s → **1.1 s**;
+Accessibility, Best practices and SEO stay at 100 (production image, three runs each).
+
+- Build: `apps/web` `build` = `vite build && node scripts/prerender.mjs`. The script SSR-builds
+  `src/prerender/entry.tsx` (real `SiteHeader` + `Hero` in a minimal router; French, anonymous,
+  empty cart) into a temporary `.prerender/` folder (git-ignored, deleted afterwards) and injects
+  the HTML into `dist/index.html` (`#root > #prerender`, 18.5 KB). The Docker image build runs it.
+- `theme-init.js` moved to `<head>`: besides the theme, it marks `html.prerendered` on `/` for a
+  French visitor; an inline style hides `#prerender` everywhere else (other routes, Arabic).
+- `main.tsx` imports `lib/prerender.ts` first and, over the shell, awaits `router.load()` before
+  rendering (no empty frame while the lazy home chunk loads). `useSkipIntro()` skips the hero's
+  entrance animations on that first render only.
+- `src/i18n` no longer touches `document` when there is none (the pre-render runs in Node).
+
+**Verified on the production image:** hero paragraph visible from the first paint and never hidden
+during React's takeover (0 / 247 frames); shell shown only for the French home (not for Arabic, the
+catalogue or a QR page); no CSP violation and no console error; Playwright e2e 3/3 against the
+production storefront (real CSP) and against the dev servers; storefront captures (51) without
+overflow. All 42 tasks green.
