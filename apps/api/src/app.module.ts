@@ -14,6 +14,7 @@ import { MeController } from './me/me.controller';
 import { PrevisionsModule } from './previsions/previsions.controller';
 import { AdminModule } from './admin/admin.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { PowerBiModule } from './powerbi/powerbi.module';
 import { CatalogueModule } from './catalogue/catalogue.module';
 import { CommandesModule } from './commandes/commandes.module';
 import { StockModule } from './stock/stock.module';
@@ -56,6 +57,7 @@ export class AppModule {
         PrevisionsModule,
         AdminModule.register(env),
         AnalyticsModule.register(env),
+        PowerBiModule.register(env),
       ],
       controllers: [MeController],
     };

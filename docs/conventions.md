@@ -143,6 +143,9 @@ How to work in this repo: the binding conventions for the application scope.
   - default: authenticated **and** tenant required (token `tenant_id`, or `X-Coop-Id` for `saas_admin`);
   - `@Roles('coop_manager', ...)`: any-of; `saas_admin` always passes (and must send `X-Coop-Id`);
   - `@NoTenant()`: authenticated, no tenant (e.g. `/me`, storefront routes keyed by `/coops/:code`);
+  - `@AdminTenantOptional()`: tenant route where a `saas_admin` MAY omit `X-Coop-Id` (the handler
+    then sees no coopId and must handle the cross-tenant case itself; Power BI's Admin role);
+  - `@RateLimit(limit, ttlMs)`: stricter per-route limit than the global throttler (429);
   - `@Public()`: no auth at all (public catalogue, QR verification, probes).
     Every user also has the `customer` role (Keycloak default role): check `reseller` before `customer`.
 - Data access: inject `TenantDb` and use `tenantDb.run((scope) => scope.list / findOne / insert /
@@ -190,6 +193,12 @@ generate` regenerates the TS types.
   device class, never the IP. Anomaly rules live in `apps/qr/src/qr/anomaly.ts` (city rule for
   unit-level codes only).
 - Unique violations: catch and map with `isUniqueViolation(error, '<constraint>')` → `Problems.conflict`.
+- **Power BI Embedded** (`apps/api/src/powerbi`, `/api/v1/analytics/powerbi/*`): the API alone holds
+  the service principal (`@azure/msal-node`, token cached until 5 min before expiry) and returns
+  embed tokens whose RLS effective identity is `username = coop_id from RequestContext`, role
+  `Cooperative` (saas_admin without X-Coop-Id: role `Admin`). Never take the identity from the
+  request. Settings `POWERBI_*`: all or none; none (or blank) = demo mode, so CI needs no Azure. The
+  REST layer is the `POWERBI_API` port: tests override it with a fake. Never log embed tokens.
 - **Time zone:** Morocco has been on permanent UTC+0 since 2026-09-20 (IANA tzdb 2026c; UTC+1 before,
   except Ramadan). Business dates use `Africa/Casablanca` through the runtime's tz data, which must be
   ≥ 2026c: `node:24` images and Postgres 16 are current; Node 22.22 (tz 2026a) is NOT — services log a

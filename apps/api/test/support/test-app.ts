@@ -28,6 +28,8 @@ export interface TestAppOverrides {
   providers?: { token: symbol | string; value: unknown }[];
   /** Read-only connection to the `gold` schema (enables /api/analytics). */
   analyticsUrl?: string;
+  /** Extra environment variables (e.g. POWERBI_* for live mode with a fake Power BI API). */
+  env?: Record<string, string>;
 }
 
 export async function createTestApp(
@@ -41,6 +43,7 @@ export async function createTestApp(
     OIDC_ISSUER: issuer.issuer,
     OIDC_AUDIENCE: issuer.audience,
     ...(overrides.analyticsUrl ? { ANALYTICS_DATABASE_URL: overrides.analyticsUrl } : {}),
+    ...overrides.env,
   });
   let builder = Test.createTestingModule({ imports: [AppModule.register(env)] })
     .overrideProvider(JWT_VERIFIER)

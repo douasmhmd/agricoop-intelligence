@@ -859,3 +859,45 @@ during React's takeover (0 / 247 frames); shell shown only for the French home (
 catalogue or a QR page); no CSP violation and no console error; Playwright e2e 3/3 against the
 production storefront (real CSP) and against the dev servers; storefront captures (51) without
 overflow. All 42 tasks green.
+
+## Power BI embedding — phase 2: backend (2026-11-18)
+
+"Embed for your customers": the API authenticates to Power BI as a service principal and gives the
+back office short-lived embed tokens filtered by row-level security.
+
+**Endpoints** (`apps/api/src/powerbi`, under `/api/v1`, not the data plane's `/api/analytics`
+contract): `GET /api/v1/analytics/powerbi/reports` (key, title, page, last refresh) and
+`GET /api/v1/analytics/powerbi/embed/{reportKey}` (`embedUrl`, `embedToken`, `expiresAt`, RLS role).
+Roles: `coop_manager` and `saas_admin`; the embed route is rate-limited (30/min) and logs the report
+key, role and coop_id, never the token.
+
+- **Identity:** `GenerateToken` (v2, multi-resource) with the effective identity
+  `{ username: <coop_id from RequestContext>, roles: ["Cooperative"], datasets: [<datasetId>] }`.
+  A `saas_admin` with `X-Coop-Id` gets that cooperative; without it, the unfiltered `Admin` role
+  (new opt-in `@AdminTenantOptional()` in nest-kit's guard; every other route is unchanged).
+- **Entra ID:** `@azure/msal-node` client credentials for
+  `https://analysis.windows.net/powerbi/api/.default`, cached until 5 minutes before expiry,
+  concurrent callers share one renewal.
+- **Report map:** `POWERBI_REPORTS` maps a key to a report id, or to `{ reportId, page, title }`: the
+  data plane ships ONE report (`data/bi/reports/AgriCoop_Dashboard.pbix`, pages Contrôles, Vue
+  d'ensemble, Stocks, Prévisions), so keys can target pages. Titles: setting, else page display
+  name, else report name. Report metadata is cached 10 minutes.
+- **Demo mode:** without the five required settings (or with blank ones, as compose passes them)
+  the endpoints answer `mode: "demo"` with the names of the missing settings; a partial
+  configuration fails at startup. CI and local dev need no Azure.
+- **Errors:** unknown key 404 `rapport_powerbi_inconnu`, malformed key 400, Power BI failure 502
+  `powerbi_indisponible` (status and Power BI error code logged, nothing echoed to the client).
+- DTOs in `@agricoop/shared` (`powerbi.ts`) as plain objects (`mode` + fields): `createZodDto` cannot
+  build a class from a union. nest-kit also gains `@RateLimit()`.
+- `contracts/api/openapi.yaml` regenerated (two paths); Orval hooks `usePowerBiReports`,
+  `usePowerBiEmbed`. `.env.example` and `docker-compose.apps.yml` (api) list the settings.
+
+**Tests:** `powerbi.int.test.ts` (11, fake REST layer): demo mode, blank and partial settings, report
+list, the token's identity equals the caller's coop_id, query parameters and a manager's foreign
+`X-Coop-Id` cannot change it (403 before Power BI is called), saas_admin with/without a cooperative,
+customer/reseller 403 and anonymous 401, unknown/inherited/malformed keys, 502 mapping, rate limit;
+`entra-token.test.ts` (cache, shared renewal, missing token). All 42 tasks green.
+
+**Still needed outside this repo** (docs in phase 3): an Entra app + secret, the tenant setting for
+service principals, the principal as workspace Member, a capacity, and — from the data plane — the
+`Cooperative` (`[coop_id] = USERNAME()`) and `Admin` RLS roles on the semantic model.

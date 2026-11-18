@@ -14,3 +14,4 @@ export * from './schemas/qr.js';
 export * from './schemas/prevision.js';
 export * from './schemas/admin.js';
 export * from './schemas/analytics.js';
+export * from './schemas/powerbi.js';

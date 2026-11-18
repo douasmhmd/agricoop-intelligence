@@ -450,6 +450,78 @@ paths:
         - bearer: []
       tags:
         - admin
+  /api/v1/analytics/powerbi/embed/{reportKey}:
+    get:
+      operationId: PowerBi_embed
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+        - name: reportKey
+          required: true
+          in: path
+          schema:
+            pattern: ^[a-z0-9_-]{1,32}$
+            type: string
+      responses:
+        "200":
+          description: Embed configuration, or demo mode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PowerBiEmbed"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - powerbi
+  /api/v1/analytics/powerbi/reports:
+    get:
+      operationId: PowerBi_reports
+      parameters:
+        - name: X-Coop-Id
+          in: header
+          description: "saas_admin only: cooperative (coop_id) to act on. Audited."
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Available reports, or demo mode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PowerBiReports"
+        4XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        5XX:
+          description: Problem details (RFC 7807)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+      security:
+        - bearer: []
+      tags:
+        - powerbi
   /api/v1/commandes:
     get:
       operationId: Commandes_list
@@ -2830,6 +2902,101 @@ components:
       required:
         - mouvement
         - stock_apres
+      additionalProperties: false
+    PowerBiEmbed:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+            - live
+            - demo
+        embed:
+          type: object
+          properties:
+            reportKey:
+              type: string
+              pattern: ^[a-z0-9_-]{1,32}$
+            reportId:
+              type: string
+              format: uuid
+              pattern: ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            pageName:
+              type: string
+              nullable: true
+            embedUrl:
+              type: string
+              format: uri
+            embedToken:
+              type: string
+            expiresAt:
+              type: string
+              format: date-time
+              pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            rls:
+              type: string
+              enum:
+                - Cooperative
+                - Admin
+          required:
+            - reportKey
+            - reportId
+            - pageName
+            - embedUrl
+            - embedToken
+            - expiresAt
+            - rls
+          additionalProperties: false
+          nullable: true
+        missing:
+          type: array
+          items:
+            type: string
+      required:
+        - mode
+        - embed
+        - missing
+      additionalProperties: false
+    PowerBiReports:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+            - live
+            - demo
+        reports:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                pattern: ^[a-z0-9_-]{1,32}$
+              title:
+                type: string
+              pageName:
+                type: string
+                nullable: true
+              lastRefresh:
+                type: string
+                format: date-time
+                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                nullable: true
+            required:
+              - key
+              - title
+              - pageName
+              - lastRefresh
+            additionalProperties: false
+        missing:
+          type: array
+          items:
+            type: string
+      required:
+        - mode
+        - reports
+        - missing
       additionalProperties: false
     PrevisionAnalytics:
       type: object

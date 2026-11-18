@@ -13,7 +13,7 @@ import type { FastifyRequest } from 'fastify';
 import type { ContextualRequest } from '../context/request-context.js';
 import { Problems } from '../problem/problem.js';
 import { type AuthUser, hasRole } from './auth-user.js';
-import { IS_PUBLIC, NO_TENANT, ROLES } from './decorators.js';
+import { ADMIN_TENANT_OPTIONAL, IS_PUBLIC, NO_TENANT, ROLES } from './decorators.js';
 import { JWT_VERIFIER, type JwtVerifier } from './jwt-verifier.js';
 import { TENANT_DIRECTORY, type TenantDirectory } from './tenant-directory.js';
 
@@ -25,7 +25,8 @@ export const COOP_HEADER = 'x-coop-id';
  *   1. authentication — Bearer JWT verified against Keycloak's JWKS (401 on failure);
  *   2. roles          — @Roles(...) any-of, saas_admin always passes (403);
  *   3. tenant         — unless @Public/@NoTenant: the token's tenant_id, or X-Coop-Id for saas_admin
- *                       (audited). Everyone else is locked to their own tenant.
+ *                       (audited). Everyone else is locked to their own tenant. On
+ *                       @AdminTenantOptional routes a saas_admin may omit X-Coop-Id (no tenant).
  * The result is attached to the request and exposed through RequestContext.
  */
 @Injectable()
@@ -79,7 +80,14 @@ export class AccessGuard implements CanActivate {
     const requested = Array.isArray(header) ? header[0] : header;
 
     if (isAdmin) {
-      if (!requested) throw Problems.coopHeaderRequired();
+      if (!requested) {
+        // Opt-in routes let the platform admin work across tenants (no coopId in the context).
+        if (meta<boolean>(ADMIN_TENANT_OPTIONAL) === true) {
+          request.agricoop = { user };
+          return true;
+        }
+        throw Problems.coopHeaderRequired();
+      }
       if (!UUID_RE.test(requested)) throw Problems.invalidCoopHeader();
       if (!(await this.tenants.exists(requested))) throw Problems.unknownCooperative();
       this.audit.log({

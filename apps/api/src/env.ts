@@ -1,5 +1,6 @@
 import { baseEnv } from '@agricoop/nest-kit';
 import { z } from 'zod';
+import { powerBiAllOrNone, powerBiEnvShape, POWERBI_REQUIRED } from './powerbi/config';
 
 export const apiEnv = baseEnv
   .extend({
@@ -20,6 +21,12 @@ export const apiEnv = baseEnv
     /** Read-only connection to the data plane's `gold` schema (role analytics_reader, see
      *  data/bi/04_role_lecture.sql). Without it the /api/analytics endpoints answer 503. */
     ANALYTICS_DATABASE_URL: z.url().optional(),
+    /** Power BI Embedded (service principal). None set = demo mode. See docs/powerbi-embedding.md. */
+    ...powerBiEnvShape,
+  })
+  .refine(powerBiAllOrNone, {
+    path: ['POWERBI_TENANT_ID'],
+    message: `set all of ${POWERBI_REQUIRED.join(', ')} or none (demo mode)`,
   })
   .refine(
     (e) => e.NODE_ENV !== 'production' || e.PAYMENT_MOCK_SECRET !== 'dev-only-payment-mock-secret',

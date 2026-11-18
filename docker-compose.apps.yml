@@ -127,6 +127,12 @@ services:
       # Read-only role on the data plane's gold schema (data/bi/04_role_lecture.sql, local default
       # password). Build the layer first: pnpm db:gold.
       ANALYTICS_DATABASE_URL: postgres://analytics_reader:${ANALYTICS_READER_PASSWORD:-analytics_dev}@postgres:5432/agricoop
+      # Power BI Embedded (docs/powerbi-embedding.md). Unset = demo mode.
+      POWERBI_TENANT_ID: ${POWERBI_TENANT_ID:-}
+      POWERBI_CLIENT_ID: ${POWERBI_CLIENT_ID:-}
+      POWERBI_CLIENT_SECRET: ${POWERBI_CLIENT_SECRET:-}
+      POWERBI_WORKSPACE_ID: ${POWERBI_WORKSPACE_ID:-}
+      POWERBI_REPORTS: ${POWERBI_REPORTS:-}
     ports:
       - '3000:3000'
     healthcheck: &node-health
