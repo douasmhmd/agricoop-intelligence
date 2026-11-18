@@ -255,6 +255,13 @@ generate` regenerates the TS types.
   `window.confirm`. Status values render with `<StatusBadge tone>` (tones in `lib/tones.ts`). On
   phones, hide secondary table columns with `max-md:hidden` rather than letting the table scroll.
 - No letter-spacing in Arabic: `theme.css` resets it under `[dir=rtl]` (tracking breaks letter joining).
+- `/analyses → Power BI` (`src/analytics/powerbi/`, lazy chunk): `powerbi-client-react`. The token
+  that STARTS an embed is kept in state: PowerBIEmbed re-embeds on any config change, so refreshed
+  tokens go through `report.setAccessToken()` (5 min before expiry, and on the `error` event whose
+  message is `TokenExpired`: powerbi-client has no `tokenExpired` event and throws on unknown
+  event names). Report themes are generated from the tokens: `node apps/backoffice/scripts/powerbi-theme.ts`
+  after a colour change (a test fails on drift). The CSP frame host comes from
+  `CSP_EXTRA_FRAME_SRC` (nginx template; set for the back office only). Setup: `docs/powerbi-embedding.md`.
 - `/analyses` reads the gold layer (`useAnalytics*` hooks, `src/analytics/`). Its amounts are JSON
   numbers: sum with `sumAmounts`, display with `formatAmount` (signed), never `<Money>` (it takes
   money strings). Model labels (segments, QR levels) go through `segmentKey` / `qrNiveauKey`.

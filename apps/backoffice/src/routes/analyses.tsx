@@ -1,6 +1,7 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@agricoop/ui';
+import { Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from '@agricoop/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Boxes, ChartColumn, QrCode, Users } from 'lucide-react';
+import { BarChart3, Boxes, ChartColumn, QrCode, Users } from 'lucide-react';
+import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ClientsTab } from '@/analytics/ClientsTab';
 import { QrTab } from '@/analytics/QrTab';
@@ -8,13 +9,14 @@ import { StocksTab } from '@/analytics/StocksTab';
 import { VentesTab } from '@/analytics/VentesTab';
 import { PageHeader } from '@/components/common';
 
-const ONGLETS = ['ventes', 'stocks', 'clients', 'qr'] as const;
+const ONGLETS = ['ventes', 'stocks', 'clients', 'qr', 'powerbi'] as const;
 type Onglet = (typeof ONGLETS)[number];
 
 /*
  * Analyses: the data plane's gold layer (contracts/api/analytics.yaml) — sales KPIs per campaign,
- * stock cover, customer segments and suspected counterfeit QR codes. Read-only; the tab is in the
- * URL (?onglet=) so a view can be shared.
+ * stock cover, customer segments and suspected counterfeit QR codes — and the data plane's Power BI
+ * report, embedded for the caller's cooperative. Read-only; the tab is in the URL (?onglet=) so a
+ * view can be shared.
  */
 export const Route = createFileRoute('/analyses')({
   validateSearch: (search: Record<string, unknown>): { onglet?: Onglet } =>
@@ -24,7 +26,16 @@ export const Route = createFileRoute('/analyses')({
   component: AnalysesPage,
 });
 
-const ICONS = { ventes: ChartColumn, stocks: Boxes, clients: Users, qr: QrCode } as const;
+const ICONS = {
+  ventes: ChartColumn,
+  stocks: Boxes,
+  clients: Users,
+  qr: QrCode,
+  powerbi: BarChart3,
+} as const;
+
+// powerbi-client is large: only loaded when the Power BI tab opens.
+const PowerBiTab = lazy(() => import('@/analytics/powerbi/PowerBiTab'));
 
 function AnalysesPage() {
   const { t } = useTranslation();
@@ -62,6 +73,13 @@ function AnalysesPage() {
         </TabsContent>
         <TabsContent value="qr">
           <QrTab />
+        </TabsContent>
+        <TabsContent value="powerbi">
+          <Suspense
+            fallback={<Skeleton className="h-[calc(100dvh-16rem)] min-h-[34rem] rounded-xl" />}
+          >
+            <PowerBiTab />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </>

@@ -327,7 +327,8 @@
       "ventes": "Ventes",
       "stocks": "Stocks",
       "clients": "Clientèle",
-      "qr": "Contrefaçon QR"
+      "qr": "Contrefaçon QR",
+      "powerbi": "Power BI"
     },
     "empty": "Pas encore de données pour cette analyse.",
     "total": "Total",
@@ -434,6 +435,19 @@
       "duree": "Durée (jours)",
       "date": "Analysé le",
       "km": "{{value}} km"
+    },
+    "powerbi": {
+      "picker": "Rapports Power BI",
+      "lastRefresh": "Données actualisées le",
+      "syntheticNote": "Le masquage des données synthétiques ne s'applique pas encore au rapport Power BI : son modèle de données n'expose pas cette information.",
+      "rlsCoop": "Filtré sur votre coopérative",
+      "rlsAdmin": "Toutes les coopératives (administration)",
+      "retry": "Réessayer",
+      "embedError": "Le rapport n'a pas pu s'afficher.",
+      "notConfiguredTitle": "Power BI n'est pas encore configuré",
+      "notConfiguredText": "Les rapports Power BI s'afficheront ici une fois l'API reliée à Power BI. Renseignez ces paramètres côté API :",
+      "missing": "Paramètres manquants",
+      "docs": "Guide de mise en place :"
     }
   },
   "admin": {
@@ -485,7 +499,9 @@
     "montant_incorrect": "Montant incorrect.",
     "signature_invalide": "Signature invalide.",
     "qr_inconnu": "QR code inconnu.",
-    "analytics_indisponible": "Les analyses ne sont pas disponibles pour le moment (plateforme de données non connectée)."
+    "analytics_indisponible": "Les analyses ne sont pas disponibles pour le moment (plateforme de données non connectée).",
+    "rapport_powerbi_inconnu": "Rapport Power BI inconnu.",
+    "powerbi_indisponible": "Power BI ne répond pas pour le moment. Réessayez dans un instant."
   },
   "theme": {
     "group": "Thème",

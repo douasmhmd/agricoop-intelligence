@@ -26,6 +26,8 @@
     "lucide-react": "^1.72.0",
     "motion": "^14.13.0",
     "oidc-client-ts": "^3.5.0",
+    "powerbi-client": "2.25.0",
+    "powerbi-client-react": "2.0.2",
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

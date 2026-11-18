@@ -1,0 +1,125 @@
+{
+  "name": "AgriCoop (sombre)",
+  "dataColors": [
+    "#acba6e",
+    "#ebb353",
+    "#dd8364",
+    "#70b3aa",
+    "#a98db0",
+    "#b4bf78",
+    "#dd8364",
+    "#6ab0e0"
+  ],
+  "foreground": "#efebe2",
+  "foregroundNeutralSecondary": "#ada79b",
+  "background": "#1b1812",
+  "backgroundLight": "#23201a",
+  "backgroundNeutral": "#322d26",
+  "tableAccent": "#b4bf78",
+  "good": "#62bb78",
+  "neutral": "#f2b54a",
+  "bad": "#ef675c",
+  "maximum": "#b4bf78",
+  "center": "#ebb353",
+  "minimum": "#2c2d1b",
+  "hyperlink": "#b4bf78",
+  "textClasses": {
+    "callout": {
+      "fontSize": 28,
+      "fontFace": "Georgia, serif",
+      "color": "#efebe2"
+    },
+    "title": {
+      "fontSize": 13,
+      "fontFace": "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif",
+      "color": "#efebe2"
+    },
+    "header": {
+      "fontSize": 12,
+      "fontFace": "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif",
+      "color": "#efebe2"
+    },
+    "label": {
+      "fontSize": 10,
+      "fontFace": "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif",
+      "color": "#ada79b"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#1b1812"
+              }
+            },
+            "transparency": 0
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#322d26"
+              }
+            },
+            "radius": 12
+          }
+        ],
+        "dropShadow": [
+          {
+            "show": false
+          }
+        ],
+        "title": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#efebe2"
+              }
+            },
+            "fontFamily": "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif",
+            "fontSize": 12
+          }
+        ],
+        "visualHeader": [
+          {
+            "foreground": {
+              "solid": {
+                "color": "#ada79b"
+              }
+            },
+            "background": {
+              "solid": {
+                "color": "#1b1812"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "page": {
+      "*": {
+        "background": [
+          {
+            "transparency": 100
+          }
+        ],
+        "outspace": [
+          {
+            "color": {
+              "solid": {
+                "color": "#13100b"
+              }
+            },
+            "transparency": 100
+          }
+        ]
+      }
+    }
+  }
+}

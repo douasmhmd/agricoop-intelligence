@@ -347,7 +347,8 @@
       "ventes": "المبيعات",
       "stocks": "المخزون",
       "clients": "الزبائن",
-      "qr": "تزوير رموز QR"
+      "qr": "تزوير رموز QR",
+      "powerbi": "Power BI"
     },
     "empty": "لا توجد بيانات لهذا التحليل بعد.",
     "total": "المجموع",
@@ -470,6 +471,19 @@
       "duree": "المدة (أيام)",
       "date": "تاريخ التحليل",
       "km": "{{value}} كلم"
+    },
+    "powerbi": {
+      "picker": "تقارير Power BI",
+      "lastRefresh": "آخر تحديث للبيانات:",
+      "syntheticNote": "لا ينطبق إخفاء البيانات الاصطناعية بعد على تقرير Power BI: نموذج بياناته لا يتضمن هذه المعلومة.",
+      "rlsCoop": "مُصفّى على تعاونيتكم",
+      "rlsAdmin": "جميع التعاونيات (الإدارة)",
+      "retry": "إعادة المحاولة",
+      "embedError": "تعذّر عرض التقرير.",
+      "notConfiguredTitle": "لم يتم إعداد Power BI بعد",
+      "notConfiguredText": "ستظهر تقارير Power BI هنا بعد ربط الواجهة البرمجية بـ Power BI. أدخلوا هذه الإعدادات في الواجهة البرمجية:",
+      "missing": "الإعدادات الناقصة",
+      "docs": "دليل الإعداد:"
     }
   },
   "admin": {
@@ -521,7 +535,9 @@
     "montant_incorrect": "المبلغ غير صحيح.",
     "signature_invalide": "توقيع غير صالح.",
     "qr_inconnu": "رمز QR غير معروف.",
-    "analytics_indisponible": "التحليلات غير متاحة حاليًا (منصة البيانات غير متصلة)."
+    "analytics_indisponible": "التحليلات غير متاحة حاليًا (منصة البيانات غير متصلة).",
+    "rapport_powerbi_inconnu": "تقرير Power BI غير معروف.",
+    "powerbi_indisponible": "لا يستجيب Power BI حاليًا. أعيدوا المحاولة بعد قليل."
   },
   "theme": {
     "group": "المظهر",

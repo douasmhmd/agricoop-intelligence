@@ -45,6 +45,7 @@ COPY --from=builder /repo/apps/${APP}/dist /usr/share/nginx/html
 # Rendered into the nginx config at start-up (envsubst) and served as /config.js, so one image runs
 # in every environment: only these variables change.
 ENV API_UPSTREAM=http://api:3000 \
+    CSP_EXTRA_FRAME_SRC="" \
     QR_UPSTREAM=http://qr:3001 \
     OIDC_AUTHORITY=http://localhost:8080/realms/agricoop \
     OIDC_CLIENT_ID=${OIDC_CLIENT_ID}

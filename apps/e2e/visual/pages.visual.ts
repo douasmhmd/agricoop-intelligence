@@ -46,7 +46,7 @@ const PAGES: {
   { name: 'bo-404', url: `${BACKOFFICE_URL}/nulle-part`, auth: true, ready: 'main p' },
   // Gold-layer data: run with VISUAL_USER=manager.coop01 after `pnpm db:restore`.
   { name: 'bo-analyses-ventes', url: `${BACKOFFICE_URL}/analyses`, auth: true, ready: 'h1' },
-  ...(['stocks', 'clients', 'qr'] as const).map((onglet) => ({
+  ...(['stocks', 'clients', 'qr', 'powerbi'] as const).map((onglet) => ({
     name: `bo-analyses-${onglet}`,
     url: `${BACKOFFICE_URL}/analyses?onglet=${onglet}`,
     auth: true,

@@ -1,0 +1,125 @@
+{
+  "name": "AgriCoop",
+  "dataColors": [
+    "#556223",
+    "#df9727",
+    "#c06143",
+    "#4b8e86",
+    "#795e7f",
+    "#3f4b19",
+    "#b25033",
+    "#27709c"
+  ],
+  "foreground": "#17160f",
+  "foregroundNeutralSecondary": "#615a4e",
+  "background": "#fefdfa",
+  "backgroundLight": "#f3efe7",
+  "backgroundNeutral": "#e2dcd1",
+  "tableAccent": "#3f4b19",
+  "good": "#26753e",
+  "neutral": "#eb9f2c",
+  "bad": "#c22823",
+  "maximum": "#3f4b19",
+  "center": "#df9727",
+  "minimum": "#e9ecd5",
+  "hyperlink": "#3f4b19",
+  "textClasses": {
+    "callout": {
+      "fontSize": 28,
+      "fontFace": "Georgia, serif",
+      "color": "#17160f"
+    },
+    "title": {
+      "fontSize": 13,
+      "fontFace": "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif",
+      "color": "#17160f"
+    },
+    "header": {
+      "fontSize": 12,
+      "fontFace": "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif",
+      "color": "#17160f"
+    },
+    "label": {
+      "fontSize": 10,
+      "fontFace": "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif",
+      "color": "#615a4e"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#fefdfa"
+              }
+            },
+            "transparency": 0
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#e2dcd1"
+              }
+            },
+            "radius": 12
+          }
+        ],
+        "dropShadow": [
+          {
+            "show": false
+          }
+        ],
+        "title": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#17160f"
+              }
+            },
+            "fontFamily": "'Segoe UI', wf_segoe-ui_normal, helvetica, arial, sans-serif",
+            "fontSize": 12
+          }
+        ],
+        "visualHeader": [
+          {
+            "foreground": {
+              "solid": {
+                "color": "#615a4e"
+              }
+            },
+            "background": {
+              "solid": {
+                "color": "#fefdfa"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "page": {
+      "*": {
+        "background": [
+          {
+            "transparency": 100
+          }
+        ],
+        "outspace": [
+          {
+            "color": {
+              "solid": {
+                "color": "#faf7f1"
+              }
+            },
+            "transparency": 100
+          }
+        ]
+      }
+    }
+  }
+}

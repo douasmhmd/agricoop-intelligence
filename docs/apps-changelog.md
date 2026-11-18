@@ -901,3 +901,45 @@ customer/reseller 403 and anonymous 401, unknown/inherited/malformed keys, 502 m
 **Still needed outside this repo** (docs in phase 3): an Entra app + secret, the tenant setting for
 service principals, the principal as workspace Member, a capacity, and — from the data plane — the
 `Cooperative` (`[coop_id] = USERNAME()`) and `Admin` RLS roles on the semantic model.
+
+## Power BI embedding — phase 3: back-office tab, theme, CSP, setup guide (2026-11-18)
+
+New **Power BI** tab on `/analyses` (`?onglet=powerbi`, existing tabs and URL logic unchanged),
+loaded lazily (`powerbi-client` is a 256 KB chunk of its own).
+
+- **Picker and states:** segmented control over the reports/pages from
+  `GET /api/v1/analytics/powerbi/reports`, last refresh date, RLS label ("Filtré sur votre
+  coopérative" / "Toutes les coopératives"); branded skeleton until the report's `rendered` event,
+  then a fade-in (motion presets); error card with retry (API error, or Power BI's `error` event);
+  **not-configured state** in demo mode listing the missing settings and pointing to the guide.
+- **Embed config:** `tokenType: Embed`, filter and page-navigation panes hidden, transparent
+  background, `localeSettings` from the app language (fr / ar), `MobilePortrait` layout under
+  640 px (used when the report has a mobile layout).
+- **Token refresh:** 5 minutes before `expiresAt` (never more often than every 30 s) and on an
+  expired-token error, applied with `report.setAccessToken()` without reloading the iframe. The
+  token an embed starts with lives in state, because `PowerBIEmbed` re-embeds on any config
+  change. Note: powerbi-client 2.25 has **no `tokenExpired` event** (unknown event names throw):
+  expiry arrives as `error` with message `TokenExpired`, which is what the tab handles.
+- **Theme:** `scripts/powerbi-theme.ts` converts the kit's OKLCH tokens to a Power BI theme (data
+  colours, sentiment colours, text classes, card-like visuals, transparent page) in light and dark;
+  applied with `report.applyTheme()` and re-applied when the app theme changes. Copies in
+  `public/powerbi-theme{,-dark}.json` for report authors (Power BI Desktop). Power BI cannot load
+  web fonts: Georgia / Segoe UI stand in. A test fails if the files drift from the tokens.
+- **Synthetic toggle:** not applied to the report — the gold views and the model have no
+  `is_synthetic` column; the tab says so when synthetic data is hidden (request to the data plane
+  in the guide).
+- **CSP:** the shared SPA nginx template gains `CSP_EXTRA_FRAME_SRC` (empty by default); compose
+  sets `https://app.powerbi.com` for the back office only. Checked on the built images: back office
+  `frame-src … https://app.powerbi.com`, storefront unchanged.
+- **Docs:** `docs/powerbi-embedding.md` — Entra app + secret, tenant setting for service
+  principals, workspace Member, capacity (F/A SKU, trial for the demo), the RLS roles `Cooperative`
+  (`[coop_id] = USERNAME()`) and `Admin` flagged as a **request to the data plane**, settings with
+  the current `.pbix` page names, CSP, theme, checks and troubleshooting.
+- FR/AR strings; error keys `rapport_powerbi_inconnu`, `powerbi_indisponible`.
+
+**Verified:** demo state captured in every variant (desktop/mobile × light/dark × FR/AR, no
+overflow). Client wiring exercised against the real `app.powerbi.com` with intercepted API
+answers (fake token): the iframe loads, Power BI's 403 reaches the retry card, and the token
+refresh fires on schedule (2 token requests in 45 s). Unit tests for refresh timing, expiry
+detection, locale and theme drift. All 42 tasks green, Playwright e2e 3/3. A real report needs the
+Azure setup and the data plane's RLS roles (guide).
