@@ -943,3 +943,41 @@ answers (fake token): the iframe loads, Power BI's 403 reaches the retry card, a
 refresh fires on schedule (2 token requests in 45 s). Unit tests for refresh timing, expiry
 detection, locale and theme drift. All 42 tasks green, Playwright e2e 3/3. A real report needs the
 Azure setup and the data plane's RLS roles (guide).
+
+## Login theme — phase 4: Keycloakify setup and the login page (2026-11-18)
+
+New workspace package **`apps/keycloak-theme`**: a Keycloak login theme (`agricoop`) built with
+**Keycloakify 11.16.4** (React 19, Vite 8, Tailwind 4), importing the real design system
+(`@agricoop/ui` tokens, self-hosted fonts, components, motion presets). Not wired into Keycloak yet
+(phase 5: JAR build, compose, realm).
+
+- **Template** (every page): desktop split screen — arch-masked olive-grove photo with a slow zoom,
+  the zellige lattice fading in from the bottom, eyebrow + serif tagline (FR/AR/EN) — and the
+  auth card; on phones a compact photo header and one column. The sides mirror in RTL. Header:
+  brand, language switcher wired to Keycloak's locales (FR / العربية / English, sets `lang` and
+  `dir`), light/dark/system theme toggle. Card: serif title, "attempted username" row with restart,
+  messages as branded alerts (sanitized with `kcSanitize`), try-another-way, social providers
+  area (none configured on the realm), required-fields note. Entrance: card fade-up; reduced motion
+  keeps fades only (MotionProvider).
+- **Login page** (`login.ftl`): floating-label fields, password show/hide, caps-lock warning,
+  inline field errors from Keycloak (animated, linked with `aria-describedby`), remember me,
+  forgot password, register link, submit button with a loading state (no double submit). Field
+  ids/names unchanged (`username`, `password`, `rememberMe`, `kc-login`): the existing e2e login
+  helper keeps working.
+- **`FloatingInput`** added to `@agricoop/ui` (label moved by transform only, `toggleLabels`,
+  `capsLockMessage`, `error` / `invalid`); component tests in the back office's DOM test setup.
+- **Strings:** our own keys (`agricoop*`) and rewordings of Keycloak messages that read badly
+  ("Se connecter", "Identifiant ou e-mail", "Pas encore de compte ?", "Créer un compte",
+  "Identifiant ou mot de passe incorrect.", Arabic equivalents); every key in fr/ar/en.
+- **Other pages** render Keycloakify's default markup inside our template with design-system
+  classes until phase 5 gives each its own component.
+- **Preview without Keycloak:** dev server on 5176 with Keycloakify mock contexts
+  (`/?page=login.ftl&lang=…&state=error|info`), used instead of Storybook (no extra toolchain);
+  `apps/e2e/visual/login-preview.visual.ts` captures login, login with error and with an info
+  message × desktop/mobile × light/dark × FR/AR/EN (36, no overflow) into
+  `apps/e2e/screenshots/login/preview/`. Fixed while reviewing: the photo's fade mask replaced the
+  zellige mask (horizontal bands); they are now two layers.
+- Local photo copies (1100 px / 720 px WebP, 317 / 143 KB) of the storefront's olive grove: no
+  third-party request on the sign-in page.
+- Tooling: ESLint React rules cover the package; `kc.gen.tsx` (generated, committed) is ignored by
+  ESLint/Prettier; `dist_keycloak/` git-ignored. All 44 tasks green.

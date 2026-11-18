@@ -15,6 +15,8 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/generated/**',
       '**/routeTree.gen.ts',
+      // Keycloakify's generated entry (apps/keycloak-theme)
+      '**/kc.gen.tsx',
       '**/playwright-report/**',
       '**/test-results/**',
       // Static files copied as is by Vite (e.g. the runtime config.js placeholder), outside any tsconfig.
@@ -60,7 +62,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.tsx', 'apps/web/**/*.ts', 'apps/backoffice/**/*.ts'],
+    files: [
+      '**/*.tsx',
+      'apps/web/**/*.ts',
+      'apps/backoffice/**/*.ts',
+      'apps/keycloak-theme/**/*.ts',
+    ],
     plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
     languageOptions: { globals: { ...globals.browser } },
     rules: {

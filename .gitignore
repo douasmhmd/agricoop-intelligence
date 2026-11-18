@@ -18,6 +18,8 @@ __pycache__/
  Node
 node_modules/
 dist/
+# Keycloakify theme build output (apps/keycloak-theme)
+dist_keycloak/
 # Temporary SSR build of the storefront pre-render (apps/web/scripts/prerender.mjs)
 .prerender/
 #

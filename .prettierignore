@@ -15,4 +15,6 @@ pnpm-lock.yaml
 **/coverage/
 **/generated/
 **/routeTree.gen.ts
+**/kc.gen.tsx
+**/dist_keycloak/
 contracts/api/openapi.yaml
