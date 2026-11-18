@@ -26,6 +26,12 @@ const LANGUAGE_LABELS: Record<string, { short: string; full: string }> = {
   en: { short: 'EN', full: 'English' },
 };
 
+const LANGUAGE_ORDER = ['fr', 'ar', 'en'];
+const languageRank = (tag: string) => {
+  const i = LANGUAGE_ORDER.indexOf(tag);
+  return i === -1 ? LANGUAGE_ORDER.length : i;
+};
+
 const ALERT = {
   success: { icon: CircleCheck, className: 'border-success/30 bg-success/10 text-success' },
   warning: {
@@ -125,28 +131,34 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
             {enabledLanguages.length > 1 && (
               <nav aria-label={msgStr('agricoopLanguage')}>
                 <ul className="inline-flex items-center gap-0.5 rounded-full border border-border/70 bg-muted/60 p-0.5">
-                  {enabledLanguages.map(({ languageTag: tag, href, label }) => {
-                    const names = LANGUAGE_LABELS[tag] ?? { short: tag.toUpperCase(), full: label };
-                    const active = tag === languageTag;
-                    return (
-                      <li key={tag}>
-                        <a
-                          href={href}
-                          lang={tag}
-                          aria-current={active ? 'true' : undefined}
-                          className={cn(
-                            'grid h-7 min-w-9 place-items-center rounded-full px-2.5 text-sm font-medium transition-colors',
-                            active
-                              ? 'bg-primary text-primary-foreground shadow-soft'
-                              : 'text-muted-foreground hover:text-foreground',
-                          )}
-                        >
-                          <span className="sm:hidden">{names.short}</span>
-                          <span className="sr-only sm:not-sr-only">{names.full}</span>
-                        </a>
-                      </li>
-                    );
-                  })}
+                  {/* Keycloak sorts by label (English, العربية, Français): show FR, AR, EN. */}
+                  {[...enabledLanguages]
+                    .sort((x, y) => languageRank(x.languageTag) - languageRank(y.languageTag))
+                    .map(({ languageTag: tag, href, label }) => {
+                      const names = LANGUAGE_LABELS[tag] ?? {
+                        short: tag.toUpperCase(),
+                        full: label,
+                      };
+                      const active = tag === languageTag;
+                      return (
+                        <li key={tag}>
+                          <a
+                            href={href}
+                            lang={tag}
+                            aria-current={active ? 'true' : undefined}
+                            className={cn(
+                              'grid h-7 min-w-9 place-items-center rounded-full px-2.5 text-sm font-medium transition-colors',
+                              active
+                                ? 'bg-primary text-primary-foreground shadow-soft'
+                                : 'text-muted-foreground hover:text-foreground',
+                            )}
+                          >
+                            <span className="sm:hidden">{names.short}</span>
+                            <span className="sr-only sm:not-sr-only">{names.full}</span>
+                          </a>
+                        </li>
+                      );
+                    })}
                 </ul>
               </nav>
             )}

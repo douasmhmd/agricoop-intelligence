@@ -9,6 +9,7 @@ import { createRoot } from 'react-dom/client';
 import { AuthProvider, type AuthProviderProps, useAuth } from 'react-oidc-context';
 import { ApiError, setAccessTokenProvider, setCoopHeaderProvider } from './api/fetcher';
 import { safeReturnPath } from './auth/return-path';
+import { SessionNotices } from './auth/SessionNotices';
 import { useSession } from './auth/session';
 import { MotionProvider, ThemeProvider, Toaster } from '@agricoop/ui';
 import { config } from './config';
@@ -82,6 +83,7 @@ createRoot(rootElement).render(
               <ApiBridge />
               <RouterProvider router={router} />
               <Toaster position="top-center" richColors />
+              <SessionNotices />
             </QueryClientProvider>
           </PreferencesProvider>
         </AuthProvider>

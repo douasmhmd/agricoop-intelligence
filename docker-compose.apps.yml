@@ -70,6 +70,9 @@ services:
       - '8080:8080'
     volumes:
       - ./apps/keycloak/realm-agricoop.json:/opt/keycloak/data/import/realm-agricoop.json:ro
+      # Login theme "agricoop" (apps/keycloak-theme): build it with `pnpm keycloak:theme`, then
+      # restart Keycloak. start-dev already disables theme and template caching.
+      - ./apps/keycloak/providers:/opt/keycloak/providers:ro
     healthcheck:
       test:
         - CMD-SHELL

@@ -50,6 +50,19 @@ jobs:
         run: pnpm format:check
       - name: Lint, typecheck, test
         run: pnpm turbo run lint typecheck test
+      # Login theme (apps/keycloak-theme): Keycloakify packages it with Maven (preinstalled on the
+      # Ubuntu runners; Java from setup-java).
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Login theme JAR
+        run: pnpm keycloak:theme
+      - uses: actions/upload-artifact@v7
+        with:
+          name: keycloak-theme
+          path: apps/keycloak/providers/agricoop-keycloak-theme.jar
+          retention-days: 7
       - name: Contract drift (OpenAPI + generated clients must be committed)
         run: |
           pnpm contracts:openapi
@@ -98,7 +111,15 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - run: pnpm install --frozen-lockfile --filter @agricoop/e2e...
+      - run: pnpm install --frozen-lockfile --filter @agricoop/e2e... --filter @agricoop/keycloak-theme...
+      # The realm uses the "agricoop" login theme: build it before Keycloak starts (mounted from
+      # apps/keycloak/providers), so the e2e sign-in goes through the real theme.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Login theme JAR
+        run: pnpm keycloak:theme
       - name: Local-only configuration
         run: cp .env.example .env
       - name: Start the stack (Postgres, Keycloak, Redpanda, Mailpit, app images, demo seed)

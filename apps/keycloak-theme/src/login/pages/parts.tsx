@@ -10,12 +10,15 @@ export function SubmitButton({
   label,
   busyLabel,
   submitting,
+  disabled = false,
 }: {
   id: string;
   name?: string;
   label: string;
   busyLabel: string;
   submitting: boolean;
+  /** Not submittable yet (client-side validation). */
+  disabled?: boolean;
 }) {
   return (
     <Button
@@ -25,7 +28,7 @@ export function SubmitButton({
       value={name}
       size="lg"
       className="mt-1 h-12 w-full text-base"
-      disabled={submitting}
+      disabled={submitting || disabled}
       aria-busy={submitting || undefined}
     >
       {submitting ? (
@@ -68,5 +71,94 @@ export function SocialProviders({ providers, title }: { providers: Provider[]; t
         ))}
       </ul>
     </div>
+  );
+}
+
+/** A Keycloak message (may contain markup Keycloak escaped): sanitized, then rendered. */
+export function KcHtml({ html, id }: { html: string | undefined; id?: string }) {
+  return <span id={id} dangerouslySetInnerHTML={{ __html: kcSanitize(html ?? '') }} />;
+}
+
+export function TextLink({
+  href,
+  children,
+  id,
+}: {
+  href: string;
+  children: ReactNode;
+  id?: string;
+}) {
+  return (
+    <a id={id} href={href} className="font-medium text-primary underline-offset-4 hover:underline">
+      {children}
+    </a>
+  );
+}
+
+export function Checkbox({
+  id,
+  name,
+  value,
+  defaultChecked,
+  children,
+}: {
+  id: string;
+  name: string;
+  value?: string;
+  defaultChecked?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground"
+    >
+      <input
+        id={id}
+        name={name}
+        value={value}
+        type="checkbox"
+        defaultChecked={defaultChecked}
+        className="size-4 rounded border-input accent-primary"
+      />
+      {children}
+    </label>
+  );
+}
+
+/** Secondary action posted with the form (e.g. cancel an application-initiated action). */
+export function SecondaryButton({
+  id,
+  name,
+  value,
+  children,
+}: {
+  id?: string;
+  name?: string;
+  value?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Button
+      type="submit"
+      id={id}
+      name={name}
+      value={value}
+      variant="outline"
+      size="lg"
+      className="h-12 w-full text-base"
+      formNoValidate
+    >
+      {children}
+    </Button>
+  );
+}
+
+/** Paragraph of instructions inside the card. */
+export function Instruction({ children, id }: { children: ReactNode; id?: string }) {
+  return (
+    <p id={id} className="text-sm leading-relaxed text-muted-foreground">
+      {children}
+    </p>
   );
 }

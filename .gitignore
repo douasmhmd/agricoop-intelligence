@@ -20,6 +20,8 @@ node_modules/
 dist/
 # Keycloakify theme build output (apps/keycloak-theme)
 dist_keycloak/
+# Built theme JAR mounted into Keycloak (pnpm keycloak:theme)
+apps/keycloak/providers/*.jar
 # Temporary SSR build of the storefront pre-render (apps/web/scripts/prerender.mjs)
 .prerender/
 #

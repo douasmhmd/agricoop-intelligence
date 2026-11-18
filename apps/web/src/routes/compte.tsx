@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ChevronRight, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
+import { signOut } from '@/auth/sign-out';
 import { useBoutiqueCommandesMine } from '@/api/generated/boutique/boutique';
 import { useStorefrontList } from '@/api/generated/storefront/storefront';
 import { ok } from '@/api/ok';
@@ -41,12 +42,7 @@ function AccountPage() {
             {name && <p className="text-muted-foreground">{t('account.hello', { name })}</p>}
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          shape="pill"
-          onClick={() => void auth.signoutRedirect()}
-        >
+        <Button variant="outline" size="sm" shape="pill" onClick={() => signOut(auth)}>
           <LogOut className="size-4 rtl:rotate-180" /> {t('auth.signOut')}
         </Button>
       </header>

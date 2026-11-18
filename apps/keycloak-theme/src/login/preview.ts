@@ -32,6 +32,12 @@ const INVALID: Record<string, string> = {
   en: 'Invalid username or password.',
 };
 
+const INFO_DONE: Record<string, string> = {
+  fr: 'Votre compte a été mis à jour.',
+  ar: 'تم تحديث حسابك.',
+  en: 'Your account has been updated.',
+};
+
 export function previewKcContext(params: URLSearchParams): KcContext {
   const pageId = (params.get('page') ?? 'login.ftl') as KcContext['pageId'];
   const lang = params.get('lang') ?? 'fr';
@@ -70,6 +76,15 @@ export function previewKcContext(params: URLSearchParams): KcContext {
               get: () => INVALID[lang] ?? INVALID.en!,
               printIfExists: <T>(_field: string, text: T) => text,
             },
+          }
+        : {}),
+      // info.ftl always carries a message from Keycloak (e.g. after an action from an e-mail).
+      ...(pageId === 'info.ftl'
+        ? {
+            message: { type: 'info' as const, summary: INFO_DONE[lang] ?? INFO_DONE.en! },
+            // The mock's header is the literal "<Message header>" (stripped as markup).
+            messageHeader: '',
+            requiredActions: undefined,
           }
         : {}),
       ...(state === 'info'

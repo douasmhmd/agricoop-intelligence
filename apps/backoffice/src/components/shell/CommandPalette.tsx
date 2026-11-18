@@ -27,6 +27,7 @@ import {
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
+import { signOut } from '@/auth/sign-out';
 import { useCooperativesAdminList } from '@/api/generated/admin/admin';
 import { ok } from '@/api/ok';
 import { useSession } from '@/auth/session';
@@ -186,7 +187,7 @@ function Palette({ close }: { close: () => void }) {
             <Languages />
             {t('palette.language', { language: t(`language.${otherLanguage}`) })}
           </CommandItem>
-          <CommandItem value={t('auth.signOut')} onSelect={run(() => void auth.signoutRedirect())}>
+          <CommandItem value={t('auth.signOut')} onSelect={run(() => signOut(auth))}>
             <LogOut className="rtl:rotate-180" />
             {t('auth.signOut')}
           </CommandItem>

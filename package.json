@@ -21,7 +21,8 @@
     "db:restore": "node scripts/restore-seed.mjs",
     "contracts:openapi": "turbo run openapi:export --filter=@agricoop/api --filter=@agricoop/qr && node scripts/merge-openapi.mjs && turbo run api:generate",
     "api:generate": "turbo run api:generate",
-    "prepare": "husky"
+    "prepare": "husky",
+    "keycloak:theme": "node apps/keycloak-theme/scripts/build-jar.mjs"
   },
   "devDependencies": {
     "@agricoop/config": "workspace:*",

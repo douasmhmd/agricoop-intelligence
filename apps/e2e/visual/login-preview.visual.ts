@@ -15,6 +15,17 @@ const PAGES = [
   { name: 'login', query: 'page=login.ftl' },
   { name: 'login-error', query: 'page=login.ftl&state=error' },
   { name: 'login-info', query: 'page=login.ftl&state=info' },
+  { name: 'register', query: 'page=register.ftl' },
+  { name: 'reset-password', query: 'page=login-reset-password.ftl' },
+  { name: 'update-password', query: 'page=login-update-password.ftl' },
+  { name: 'otp', query: 'page=login-otp.ftl' },
+  { name: 'config-totp', query: 'page=login-config-totp.ftl' },
+  { name: 'verify-email', query: 'page=login-verify-email.ftl' },
+  { name: 'error', query: 'page=error.ftl' },
+  { name: 'info', query: 'page=info.ftl' },
+  { name: 'logout-confirm', query: 'page=logout-confirm.ftl' },
+  { name: 'page-expired', query: 'page=login-page-expired.ftl' },
+  { name: 'select-authenticator', query: 'page=select-authenticator.ftl' },
 ];
 
 const variants = (Object.keys(VIEWPORTS) as Variant['viewport'][]).flatMap((viewport) =>
@@ -39,7 +50,9 @@ for (const p of PAGES) {
       // applyVariant stores the theme (same key as ThemeProvider); the language comes from the URL.
       await applyVariant(page, { ...v, lang: v.lang === 'en' ? 'fr' : v.lang });
       await page.goto(`${THEME_URL}/?${p.query}&lang=${v.lang}`);
-      await expect(page.locator('#kc-form-login')).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('#kc-page-title, #kc-username').first()).toBeVisible({
+        timeout: 30_000,
+      });
       await expect(page.locator('html')).toHaveAttribute('dir', v.lang === 'ar' ? 'rtl' : 'ltr');
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(400);

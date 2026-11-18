@@ -1,6 +1,7 @@
 {
   "realm": "agricoop",
   "displayName": "AgriCoop",
+  "loginTheme": "agricoop",
   "enabled": true,
   "sslRequired": "external",
   "registrationAllowed": true,

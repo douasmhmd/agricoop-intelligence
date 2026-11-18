@@ -11,6 +11,7 @@ import { createRoot } from 'react-dom/client';
 import { AuthProvider, type AuthProviderProps, useAuth } from 'react-oidc-context';
 import { ApiError, setAccessTokenProvider } from './api/fetcher';
 import { safeReturnPath } from './auth/return-path';
+import { SessionNotices } from './auth/SessionNotices';
 import { CartProvider } from './cart/cart';
 import { MotionProvider, ThemeProvider, Toaster } from '@agricoop/ui';
 import { config } from './config';
@@ -80,6 +81,7 @@ createRoot(rootElement).render(
               <RouterProvider router={router} />
               {/* Bottom on phones: a top toast would cover the header (cart, account). */}
               <Toaster position="bottom-center" richColors />
+              <SessionNotices />
             </CartProvider>
           </QueryClientProvider>
         </AuthProvider>

@@ -38,7 +38,11 @@
     "signIn": "Se connecter",
     "signOut": "Se déconnecter",
     "required": "Connectez-vous pour continuer.",
-    "registerHint": "Pas encore de compte ? Créez-le depuis la page de connexion."
+    "registerHint": "Pas encore de compte ? Créez-le depuis la page de connexion.",
+    "redirecting": "Redirection vers la connexion…",
+    "signedOut": "Vous êtes déconnecté. À bientôt !",
+    "sessionExpired": "Votre session a expiré.",
+    "signInAgain": "Se reconnecter"
   },
   "home": {
     "title": "Produits des coopératives oléicoles du Maroc",

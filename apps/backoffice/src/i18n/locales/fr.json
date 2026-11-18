@@ -40,7 +40,14 @@
     "signOut": "Se déconnecter",
     "error": "La connexion a échoué.",
     "forbidden": "Votre compte n'a pas accès au back-office (rôle gestionnaire de coopérative requis).",
-    "adminOnly": "Réservé aux administrateurs de la plateforme."
+    "adminOnly": "Réservé aux administrateurs de la plateforme.",
+    "redirecting": "Redirection vers la connexion…",
+    "signedOut": "Vous êtes déconnecté.",
+    "sessionExpired": "Votre session a expiré.",
+    "signInAgain": "Se reconnecter",
+    "errorTitle": "Connexion impossible",
+    "forbiddenTitle": "Accès réservé",
+    "signedOutHint": "Votre session est fermée sur cet appareil."
   },
   "common": {
     "loading": "Chargement…",

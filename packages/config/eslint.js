@@ -77,7 +77,13 @@ export default tseslint.config(
   },
   {
     // TanStack file routes export `Route` next to their component; shadcn/ui files export variants.
-    files: ['**/src/routes/**/*.tsx', '**/src/components/ui/**/*.tsx', '**/src/main.tsx'],
+    files: [
+      '**/src/routes/**/*.tsx',
+      '**/src/components/ui/**/*.tsx',
+      '**/src/main.tsx',
+      // Build-time entry (storefront pre-render): never hot-reloaded.
+      '**/src/prerender/**/*.tsx',
+    ],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   {

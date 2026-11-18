@@ -1,12 +1,13 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router';
-import { Compass, Loader2, ShieldAlert } from 'lucide-react';
-import { useEffect } from 'react';
+import { CircleAlert, Compass, LogIn, LogOut, ShieldAlert } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { hasAuthParams, useAuth } from 'react-oidc-context';
 import { useSession } from '@/auth/session';
 import { AppShell } from '@/components/AppShell';
-import { BrandMark, Button, ZelligeBackdrop } from '@agricoop/ui';
+import { AuthScreen, Button } from '@agricoop/ui';
+import { consumeSignedOut, signOut } from '@/auth/sign-out';
 import { EmptyState } from '@/components/common';
 
 export interface RouterContext {
@@ -25,9 +26,12 @@ function Root() {
   const auth = useAuth();
   const session = useSession();
   const { t } = useTranslation();
+  // Back from Keycloak's logout: stay on a "signed out" screen instead of signing in again.
+  const [signedOut] = useState(consumeSignedOut);
 
   useEffect(() => {
     if (
+      !signedOut &&
       !hasAuthParams() &&
       !auth.isAuthenticated &&
       !auth.activeNavigator &&
@@ -36,43 +40,55 @@ function Root() {
     ) {
       void auth.signinRedirect({ state: { returnTo: currentPath() } });
     }
-  }, [auth]);
+  }, [auth, signedOut]);
 
-  if (auth.isLoading || auth.activeNavigator || !auth.isAuthenticated) {
+  if (signedOut && !auth.isAuthenticated && !auth.activeNavigator) {
     return (
-      <div className="relative isolate flex min-h-dvh flex-col items-center justify-center gap-4 overflow-hidden bg-background text-muted-foreground">
-        <ZelligeBackdrop />
-        <BrandMark className="size-10 text-primary" />
-        {auth.error ? (
-          <div className="grid gap-3 text-center">
-            <p>{t('auth.error')}</p>
-            <Button
-              onClick={() => void auth.signinRedirect({ state: { returnTo: currentPath() } })}
-            >
-              {t('auth.signIn')}
-            </Button>
-          </div>
-        ) : (
-          <p className="flex items-center gap-2 text-sm" role="status">
-            <Loader2 className="size-4 animate-spin" aria-hidden /> {t('auth.signingIn')}
-          </p>
-        )}
-      </div>
+      <AuthScreen
+        fullScreen
+        icon={LogOut}
+        title={t('auth.signedOut')}
+        description={t('auth.signedOutHint')}
+      >
+        <Button onClick={() => void auth.signinRedirect({ state: { returnTo: '/' } })}>
+          <LogIn className="rtl:rotate-180" /> {t('auth.signInAgain')}
+        </Button>
+      </AuthScreen>
+    );
+  }
+
+  // Same look as the Keycloak login theme: app → Keycloak → app feels like one place.
+  if (auth.isLoading || auth.activeNavigator || !auth.isAuthenticated) {
+    return auth.error ? (
+      <AuthScreen
+        fullScreen
+        tone="danger"
+        icon={CircleAlert}
+        title={t('auth.errorTitle')}
+        description={t('auth.error')}
+      >
+        <Button onClick={() => void auth.signinRedirect({ state: { returnTo: currentPath() } })}>
+          <LogIn className="rtl:rotate-180" /> {t('auth.signIn')}
+        </Button>
+      </AuthScreen>
+    ) : (
+      <AuthScreen fullScreen busy title={t('auth.redirecting')} description={t('auth.signingIn')} />
     );
   }
 
   if (!session?.isManager && !session?.isAdmin) {
     return (
-      <div className="relative isolate flex min-h-dvh flex-col items-center justify-center gap-4 overflow-hidden bg-background p-6 text-center">
-        <ZelligeBackdrop />
-        <span className="grid size-14 place-items-center rounded-full border bg-card text-warning-foreground shadow-soft dark:text-warning">
-          <ShieldAlert className="size-6" aria-hidden />
-        </span>
-        <p className="max-w-md text-muted-foreground">{t('auth.forbidden')}</p>
-        <Button variant="outline" onClick={() => void auth.signoutRedirect()}>
-          {t('auth.signOut')}
+      <AuthScreen
+        fullScreen
+        tone="warning"
+        icon={ShieldAlert}
+        title={t('auth.forbiddenTitle')}
+        description={t('auth.forbidden')}
+      >
+        <Button variant="outline" onClick={() => signOut(auth)}>
+          <LogOut className="rtl:rotate-180" /> {t('auth.signOut')}
         </Button>
-      </div>
+      </AuthScreen>
     );
   }
 

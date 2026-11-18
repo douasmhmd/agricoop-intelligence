@@ -15,6 +15,7 @@ import { ChevronDown, ChevronRight, LogOut, Menu, Search } from 'lucide-react';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
+import { signOut } from '@/auth/sign-out';
 import { useCooperativesAdminList } from '@/api/generated/admin/admin';
 import { ok } from '@/api/ok';
 import { useSession } from '@/auth/session';
@@ -149,7 +150,7 @@ function UserMenu() {
         <div className="flex items-center justify-between px-2 py-1.5 sm:hidden">
           <LanguageSwitcher />
         </div>
-        <DropdownMenuItem onSelect={() => void auth.signoutRedirect()}>
+        <DropdownMenuItem onSelect={() => signOut(auth)}>
           <LogOut className="rtl:rotate-180" /> {t('auth.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
