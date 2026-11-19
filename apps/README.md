@@ -14,7 +14,7 @@ and the outbox relay that streams business events to Redpanda for the data plane
 
 Shared code lives in `packages/` (`shared`, `db`, `events`, `nest-kit`, `testing`, `config`). The
 contracts (database schema, OpenAPI, event schemas) live in `contracts/` and are shared with the data
-plane: see the `docs/conventions.md` for the rules.
+plane: see `docs/conventions.md` for the rules.
 
 ## Prerequisites
 

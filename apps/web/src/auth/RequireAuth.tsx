@@ -13,7 +13,12 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }
   if (!auth.isAuthenticated) {
     return (
-      <AuthScreen icon={LogIn} title={t('auth.required')} description={t('auth.registerHint')}>
+      <AuthScreen
+        icon={LogIn}
+        mirrorIcon
+        title={t('auth.required')}
+        description={t('auth.registerHint')}
+      >
         <Button
           size="xl"
           shape="pill"

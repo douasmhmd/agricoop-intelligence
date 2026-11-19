@@ -18,3 +18,4 @@ pnpm-lock.yaml
 **/kc.gen.tsx
 **/dist_keycloak/
 contracts/api/openapi.yaml
+**/keycloakify-dev-resources/

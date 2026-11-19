@@ -981,3 +981,37 @@ New workspace package **`apps/keycloak-theme`**: a Keycloak login theme (`agrico
   third-party request on the sign-in page.
 - Tooling: ESLint React rules cover the package; `kc.gen.tsx` (generated, committed) is ignored by
   ESLint/Prettier; `dist_keycloak/` git-ignored. All 44 tasks green.
+
+## Login theme — phase 5: every auth page, Keycloak wiring, in-app auth states (2026-11-19)
+
+- **Pages:** each Keycloak page the realm can show now has its own component in
+  `apps/keycloak-theme/src/login/pages/`: register (our own user-profile fields on
+  `useUserProfileForm`: floating inputs, native select for options), reset password, update
+  password, OTP, TOTP setup (QR code + manual key), verify e-mail, error, info, logout confirm, page
+  expired, select authenticator. Anything else still renders Keycloakify's default markup in our
+  template. More wording fixes in fr/ar/en (`backToLogin`, `backToApplication`,
+  `proceedWithAction`, `registerTitle`, `email`). The submit button's "disabled" (form not ready)
+  is now separate from "submitting" (spinner).
+- **Wiring:** `pnpm keycloak:theme` builds the theme JAR (`vite build` + `keycloakify build`) into
+  `apps/keycloak/providers/` (git-ignored), mounted read-only by `docker-compose.apps.yml`; restart
+  Keycloak after a rebuild. Keycloakify packages with Maven: without a local `mvn`, the script puts
+  a stand-in on PATH that runs the `maven:3.9-eclipse-temurin-21` image (about a minute).
+  Realm: `"loginTheme": "agricoop"` (the only realm change; the running Keycloak was updated through
+  kcadm since `--import-realm` skips an existing realm). Without the JAR Keycloak logs an error and
+  falls back to its built-in theme: sign-in still works. CI builds the JAR in the checks job
+  (uploaded as an artifact) and before the e2e stack starts.
+- **In-app auth states:** `AuthScreen` in `@agricoop/ui` (brand, zellige, lifted card, same look as
+  the login theme). The back office uses it for redirecting, sign-in failed, access reserved and
+  a new **signed-out** screen (it no longer bounces straight back to Keycloak after logout); the
+  storefront for "sign-in required". `signOut(auth)` (both apps) marks the tab before Keycloak's
+  logout redirect; the storefront then shows a "signed out" toast. `SessionNotices` shows a
+  persistent "session expired — sign in again" toast when silent renew fails or the access token
+  expires. Arrow icons mirror in Arabic (`mirrorIcon`).
+- **Real-flow screenshots:** `apps/e2e/visual/login-flow.visual.ts` drives back office → Keycloak
+  → back office → sign out on the running stack and captures login, login error (unknown account,
+  so brute-force protection never locks a demo user), forgot password, register and signed out ×
+  desktop/mobile × light/dark × FR/AR (40, no overflow) into `apps/e2e/screenshots/login/`.
+  Fixed while reviewing: the signed-out icon pointed the wrong way in Arabic. The mock previews
+  (`login-preview.visual.ts`) cover all 14 pages × FR/AR/EN (168).
+- **Verified:** themed sign-in served by Keycloak 26.8 with the expected field ids, no console
+  errors; Playwright e2e green through the themed login; fallback without the JAR checked.

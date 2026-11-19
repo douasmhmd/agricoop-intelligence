@@ -47,6 +47,7 @@ function Root() {
       <AuthScreen
         fullScreen
         icon={LogOut}
+        mirrorIcon
         title={t('auth.signedOut')}
         description={t('auth.signedOutHint')}
       >

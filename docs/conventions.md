@@ -322,6 +322,17 @@ generate` regenerates the TS types.
   `apps/e2e/visual/login-preview.visual.ts` captures them (skipped when the server is down).
 - The login photo is a local copy of the storefront's Unsplash olive grove (`src/assets/`): the
   sign-in page makes no third-party requests.
+- Into Keycloak: `pnpm keycloak:theme` builds the JAR (Maven via the `maven` Docker image when
+  `mvn` is missing) into `apps/keycloak/providers/` (git-ignored, mounted by
+  `docker-compose.apps.yml`); restart Keycloak to load a new build (start-dev does not cache
+  themes). The realm sets `loginTheme: agricoop`; without the JAR Keycloak falls back to its
+  built-in theme. CI builds the JAR before e2e.
+- Real-flow screenshots: `apps/e2e/visual/login-flow.visual.ts` (needs the stack and the back-office
+  dev server) → `apps/e2e/screenshots/login/`. Use an unknown account for error states: the realm
+  has brute-force protection.
+- In the apps, auth states use `AuthScreen` (`@agricoop/ui`) and sign-out goes through
+  `signOut(auth)` (`src/auth/sign-out.ts`, never `auth.signoutRedirect()` directly): the back office
+  then shows its signed-out screen, the storefront a toast. `SessionNotices` handles session expiry.
 
 ## Local dev
 

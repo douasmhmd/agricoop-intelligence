@@ -17,6 +17,7 @@ export function AuthScreen({
   description,
   busy = false,
   tone = 'neutral',
+  mirrorIcon = false,
   fullScreen = false,
   brandName = 'AgriCoop',
   children,
@@ -27,6 +28,8 @@ export function AuthScreen({
   /** Shows a spinner instead of the icon (e.g. while redirecting to sign-in). */
   busy?: boolean;
   tone?: 'neutral' | 'warning' | 'danger';
+  /** Arrow-like icons (sign in / sign out) point the other way in right-to-left languages. */
+  mirrorIcon?: boolean;
   /** Whole viewport (before the app shell exists) or inside a page. */
   fullScreen?: boolean;
   brandName?: string;
@@ -69,7 +72,7 @@ export function AuthScreen({
             {busy ? (
               <Loader2 className="size-6 animate-spin" aria-hidden />
             ) : Icon ? (
-              <Icon className="size-6" aria-hidden />
+              <Icon className={cn('size-6', mirrorIcon && 'rtl:-scale-x-100')} aria-hidden />
             ) : null}
           </span>
           <p className="font-display text-xl font-semibold text-balance">{title}</p>
