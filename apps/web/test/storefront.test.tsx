@@ -108,16 +108,20 @@ const verification = {
 };
 
 function renderAt(path: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [path] }),
-    context: { queryClient: new QueryClient() },
+    context: { queryClient },
   });
+
   render(
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-    >
-      {/* Same providers as main.tsx (the layout's theme toggles need ThemeProvider). */}
+    <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <CartProvider>
           <RouterProvider router={router} />
