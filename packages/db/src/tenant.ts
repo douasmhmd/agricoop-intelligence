@@ -3,6 +3,7 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import type { Schema } from './client.js';
 import * as t from './generated/schema.js';
+import { previsionProduit } from './prevision-produit.js';
 
 /*
  * Tenant isolation, enforced centrally.
@@ -28,6 +29,7 @@ export const tenantTables = {
   ligne_commande: t.ligne_commande,
   mouvement_stock: t.mouvement_stock,
   prevision: t.prevision,
+  prevision_produit: previsionProduit,
   outbox: t.outbox,
 } as const;
 

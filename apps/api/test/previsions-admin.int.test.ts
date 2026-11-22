@@ -13,6 +13,8 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { IDENTITY_ADMIN, InMemoryIdentityAdmin } from '../src/admin/identity-admin';
 import { createTestApp } from './support/test-app';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const COOP_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const COOP_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -31,6 +33,25 @@ describe.each([{ rls: false }, { rls: true }])('previsions & admin (rls: $rls)',
 
   beforeAll(async () => {
     [db, issuer] = await Promise.all([startTestDatabase({ rls }), createTestIssuer()]);
+
+    // Installer la nouvelle table dans la base temporaire de test.
+
+    // Charger la migration dans la base temporaire de test.
+    const migration = readFileSync(
+      resolve(process.cwd(), '../../contracts/migrations/20261122_prevision_produit.sql'),
+      'utf8',
+    );
+    await ownerQuery(db, migration);
+
+    // Activer notre politique complémentaire uniquement en mode RLS.
+    if (rls) {
+      const politique = readFileSync(
+        resolve(process.cwd(), '../../contracts/db/proposals/004_prevision_produit_rls.sql'),
+        'utf8',
+      );
+      await ownerQuery(db, politique);
+    }
+
     await ownerQuery(
       db,
       `INSERT INTO cooperative (coop_id, code, nom, province) VALUES
@@ -80,6 +101,32 @@ describe.each([{ rls: false }, { rls: true }])('previsions & admin (rls: $rls)',
     await sale('2026-06-03T10:00:00Z', 50, 'annulee');
     await sale('2026-06-09T10:00:00Z', 7, 'livree', true);
 
+    // Produit appartenant à la deuxième coopérative.
+    const [pB] = await ownerQuery<{ id: string }>(
+      db,
+      `INSERT INTO produit
+       (coop_id, code, nom, famille, categorie,
+        prix_mad, cout_mad, conservation_j, niveau_qr)
+       VALUES ($1, 'PB', 'Produit B', 'alimentaire',
+               'huile', 10, 5, 100, 'lot')
+       RETURNING produit_id AS id`,
+      [COOP_B],
+    );
+
+    // Une prévision par coopérative.
+    await ownerQuery(
+      db,
+      `INSERT INTO prevision_produit
+       (coop_id, produit_id, semaine, type_prevision,
+        quantite_prevue, version_modele)
+       VALUES
+       ($1, $2, '2026-06-08', 'simulation_apres_historique',
+        24.32, 'vDemoA'),
+       ($3, $4, '2026-06-08', 'simulation_apres_historique',
+        99.00, 'vDemoB')`,
+      [COOP_A, p!.id, COOP_B, pB!.id],
+    );
+
     app = await createTestApp(db, issuer, {
       clock,
       providers: [{ token: IDENTITY_ADMIN, value: identity }],
@@ -95,6 +142,41 @@ describe.each([{ rls: false }, { rls: true }])('previsions & admin (rls: $rls)',
   });
 
   describe('previsions', () => {
+    it('returns product forecasts for the authenticated cooperative', async () => {
+      const res = await api()
+        .get('/api/v1/previsions/produits?semaine=2026-06-08')
+        .set(as('a'))
+        .expect(200);
+
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0]).toMatchObject({
+        code_produit: 'P',
+        famille: 'alimentaire',
+        semaine: '2026-06-08',
+        quantite_prevue: '24.32',
+        version_modele: 'vDemoA',
+        type_prevision: 'simulation_apres_historique',
+      });
+    });
+
+    it('never exposes another cooperative product forecasts', async () => {
+      const res = await api()
+        .get('/api/v1/previsions/produits?semaine=2026-06-08')
+        .set(as('b'))
+        .expect(200);
+
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0]).toMatchObject({
+        code_produit: 'PB',
+        quantite_prevue: '99.00',
+        version_modele: 'vDemoB',
+      });
+
+      const rows = res.body as Array<{ code_produit: string }>;
+
+      expect(rows.some((row) => row.code_produit === 'P')).toBe(false);
+    });
+
     it('lists model versions, newest first, per tenant', async () => {
       const a = await api().get('/api/v1/previsions/versions').set(as('a')).expect(200);
       expect((a.body as { version_modele: string }[]).map((v) => v.version_modele)).toEqual([

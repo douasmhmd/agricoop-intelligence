@@ -7,6 +7,9 @@ import {
   previsionsSchema,
   type VersionModele,
   versionModeleSchema,
+  type PrevisionProduit,
+  previsionProduitSchema,
+  previsionsProduitsQuery,
 } from '@agricoop/shared';
 import { createZodDto, ZodResponse } from 'nestjs-zod';
 import { PrevisionsService } from './previsions.service';
@@ -14,6 +17,8 @@ import { PrevisionsService } from './previsions.service';
 export class PrevisionsDto extends createZodDto(previsionsSchema) {}
 export class PrevisionsQueryDto extends createZodDto(previsionsQuery) {}
 export class VersionModeleDto extends createZodDto(versionModeleSchema) {}
+export class PrevisionProduitDto extends createZodDto(previsionProduitSchema) {}
+export class PrevisionsProduitsQueryDto extends createZodDto(previsionsProduitsQuery) {}
 
 @ApiTags('previsions')
 @Controller('previsions')
@@ -33,6 +38,17 @@ export class PrevisionsController {
   @ZodResponse({ status: 200, description: 'Forecast and sales series', type: PrevisionsDto })
   series(@Query() query: PrevisionsQueryDto): Promise<Previsions> {
     return this.previsions.series(query);
+  }
+
+  /** Prévisions IA hebdomadaires par produit. */
+  @Get('produits')
+  @ZodResponse({
+    status: 200,
+    description: 'Prévisions IA par produit',
+    type: [PrevisionProduitDto],
+  })
+  produits(@Query() query: PrevisionsProduitsQueryDto): Promise<PrevisionProduit[]> {
+    return this.previsions.produits(query);
   }
 }
 
