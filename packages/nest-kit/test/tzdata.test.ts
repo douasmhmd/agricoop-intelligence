@@ -12,7 +12,7 @@ describe('tz data guard', () => {
   it('flags older or unknown tz data', () => {
     expect(tzDataIsCurrent('2026a')).toBe(false);
     expect(tzDataIsCurrent('2025b')).toBe(false);
-    expect(tzDataIsCurrent(undefined)).toBe(false);
+    expect(tzDataIsCurrent('unknown')).toBe(false);
     expect(tzDataWarning('2026a')).toMatch(/predates 2026c/);
   });
 });
