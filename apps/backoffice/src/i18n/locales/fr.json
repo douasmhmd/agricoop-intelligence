@@ -315,7 +315,7 @@
   },
   "previsions": {
     "title": "Prévisions",
-    "subtitle": "Prévisions hebdomadaires par famille, comparées aux ventes réelles",
+    "subtitle": "Prévisions hebdomadaires par famille et par produit, comparées aux ventes réelles",
     "version": "Version du modèle",
     "noVersion": "Aucune version",
     "empty": "Ni prévisions ni ventes sur la période.",
@@ -599,5 +599,25 @@
       "admin": "Administrateur de la plateforme"
     }
   },
-  "notFoundHint": "Cette page n'existe pas ou a été déplacée."
+  "notFoundHint": "Cette page n'existe pas ou a été déplacée.",
+  "previsionsProduit": {
+    "title": "Prévisions IA par produit",
+    "subtitle": "Demande hebdomadaire prévue par le modèle pour chaque produit.",
+    "semaine": "Semaine",
+    "famille": "Famille",
+    "produit": "Produit",
+    "quantite": "Quantité prévue",
+    "type": "Type",
+    "modele": "Version du modèle",
+    "calcul": "Calculée le",
+    "types": {
+      "simulation": "Simulation",
+      "prevision": "Prévision"
+    },
+    "simulationNotice": "{{week}} : simulation sur l'historique. Le modèle a été rejoué sur des ventes passées pour être évalué ; ce ne sont pas des prévisions pour les semaines à venir.",
+    "total_one": "{{count}} produit · {{quantite}} unités prévues",
+    "total_other": "{{count}} produits · {{quantite}} unités prévues",
+    "emptyTitle": "Pas encore de prévisions par produit",
+    "empty": "Le pipeline analytique n'a encore publié aucune prévision par produit pour cette coopérative."
+  }
 }
