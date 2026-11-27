@@ -1,0 +1,21 @@
+# Shared / teammate-owned areas: not formatted by the apps tooling
+data/
+infra/
+contracts/db/schema.sql
+# Teammate-authored shared contracts: kept byte-for-byte as written
+contracts/api/analytics.yaml
+contracts/events/evenements.schema.json
+docker-compose.yml
+README.md
+.github/CODEOWNERS
+
+# Generated
+pnpm-lock.yaml
+**/dist/
+**/coverage/
+**/generated/
+**/routeTree.gen.ts
+**/kc.gen.tsx
+**/dist_keycloak/
+contracts/api/openapi.yaml
+**/keycloakify-dev-resources/

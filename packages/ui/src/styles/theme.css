@@ -1,0 +1,465 @@
+/*
+ * AgriCoop design tokens — "Moroccan olive oil, premium and authentic".
+ *
+ * Usage (each app's src/index.css):
+ *   @import 'tailwindcss';
+ *   @import 'tw-animate-css';
+ *   @import '@agricoop/ui/theme.css';
+ *   @source '../../../packages/ui/src';
+ *
+ * Two layers:
+ *   1. Brand scales (static, @theme): olive, gold, terracotta, sand, ink → bg-olive-700, text-gold-500…
+ *   2. Semantic tokens (switch with the theme): background, foreground, primary, accent, success…
+ *      They keep the shadcn names, so `bg-card`, `text-muted-foreground`… work everywhere.
+ * Colours are OKLCH. Text pairs are checked for WCAG AA in both themes (see docs/ui-design.md).
+ *
+ * Dark mode: `.dark` on <html> (ThemeProvider), warm dark tones, never pure black.
+ * RTL: always logical utilities (ms-/me-/ps-/pe-/start-/end-/text-start), never ml-/mr-/left-/right-.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------------------------- */
+/* 1. Brand scales                                                                                 */
+/* ---------------------------------------------------------------------------------------------- */
+/* `static`: emit every variable, even unused ones, so var(--color-gold-600) works in inline styles
+   and charts (Tailwind otherwise keeps only the variables its classes use). */
+@theme static {
+  --color-olive-50: oklch(0.97 0.014 115);
+  --color-olive-100: oklch(0.94 0.028 115);
+  --color-olive-200: oklch(0.88 0.052 115);
+  --color-olive-300: oklch(0.8 0.078 116);
+  --color-olive-400: oklch(0.69 0.095 117);
+  --color-olive-500: oklch(0.57 0.098 118);
+  --color-olive-600: oklch(0.47 0.088 120);
+  --color-olive-700: oklch(0.39 0.074 121);
+  --color-olive-800: oklch(0.32 0.06 122);
+  --color-olive-900: oklch(0.26 0.046 123);
+  --color-olive-950: oklch(0.19 0.032 124);
+
+  --color-gold-50: oklch(0.98 0.02 85);
+  --color-gold-100: oklch(0.95 0.045 85);
+  --color-gold-200: oklch(0.9 0.08 83);
+  --color-gold-300: oklch(0.85 0.115 80);
+  --color-gold-400: oklch(0.79 0.138 76);
+  --color-gold-500: oklch(0.73 0.145 72);
+  --color-gold-600: oklch(0.63 0.13 68);
+  --color-gold-700: oklch(0.53 0.11 65);
+  --color-gold-800: oklch(0.44 0.09 62);
+  --color-gold-900: oklch(0.36 0.07 60);
+  --color-gold-950: oklch(0.26 0.05 58);
+
+  --color-terracotta-50: oklch(0.97 0.015 45);
+  --color-terracotta-100: oklch(0.93 0.035 45);
+  --color-terracotta-200: oklch(0.86 0.07 44);
+  --color-terracotta-300: oklch(0.78 0.105 42);
+  --color-terracotta-400: oklch(0.69 0.13 40);
+  --color-terracotta-500: oklch(0.61 0.14 38);
+  --color-terracotta-600: oklch(0.53 0.13 36);
+  --color-terracotta-700: oklch(0.46 0.11 35);
+  --color-terracotta-800: oklch(0.39 0.09 34);
+  --color-terracotta-900: oklch(0.31 0.07 33);
+  --color-terracotta-950: oklch(0.22 0.05 32);
+
+  --color-sand-50: oklch(0.985 0.006 85);
+  --color-sand-100: oklch(0.966 0.011 84);
+  --color-sand-200: oklch(0.932 0.017 82);
+  --color-sand-300: oklch(0.88 0.022 80);
+  --color-sand-400: oklch(0.77 0.025 78);
+  --color-sand-500: oklch(0.65 0.025 76);
+  --color-sand-600: oklch(0.54 0.022 74);
+  --color-sand-700: oklch(0.44 0.018 72);
+  --color-sand-800: oklch(0.34 0.014 70);
+  --color-sand-900: oklch(0.25 0.011 68);
+  --color-sand-950: oklch(0.18 0.008 66);
+
+  --color-ink: oklch(0.2 0.014 100);
+
+  /* Typography. Latin faces first; Arabic text falls through to the Arabic faces. */
+  --font-sans:
+    'Manrope Variable', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    sans-serif;
+  --font-display:
+    'Fraunces Variable', 'Noto Kufi Arabic Variable', ui-serif, Georgia, 'Times New Roman', serif;
+
+  /* Fluid display scale (360px → 1920px). Body/UI sizes stay on Tailwind's fixed scale. */
+  --text-display-2xl: clamp(2.75rem, 1.6rem + 5.2vw, 6.5rem);
+  --text-display-2xl--line-height: 1;
+  --text-display-2xl--letter-spacing: -0.035em;
+  --text-display-xl: clamp(2.25rem, 1.5rem + 3.4vw, 4.75rem);
+  --text-display-xl--line-height: 1.04;
+  --text-display-xl--letter-spacing: -0.03em;
+  --text-display-lg: clamp(1.875rem, 1.4rem + 2.2vw, 3.5rem);
+  --text-display-lg--line-height: 1.08;
+  --text-display-lg--letter-spacing: -0.025em;
+  --text-display-md: clamp(1.5rem, 1.25rem + 1.2vw, 2.375rem);
+  --text-display-md--line-height: 1.15;
+  --text-display-md--letter-spacing: -0.02em;
+  --text-display-sm: clamp(1.25rem, 1.12rem + 0.6vw, 1.75rem);
+  --text-display-sm--line-height: 1.2;
+  --text-display-sm--letter-spacing: -0.01em;
+
+  /* Easing (mirrored in motion.ts). `spring` is a CSS linear() approximation of a soft spring. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+  --ease-spring: linear(
+    0,
+    0.009,
+    0.035 2.1%,
+    0.141 4.4%,
+    0.723 12.9%,
+    0.938 16.7%,
+    1.017 19.4%,
+    1.067,
+    1.089 24.6%,
+    1.089 27.3%,
+    1.064 31.1%,
+    1.003 39.5%,
+    0.984 44.4%,
+    0.981 50.4%,
+    0.997 65.5%,
+    1
+  );
+
+  --animate-shimmer: shimmer 1.6s var(--ease-in-out-quint) infinite;
+  --animate-float: float 3.2s ease-in-out infinite;
+
+  @keyframes shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* 2. Semantic tokens                                                                              */
+/* ---------------------------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --radius: 0.875rem; /* 14px: cards. Inputs/buttons use --radius-md (10px), sheets --radius-2xl. */
+
+  --background: oklch(0.977 0.008 85);
+  --foreground: oklch(0.2 0.014 100);
+  --card: oklch(0.993 0.004 85);
+  --card-foreground: oklch(0.2 0.014 100);
+  --popover: oklch(0.995 0.003 85);
+  --popover-foreground: oklch(0.2 0.014 100);
+  --primary: oklch(0.39 0.074 121);
+  --primary-foreground: oklch(0.985 0.006 85);
+  --secondary: oklch(0.945 0.016 84);
+  --secondary-foreground: oklch(0.26 0.03 115);
+  --muted: oklch(0.953 0.012 84);
+  --muted-foreground: oklch(0.47 0.02 78);
+  --accent: oklch(0.935 0.03 112);
+  --accent-foreground: oklch(0.26 0.046 123);
+  --gold: oklch(0.73 0.145 72);
+  --gold-foreground: oklch(0.2 0.03 65);
+  --terracotta: oklch(0.55 0.135 37);
+  --terracotta-foreground: oklch(0.985 0.006 85);
+  --destructive: oklch(0.53 0.19 28);
+  --destructive-foreground: oklch(0.985 0.006 85);
+  --success: oklch(0.5 0.115 150);
+  --success-foreground: oklch(0.985 0.006 85);
+  --warning: oklch(0.76 0.15 72);
+  --warning-foreground: oklch(0.27 0.06 60);
+  --info: oklch(0.52 0.1 240);
+  --info-foreground: oklch(0.985 0.006 85);
+  --border: oklch(0.895 0.016 82);
+  --input: oklch(0.86 0.02 82);
+  --ring: oklch(0.6 0.13 68); /* gold, dark enough for 3:1 on the page */
+
+  --chart-1: oklch(0.47 0.088 120);
+  --chart-2: oklch(0.73 0.145 72);
+  --chart-3: oklch(0.6 0.13 38);
+  --chart-4: oklch(0.6 0.07 185);
+  --chart-5: oklch(0.52 0.06 320);
+
+  --sidebar: oklch(0.962 0.011 84);
+  --sidebar-foreground: oklch(0.26 0.02 100);
+  --sidebar-accent: oklch(0.925 0.02 100);
+  --sidebar-border: oklch(0.9 0.016 82);
+
+  /* Layered, warm-tinted shadows. */
+  --elevation-1: 0 1px 2px oklch(0.35 0.03 80 / 0.06), 0 1px 1px oklch(0.35 0.03 80 / 0.04);
+  --elevation-2:
+    0 1px 2px oklch(0.35 0.03 80 / 0.05), 0 4px 12px -2px oklch(0.35 0.03 80 / 0.08),
+    0 12px 24px -12px oklch(0.35 0.03 80 / 0.1);
+  --elevation-3:
+    0 2px 4px oklch(0.35 0.03 80 / 0.05), 0 12px 32px -6px oklch(0.35 0.03 80 / 0.14),
+    0 32px 64px -24px oklch(0.35 0.03 80 / 0.18);
+  --glass: oklch(0.985 0.006 85 / 0.72);
+  --grain-opacity: 0.045;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.175 0.012 80);
+  --foreground: oklch(0.94 0.012 85);
+  --card: oklch(0.21 0.013 80);
+  --card-foreground: oklch(0.94 0.012 85);
+  --popover: oklch(0.225 0.014 80);
+  --popover-foreground: oklch(0.94 0.012 85);
+  --primary: oklch(0.78 0.095 116);
+  --primary-foreground: oklch(0.19 0.032 124);
+  --secondary: oklch(0.265 0.014 80);
+  --secondary-foreground: oklch(0.92 0.012 85);
+  --muted: oklch(0.245 0.012 80);
+  --muted-foreground: oklch(0.73 0.018 82);
+  --accent: oklch(0.29 0.03 112);
+  --accent-foreground: oklch(0.94 0.012 85);
+  --gold: oklch(0.8 0.13 78);
+  --gold-foreground: oklch(0.2 0.03 65);
+  --terracotta: oklch(0.7 0.12 40);
+  --terracotta-foreground: oklch(0.18 0.03 35);
+  --destructive: oklch(0.68 0.17 27);
+  --destructive-foreground: oklch(0.17 0.03 27);
+  --success: oklch(0.72 0.13 150);
+  --success-foreground: oklch(0.17 0.03 150);
+  --warning: oklch(0.81 0.14 78);
+  --warning-foreground: oklch(0.22 0.05 60);
+  --info: oklch(0.73 0.1 240);
+  --info-foreground: oklch(0.17 0.03 240);
+  --border: oklch(0.3 0.014 80);
+  --input: oklch(0.35 0.016 80);
+  --ring: oklch(0.8 0.13 78);
+
+  --chart-1: oklch(0.76 0.1 117);
+  --chart-2: oklch(0.8 0.13 78);
+  --chart-3: oklch(0.7 0.12 40);
+  --chart-4: oklch(0.72 0.07 185);
+  --chart-5: oklch(0.68 0.06 320);
+
+  --sidebar: oklch(0.195 0.012 80);
+  --sidebar-foreground: oklch(0.9 0.012 85);
+  --sidebar-accent: oklch(0.26 0.016 90);
+  --sidebar-border: oklch(0.28 0.014 80);
+
+  --elevation-1: 0 1px 2px oklch(0 0 0 / 0.3);
+  --elevation-2: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 24px -8px oklch(0 0 0 / 0.45);
+  --elevation-3: 0 2px 4px oklch(0 0 0 / 0.3), 0 24px 48px -16px oklch(0 0 0 / 0.6);
+  --glass: oklch(0.2 0.012 80 / 0.7);
+  --grain-opacity: 0.06;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 6px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-foreground: var(--terracotta-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-glass: var(--glass);
+
+  --shadow-soft: var(--elevation-1);
+  --shadow-lifted: var(--elevation-2);
+  --shadow-float: var(--elevation-3);
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* 3. Base                                                                                         */
+/* ---------------------------------------------------------------------------------------------- */
+@layer base {
+  * {
+    @apply border-border outline-ring/60;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-feature-settings: 'ss01', 'cv11';
+    text-rendering: optimizeLegibility;
+  }
+  :lang(ar) body {
+    /* Arabic needs more vertical room for its ascenders / descenders. */
+    line-height: 1.7;
+    font-feature-settings: normal;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--gold) 35%, transparent);
+  }
+  /* Brand focus ring: a gold halo, visible on every surface. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* 4. Brand utilities                                                                              */
+/* ---------------------------------------------------------------------------------------------- */
+
+/* Zellige: an 8-point star lattice drawn in currentColor (use with a low-alpha text colour,
+   e.g. `zellige text-primary/10`). Decorative only: put it on an aria-hidden layer. */
+@utility zellige {
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='1.1'%3E%3Cpath d='M32 14l5.3 12.7L50 32l-12.7 5.3L32 50l-5.3-12.7L14 32l12.7-5.3z'/%3E%3Cpath d='M19.3 19.3h25.4v25.4H19.3z'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3Cpath d='M0 0l14 14M64 0L50 14M0 64l14-14M64 64L50 50M32 0v6M32 58v6M0 32h6M58 32h6'/%3E%3C/g%3E%3C/svg%3E");
+  mask-size: 64px 64px;
+  mask-repeat: repeat;
+}
+
+/* Film grain overlay (on a positioned parent). */
+@utility grain {
+  position: relative;
+  isolation: isolate;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .dark &::after {
+    mix-blend-mode: screen;
+  }
+}
+
+/* Moroccan arch: semicircular top, square base (for images and frames). */
+@utility arch {
+  border-radius: 9999px 9999px var(--radius-md) var(--radius-md);
+  overflow: hidden;
+}
+
+/* Frosted glass for the sticky header and overlays only. */
+@utility glass {
+  background-color: var(--glass);
+  backdrop-filter: saturate(1.4) blur(14px);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+}
+
+/* Below-the-fold content: skip its rendering work until it nears the viewport. `auto` remembers
+   the real size once rendered, so the scrollbar stays stable. */
+@utility defer-render {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 2400px;
+}
+
+/* Thin gold hairline. */
+@utility hairline-gold {
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--gold) 70%, transparent) 20%,
+    color-mix(in oklch, var(--gold) 70%, transparent) 80%,
+    transparent
+  );
+  height: 1px;
+}
+
+/* Route changes (View Transitions API): a short cross-fade, shared elements morph with the brand
+   easing. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+::view-transition-group(*) {
+  animation-duration: 450ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+
+/* Reduced motion: keep fades, drop movement-heavy CSS animations. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer,
+  .animate-float {
+    animation: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  /*
+   * tw-animate-css entrances and exits (dialogs, sheets, menus, accordion, tabs): keep the fade,
+   * drop the movement. Motion components are covered by <MotionConfig reducedMotion="user">.
+   */
+  *,
+  ::before,
+  ::after {
+    --tw-enter-translate-x: 0 !important;
+    --tw-enter-translate-y: 0 !important;
+    --tw-enter-scale: 1 !important;
+    --tw-enter-rotate: 0 !important;
+    --tw-exit-translate-x: 0 !important;
+    --tw-exit-translate-y: 0 !important;
+    --tw-exit-scale: 1 !important;
+    --tw-exit-rotate: 0 !important;
+    /* Hover nudges, switch thumb, sidebar width: change instantly instead of moving. */
+    transition-property:
+      color, background-color, border-color, outline-color, text-decoration-color, fill, stroke,
+      opacity, box-shadow !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Arabic script is never letter-spaced: tracking (positive or negative) breaks the joining of
+ * letters. Unlayered on purpose, so it wins over the tracking-* and display-size utilities.
+ */
+[dir='rtl'] * {
+  letter-spacing: normal;
+}

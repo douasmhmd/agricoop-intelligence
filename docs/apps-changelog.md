@@ -1,0 +1,1042 @@
+# apps/ changelog
+
+Phase log for `apps/` and `packages/`. Newest entries at the bottom.
+
+## Phases
+
+1. Recon & plan
+2. Scaffold (monorepo, packages, compose, Keycloak realm, `drizzle-kit pull`, health endpoints)
+3. API core (auth, TenantGuard, `withTenant`, problem+json, logging redaction, OpenAPI export, tenant-isolation test)
+4. Catalogue / lots / stock
+5. Orders + outbox + relay + mock payment (incl. concurrency test)
+6. QR service (generation, PDF labels, verification, anomaly rule)
+7. Backoffice UI
+8. Storefront UI
+9. Hardening (multi-arch images, CI, Playwright, demo seed, `apps/README.md`)
+
+---
+
+## Phase 1 — Recon & plan (2026-11-11)
+
+- Read `README.md`, `contracts/db/schema.sql`, root `docker-compose.yml`, `.github/CODEOWNERS`, and the
+  synthetic generator notebook (to align conventions with the data plane).
+- Added `docs/conventions.md` with the binding conventions.
+- Findings that shape later phases:
+  - The generator hashes QR tokens as `hex(sha256(base64url_no_pad_token))`; the QR service uses the same.
+  - Generator device values are `Android` / `iPhone`; `scan_qr.appareil` from the app uses
+    `Android` / `iPhone` / `Autre`.
+  - The generator writes no `outbox` rows; only the app produces events.
+  - Lot-level QR codes are legitimately scanned by many buyers in many cities, so the "> 2 cities in 24h"
+    anomaly rule applies to unit-level QR codes only; lot-level codes use a higher scan-count threshold.
+  - Schema gaps (envelope `version`/`is_synthetic`, customer ↔ Keycloak link) need decisions — see the
+    phase 1 summary.
+
+## Phase 2 — Scaffold (2026-11-11)
+
+**Done**
+
+- Monorepo: pnpm 12 workspaces + Turborepo 2, TypeScript strict, ESLint 10 flat config (type-aware,
+  `no-explicit-any` + mandatory description on every `eslint-disable`), Prettier, Husky + lint-staged +
+  commitlint (Conventional Commits), `.editorconfig`, `.gitattributes` (LF), `.nvmrc` (24).
+- Packages:
+  - `@agricoop/config`: shared tsconfigs (base / lib / nest / node / react) and ESLint config.
+  - `@agricoop/shared`: domain enums mirrored from `schema.sql` CHECK constraints (a test parses
+    `schema.sql` and fails on drift), order status machine, decimal.js money helpers (string on the wire),
+    common Zod schemas incl. RFC 7807 problem details, log redaction rules (`LOG_REDACT_PATHS`, `redactUrl`).
+  - `@agricoop/db`: Drizzle schema introspected with `drizzle-kit pull` (`pnpm db:pull`), pg pool / Drizzle
+    client factory, `pingDb`.
+  - `@agricoop/events`: envelope type, `topicFor()` (`agricoop.<type>.v1`), PII guard (`assertNoPii`) with
+    tests, generator from `contracts/events/*.schema.json` (no schemas yet: phase 5).
+  - `@agricoop/nest-kit` (**not in the original layout**): Nest pieces shared by `api` and `qr` — bootstrap,
+    env parsing, pino with redaction, `/health/live` + `/health/ready` (Terminus), `/metrics` (prom-client,
+    HTTP histogram labelled by route template), `DatabaseModule`, OpenAPI builder.
+- Apps (all boot and answer their probes):
+  - `api` (`/api/v1`, port 3000) and `qr` (`/qr/v1`, port 3001): NestJS 11 + Fastify, Swagger UI at `/docs`
+    outside production.
+  - `outbox-relay` (port 3002): plain Node worker with probe/metrics server and polling loop (no-op until
+    phase 5); metrics `outbox_events_published_total`, `outbox_lag_seconds`, `outbox_pending_events`.
+  - `web` (5173) and `backoffice` (5174): React 19, Vite 8, TanStack Router (file-based) + Query, Tailwind 4,
+    shadcn/ui config, i18next FR (default) / AR with `<html dir>` flipping, Orval config + fetch mutator,
+    `/healthz`.
+- `pnpm contracts:openapi` exports each service's document and merges them into
+  `contracts/api/openapi.yaml` (no business paths yet; probes are excluded by design).
+- `docker-compose.apps.yml`: db-seed (fixed-id demo coops), Keycloak 26.8 with realm import, Redpanda
+  v26.2 + Console v3.14, Mailpit; app images under the `apps` profile. Dockerfiles: `apps/docker/`.
+- Keycloak realm `agricoop`: roles `customer` (default for self-registration), `reseller`, `coop_manager`,
+  `saas_admin`; groups `/coops/COOP01|COOP02` carrying `tenant_id`; `tenant_id` + audience
+  (`agricoop-api`) mappers; PKCE public clients for web / backoffice; `agricoop-provisioner` service account
+  (manage users/groups); `agricoop-dev-cli` password-grant client for local tests only; 5 demo users.
+- Schema proposals 002 (outbox envelope) and 003 (`client_compte`) written in `contracts/db/proposals/`.
+
+**Tests:** 40 passing in 6 packages (enum drift vs schema.sql, status machine, money, log redaction, PII
+guard, env parsing, api/qr health + readiness up/down + metrics, relay probes) + i18n/RTL tests in both
+front ends.
+
+**Verified manually:** api, qr and relay booted against a Postgres loaded with `schema.sql`: live 200,
+ready 200, metrics OK, Swagger UI OK; a `/qr/v1/verify/<token>` request is logged with the token and
+forwarded IP redacted. Demo-coop seed is idempotent.
+
+**Not verified (Docker Desktop's engine did not start on this machine):** `docker compose up`, the
+Keycloak realm import (including the `${ENV:default}` placeholders and the `tenant_id` claim coming from
+the group attribute), Redpanda, and the Dockerfiles (`pnpm deploy --legacy` under pnpm 12). To be checked
+first thing in phase 3.
+
+**Choices made**
+
+- NestJS 11.2 instead of 12, TypeScript 6.0 instead of 7 (ecosystem peer ranges, see `docs/conventions.md`).
+- `prom-client` kept as specified, but it is now deprecated in favour of `@prometheus-io/client` (0.x);
+  revisit in phase 9.
+- api and qr share one origin: `/api/v1` and `/qr/v1` prefixes, merged into a single `openapi.yaml`.
+- Demo coops get fixed UUIDs so Keycloak group attributes can carry `tenant_id` statically; `COOP01`
+  matches the generator's coop (it upserts on `code`).
+- Customers/resellers have no `tenant_id` claim; storefront tenant comes from `/coops/:code` (decision 2,
+  proposal 003).
+- Known peer warning: `@nestjs/schematics` wants chokidar 4, `@swc/cli` wants 5 (CLI tooling only).
+
+## Phase 3 — API core (2026-11-11)
+
+**Phase 2 leftovers verified (Docker up)**
+
+- `docker compose -f docker-compose.yml -f docker-compose.apps.yml up -d`: Postgres, db-seed (COOP01/COOP02
+  with fixed ids), Keycloak 26.8 (realm imported, `${ENV:default}` placeholders substituted), Redpanda
+  (healthy, topic auto-creation on), Console, Mailpit all up.
+- Real Keycloak tokens: managers carry `tenant_id` from their coop group; customers / resellers / admin have
+  none; `aud` contains `agricoop-api`; `iss` is `http://localhost:8080/realms/agricoop`.
+- Images: `agricoop/web` builds; `agricoop/api` builds and runs (non-root `node`, Node 24, internal JWKS URL,
+  real token accepted). Size 376 MB — slimming planned for phase 9.
+
+**Done**
+
+- `packages/db`: `withTenant(db, coopId, fn)` — transaction + `set_config('app.coop_id', …, true)` +
+  `TenantScope` (`list`, `findOne`, `select`, `insert`, `update`, `delete`, `owns`) that adds
+  `coop_id = :coopId` everywhere, forces it on insert and can never change it on update.
+- `contracts/db/proposals/001_rls.sql`: RLS on all business tables (`client_pii` via `client`), roles
+  `agricoop_app` / `agricoop_relay`, public-read `cooperative`, `qr_lookup()` SECURITY DEFINER. Enabled but
+  **not forced**: the owner (`agricoop`, used by the synthetic generator) is unaffected.
+- `packages/nest-kit`:
+  - `AccessGuard` (single global guard): JWT via `jose` + JWKS (RS256, issuer, audience, 30 s skew) →
+    `@Roles` → tenant (`tenant_id` claim; `saas_admin` + `X-Coop-Id`, validated, must exist, audit-logged).
+    Decorators `@Public`, `@NoTenant`, `@Roles`, `@CurrentUser`.
+  - `RequestContext` (AsyncLocalStorage) set by an interceptor; `TenantDb` service.
+  - `ProblemDetailsFilter`: RFC 7807 for every error (`AppProblem` codes, Zod validation errors by path,
+    500s without details, `WWW-Authenticate` on 401, query strings dropped from `instance`).
+  - Global `ZodValidationPipe` + `ZodSerializerInterceptor`, `ThrottlerGuard` (300/min default).
+  - OpenAPI normalization: clean schema names, explicit 2xx required, `4XX`/`5XX` → `ProblemDetails`,
+    fails on dangling `$ref`; operation ids `<Controller>_<method>`.
+- `apps/api`: `GET /api/v1/me` (no tenant), `GET /api/v1/produits`, `GET /api/v1/produits/{id}`
+  (`coop_manager`; read side of the catalogue — the vehicle for the isolation tests; CRUD in phase 4).
+- `packages/testing` (dev-only, **new**): Testcontainers Postgres 16 loaded with `schema.sql`, optionally
+  with proposal 001 and a non-owner app role; in-memory RS256 issuer.
+- `pnpm contracts:openapi` now exports api + qr only, merges, then regenerates the Orval clients.
+- Front ends: Orval mutator returns `{ data, status, headers }` (Orval 8 fetch contract) and throws
+  `ApiError` with the problem details on non-2xx; generated hooks `useMeGet`, `useProduitsList`,
+  `useProduitsGet`.
+
+**Tests:** 85 passing. Mandatory tenant-isolation suite (`apps/api/test/tenant-isolation.int.test.ts`),
+14 cases × {without RLS, with RLS}: own rows only, cross-tenant 404, no `coop_id` in responses,
+`X-Coop-Id` spoofing → 403, admin override (header required / UUID / must exist), role checks, 401 for
+missing / foreign-signed / expired / wrong-audience / wrong-issuer tokens, coop_id forced on insert and
+immutable on update, and — with RLS only — a raw query that forgot the predicate still sees only its tenant.
+Plus problem-filter and Orval-mutator unit tests.
+
+**Verified manually:** built api against the compose Postgres + real Keycloak: 401 / 403 / 200 cases,
+tenant mismatch, admin override with audit log line, no tokens or passwords in logs.
+
+**Choices made**
+
+- One composite guard instead of separate Auth/Roles/Tenant guards: fixed order, one place to audit.
+- Unauthenticated `X-Coop-Id` from a non-admin is rejected (403) rather than ignored.
+- `saas_admin` passes every `@Roles` check but must always name a tenant.
+- Health readiness returns Terminus' own body on 503 (not problem+json), as probes expect.
+- API JSON keeps the schema's snake_case French field names.
+
+## Phase 4 — Catalogue, lots, stock (2026-11-11)
+
+**Done**
+
+- **Event contract v1 (draft, needs data-plane review):** `contracts/events/<type>.v1.schema.json` for all
+  five types + `contracts/events/README.md` (topics, key, envelope, delivery, PII rules, versioning).
+  `packages/events` now generates TS types **and** embeds the schemas; `assertValidPayload` (PII guard +
+  Ajv draft 2020-12) and `assertValidEvent` (full envelope). Contract tests: one schema per type, identical
+  envelopes, no PII field name anywhere.
+- `packages/db`: `lotsWithStock` (lot + product + computed stock, `count(*) over()` total), `lotStock`,
+  `lockLotForStock` (row lock), `TenantScope.list` (typed, `forUpdate`).
+- `packages/shared`: catalogue / lot / stock DTO schemas, `syntheticFilter`, Morocco calendar helpers
+  (`isoDateInZone`, `addDays`, `daysBetween`, `isExpired`, `defaultDatePeremption`, `toIsoTimestamp`).
+- `packages/nest-kit`: `CLOCK` (injectable time), `appendEvent` (transactional outbox),
+  `isUniqueViolation` / `isForeignKeyViolation`.
+- API (`coop_manager`, all tenant-scoped):
+  - `GET/POST /produits`, `GET/PATCH/DELETE /produits/{id}` — margin (`marge_mad`, `marge_pct`) computed
+    with decimal.js; filters `famille`, `actif`, `synthetic`; 409 `produit_code_existe`,
+    `niveau_qr_verrouille` (product has lots), `produit_utilise` (delete → deactivate instead).
+  - `GET/POST /lots`, `GET /lots/{id}`, `GET /lots/{id}/mouvements`, `POST /lots/{id}/pertes` — lot creation
+    writes the `entree` movement, `unite` rows 1..N (`generate_series`) for unit-level QR products and the
+    `lot_cree` + `stock_modifie` events in one transaction; default expiry = fabrication + conservation_j;
+    paginated list with `statut` (`disponible` / `epuise` / `perime`) and `synthetic` filters; losses lock the
+    lot and return 409 `stock_insuffisant`.
+  - `GET /stock/alertes-peremption?jours=30|60|90` — lots with stock, expired or expiring, bucketed
+    `perime` / `j30` / `j60` / `j90`.
+
+**Tests:** 136 passing. New `apps/api/test/catalogue-stock.int.test.ts` (17 cases × {without RLS, with
+RLS}): CRUD + validation + margin, smuggled `coop_id` ignored, cross-tenant 404s on products and lots,
+default expiry, unit rows, uniqueness / date / inactive-product errors, `niveau_qr` lock, status filters
+and pagination, expiry buckets with a pinned clock, **concurrent losses** (10 × 3 on a lot of 20 →
+exactly 6 succeed, final stock 2, `stock_apres` 17…2), and every outbox row validated as a v1 envelope
+with one `stock_modifie` per movement.
+
+**Choices made**
+
+- A lot is expired **on** its `date_peremption` (same rule as the synthetic generator).
+- Lot status precedence: stock 0 → `epuise`, else expired → `perime`, else `disponible`.
+- One `stock_modifie` event per movement, with `stock_apres` and a `motif`, so the data plane can rebuild
+  stock from the stream.
+- Payloads carry IDs and codes, never display names (`nom` is a forbidden key).
+- Business "today" is the Africa/Casablanca date, through an injectable clock.
+- `generate` is now a Turbo task (it raced when lint / typecheck / test regenerated in parallel).
+- Backend `vitest.config` files renamed to `.mts` (Vite native config loader warning).
+
+## Phase 5 — Orders, payments, outbox relay (2026-11-11)
+
+**Done**
+
+- **Storefront (public, tenant = `/coops/:code`):** `GET /coops`, `GET /coops/{code}`,
+  `GET /coops/{code}/produits` (active products, price, orderable stock of non-expired lots; no cost or
+  margin).
+- **Storefront orders (customer / reseller):** `POST /coops/{code}/commandes`, `GET …/commandes`,
+  `GET …/commandes/{id}`, `POST …/commandes/{id}/annulation`. Placement is one transaction: all candidate
+  lots locked in a single global order (`date_peremption, lot_id`) → FEFO allocation (pure, all-or-nothing,
+  expired lots skipped) → client upsert → `commande` + one `ligne_commande` and one `sortie` per
+  (product, lot) → `commande_creee` + one `stock_modifie` per movement. 409 `stock_insuffisant` lists
+  `manquants`. Resellers get `canal = revendeur` / `type_client = revendeur` (same convention as the
+  synthetic generator), customers `canal = web`.
+- **Account linking:** one `client` per person and cooperative, created at the first order there.
+  Links on Keycloak `sub` via `client_compte` when proposal 003 is applied (auto-detected), otherwise on
+  the token's **verified** e-mail = `client_pii.email` (403 `email_non_verifie` if not verified).
+- **Back office (`coop_manager`):** `GET /commandes` (paginated, totals computed in SQL NUMERIC,
+  `statut` / `canal` / `synthetic` filters), `GET /commandes/{id}` (with delivery details from
+  `client_pii`), `POST /commandes/{id}/statut`.
+- **Status machine:** `creee → payee → expediee → livree`, `annulee` from `creee` / `payee` with compensating
+  `entree` movements (lots re-locked in the same global order); every change emits
+  `commande_statut_modifie`; 409 `transition_invalide` with `de` / `vers`. Idempotent for replays.
+- **Payments:** `PaymentGateway` port + `CmiMockGateway` — hosted mock page
+  (`/coops/{code}/paiements/mock/{id}`), signed form callback (`…/paiements/cmi/callback`,
+  HMAC-SHA512 with a per-cooperative store key), amount must equal the order total (409
+  `montant_incorrect`), `creee → payee` exactly once, then redirect to `/coops/{code}/commandes/{id}?paiement=ok|refuse`.
+- **Notifications:** `NotificationProvider` port; e-mail via SMTP (Mailpit), SMS / WhatsApp stubbed in
+  logs; order confirmation after payment, sent after commit, never logging addresses or numbers.
+- **Outbox relay:** `FOR UPDATE SKIP LOCKED` batches → KafkaJS (idempotent, acks = all, Java-compatible
+  partitioner, key = `coop_id`, headers `event_id` / `type` / `version`) → mark `publie` in the same
+  transaction (at-least-once); invalid events → `agricoop.dead_letter.v1` **without payload**; topics
+  created at startup if missing; metrics `outbox_events_published_total`,
+  `outbox_events_dead_lettered_total`, `outbox_lag_seconds`, `outbox_pending_events`; readiness includes
+  Redpanda. Reads `to_jsonb(outbox)` so proposal 002 columns are used as soon as they exist.
+- `contracts/events/README.md`: dead-letter topic documented.
+
+**Tests:** 185 passing.
+
+- `apps/api/test/commandes.int.test.ts` (18 cases × {without RLS, with RLS}): catalogue, FEFO across lots
+  skipping expired ones, exact `stock_apres` per movement, no PII in any event (keys and values),
+  all-or-nothing 409, inactive / foreign products, resellers, unverified e-mail, client reuse and order
+  privacy, back-office totals and details, forged / foreign-store / wrong-amount callbacks, payment once +
+  notification, mock-page redirect, status machine, single restock on cancellation,
+  **15 parallel orders on a lot of 10 → exactly 10 succeed, stock 0**, and **20 concurrent two-product
+  orders with opposite line order → no deadlock**.
+- `apps/api/test/client-compte.int.test.ts`: linking on `sub` once proposal 003 is applied.
+- `apps/outbox-relay/test/relay.int.test.ts` (4 cases × {without RLS, with RLS as `agricoop_relay`},
+  real Redpanda): envelopes valid and keyed by `coop_id`, drained = no-op, dead letter without payload,
+  failed publish → rows kept and retried, **3 concurrent relays publish 40 events exactly once**.
+- `packages/shared`: FEFO allocator unit tests.
+
+**Verified manually:** a real Keycloak access token for `client.demo` carries `email` +
+`email_verified: true`, so e-mail linking works with the realm as configured.
+
+**Choices made**
+
+- The mock gateway's decision endpoint can mark any order paid: it exists only with the mock provider
+  (`PAYMENT_PROVIDER=cmi-mock`) and must never be enabled in production.
+- No payment table: idempotency comes from the status machine, the amount from `ligne_commande`
+  (decision 3 of phase 1).
+- Customers can cancel their own order while `creee` or `payee` (refund is the provider's job).
+- Storefront shows synthetic cooperatives' products too (demo data is synthetic).
+
+## Phase 6 — QR authenticity service (2026-11-11)
+
+**Done** (`apps/qr`, all under `/qr/v1`)
+
+- **Tokens:** 16 random bytes, base64url without padding; only `hex(sha256(token))` is stored — verified
+  byte-for-byte against Python `hashlib` (the generator's convention).
+- **Generation + labels (`coop_manager`):** `POST /lots/{lotId}/qr-codes[?regenerer=true]` issues one
+  code per lot or one per `unite` (following `produit.niveau_qr`), under a row lock on the lot, and
+  returns the printable **A4 PDF** (3 × 8 labels: QR of `${WEB_PUBLIC_URL}/v/<token>`, product, lot,
+  serial number, expiry, cooperative). The PDF is the only copy of the clear tokens; printing twice →
+  409 `qr_deja_generes` unless regenerating (old codes deactivated). Max `QR_MAX_LABELS` (5000) per call.
+- **Public verification:** `GET /verify/{token}` — shape check, hash, cross-tenant lookup through
+  `qr_lookup()` when RLS proposal 001 is applied (auto-detected) or a plain query otherwise, then inside
+  the tenant: row lock on the code, scan recorded (city from the trusted `x-agricoop-city` / `cf-ipcity`
+  header only, device class `Android` / `iPhone` / `Autre`, **no IP**), anomaly evaluation, `qr_scanne`
+  event, `Cache-Control: no-store`. Unknown codes → 404 `qr_inconnu`. Rate limit
+  `QR_VERIFY_RATE_PER_MIN` (30) per client. Metric `qr_verifications_total{resultat}`.
+- **Anomaly rules** (`anomaly.ts`, configurable): `qr_inactif` (status not `actif`), `lot_perime`,
+  `scans_multiples` (unit code > 5 scans; lot code > 2 × lot size), `villes_multiples` (unit code in
+  > 2 cities within 24 h). Codes are **not** auto-flagged: a suspicious scan is reported in the response,
+  > the event and the back office; the manager decides.
+- **Back office (`coop_manager`):** `GET /qr-codes` (per-code scan count, cities, last scan, current
+  alerts; filters `lot_id`, `statut`), `GET/PATCH /qr-codes/{id}` (deactivate / flag / reactivate),
+  `GET /qr-codes/{id}/scans`, `GET /scans/villes?jours=` (per-city counts, `Inconnue` when no city).
+- Front-end fetch mutator returns a `Blob` for `application/pdf`.
+
+**Tests:** 31 QR integration tests (15 cases × {without RLS, with RLS} + rate limit) — PDF and rows per
+unit / per lot, print-twice refusal and regeneration, **no clear token anywhere in qr_code / outbox /
+scan_qr** (but every hash present), authentic scan recorded without the forwarded IP, valid `qr_scanne`
+event, unknown and malformed tokens, city / count / lot-size / expiry rules, deactivation, cross-tenant
+404s, scan history and per-city stats, 429 after the budget; plus 9 unit tests (tokens, hash convention,
+anomaly rule, device / city parsing).
+
+**Verified manually:** rendered a 26-label sheet and checked it visually (2 pages, 24 per page, French
+accents, serial numbers).
+
+**Choices made**
+
+- Re-printing requires regenerating (tokens are unrecoverable by design).
+- The city comes only from an edge header; the IP lookup is a stub until a GeoIP database is chosen
+  (the IP is never retained either way).
+- Label text is French only: built-in PDF fonts cannot render Arabic (needs an embedded font).
+- Lot-level codes use a count threshold relative to lot size and no city rule, because many buyers
+  legitimately scan the same lot code.
+
+## Phase 7 — Back-office UI (2026-11-12)
+
+**Done**
+
+- **API additions**
+  - `GET /previsions/versions`, `GET /previsions?version_modele&depuis&jusqua&synthetic` (`coop_manager`):
+    weekly forecasts per famille from the analytics write-back next to actual weekly sales (non-cancelled
+    order lines), latest model version by default.
+  - `GET/POST /admin/cooperatives` (`saas_admin`, no tenant): creates the tenant row and, in the same
+    transaction, its Keycloak group `/coops/<CODE>` (`tenant_id` = coop_id) and first `coop_manager`
+    account through the `IdentityAdmin` port (Keycloak Admin API, in-memory double in tests); invitation
+    e-mail (set password + verify e-mail). Identity failure → nothing created (DB rollback + Keycloak
+    cleanup of user and group). 409 `coop_code_existe` / `gestionnaire_existe`, 502 `idp_indisponible`.
+- **Back office (`apps/backoffice`)**: React 19 + TanStack Router/Query + Orval hooks + shadcn/ui +
+  React Hook Form/Zod (same schemas as the API) + Recharts.
+  - Keycloak sign-in (PKCE, tokens in sessionStorage, silent renew, return to the requested page);
+    access limited to `coop_manager` / `saas_admin`.
+  - Header: coop switcher for `saas_admin` (sent as `X-Coop-Id`, cache dropped on switch), global
+    synthetic-data toggle (default on, remembered; rows carry a "Synthétique" badge), FR / AR.
+  - Pages: dashboard (to ship, to pay, expired, expiring ≤ 30 d, recent orders, alerts); products (CRUD,
+    margins, active switch, delete with translated 409s); lots (status tabs, pagination, creation with
+    default-expiry hint) and lot detail (movements, loss entry, **QR label PDF download** with
+    regenerate confirmation); expiry alerts 30 / 60 / 90; orders (filters, detail with lines, delivery
+    details, allowed status actions); QR codes (alerts, deactivate / flag / reactivate, scan history,
+    scans per city bar chart); forecasts (Recharts, forecast vs sales per famille, model version
+    selector, sales-only notice); platform admin (coops list, create coop + manager).
+  - i18n: ~170 keys FR + AR (Arabic plurals), Zod's built-in messages follow the UI language, API
+    problems translated by `code`; charts stay LTR inside RTL pages.
+
+**Bugs found by testing in the browser and against the real Keycloak (all fixed)**
+
+- `positiveMoneyString` crashed on malformed input (Zod 4 runs refinements after a failed regex;
+  decimal.js threw) — the API would have answered 500 instead of 400. Regression test added.
+- Arabic layout: the sidebar slid off-screen on desktop (`rtl:translate-x-full` beat `lg:translate-x-0`).
+- Reloading `/qr` hit the QR service: the dev proxy (and the nginx template) matched `/qr*`. Proxies now
+  forward only `/api/v1/` and `/qr/v1/`.
+- Deep links were lost after sign-in (always redirected to `/`).
+- Keycloak 26.8 Admin API rejected the provisioner's tokens (401, missing admin-API audience): the realm
+  export now gives `agricoop-provisioner` the built-in `kc-admin-api` client scope.
+- Role lookup `GET /roles/coop_manager` needs `view-realm` (403): replaced by the user-scoped
+  available-roles endpoint; and a failure after user creation left an orphan account — compensation now
+  deletes the user too.
+- The shadcn CLI generated `import { cn } from "cn"` (an unrelated npm package) and added `next-themes`:
+  both removed.
+- ~~Data-plane note: the Postgres image's tzdata is stale for Africa/Casablanca.~~ **Wrong — corrected in
+  phase 8:** Morocco moved to permanent UTC+0 on 2026-09-20 (tzdb 2026c). Postgres was right; the local
+  Node 22.22 (tz data 2026a) was stale.
+
+**Tests:** API `test/previsions-admin.int.test.ts` (6 cases × {without RLS, with RLS}: versions per tenant,
+Morocco-week alignment incl. a Sunday-23:30-UTC order, cancelled orders excluded, version selection,
+synthetic exclusion, admin-only access, provisioning with the new coop_id, duplicate code / manager,
+identity failure rollback). Back office: 15 unit tests (translations complete in FR and AR, problem codes
+translated in both languages, synthetic preference, `X-Coop-Id` only when chosen, `ok()`, safe return
+path). Lint, typecheck and all test suites green.
+
+**Verified manually**
+
+- Real sign-in through Keycloak as `manager.coop02`, dashboard and pages with live data, Arabic RTL layout
+  (sidebar on the right), deep link `/qr` preserved through sign-in.
+- Platform admin against the real Keycloak: COOP03 created, group `/coops/COOP03` carries the new
+  coop_id, manager in the group with `coop_manager` and the set-password / verify-email actions,
+  duplicate manager e-mail → 409 with no leftovers, invitation e-mail received in Mailpit.
+  (COOP03 and its manager now exist in the local dev database / Keycloak.)
+
+**Not covered yet:** Playwright end-to-end tests (phase 9). Custom validation messages written in the
+shared Zod schemas stay in French in the Arabic UI.
+
+## Phase 8 — Storefront UI (2026-11-12)
+
+**Done**
+
+- Back office fix (user report): in Arabic the header switch thumb sat outside its track; the thumb now
+  translates in the inline direction (`rtl:data-[state=checked]:-translate-x-…`).
+- `apps/web` storefront (React 19, TanStack Router + Query, Orval hooks, shadcn/ui, FR / AR RTL):
+  - Coops list, per-coop catalogue (stock-aware quantity stepper, add to cart), cart page.
+  - Cart: client-side, one cooperative per cart (orders are per tenant); adding from another coop asks
+    to replace the cart. Kept in `localStorage`, totals with decimal.js.
+  - Checkout (sign-in required, PKCE via Keycloak client `agricoop-web`): delivery details validated
+    with the shared `coordonneesSchema`, order placed through `/coops/:code/commandes`, redirect to the
+    mock payment page; a 409 lists the products that are short.
+  - Order page: payment result (`?paiement=ok|refuse`), status steps, pay now, cancel while allowed.
+  - Account page: the customer's orders per coop.
+  - `/v/:token`: public QR verification — "Authentique", "Attention" (flagged / deactivated / anomaly)
+    or unknown code; fetched exactly once (a reload counts a new scan, a refocus does not).
+  - Toasts at the bottom: at the top they covered the header cart / account buttons on phones.
+- `mockPaymentPath()` in `@agricoop/shared` (used by the API gateway and the storefront).
+- Keycloak realm: `verifyEmail: true` for self-registered customers (also applied to the running realm).
+
+**Time zone correction**
+
+- Morocco moved to **permanent UTC+0 on 2026-09-20** (IANA tzdb 2026c). The local Node 22.22 ships tz
+  data 2026a and still applies UTC+1; Node 24 images (2026e) and Postgres are right.
+- `@agricoop/nest-kit` logs a warning at boot when `process.versions.tz` predates 2026c.
+- Tests that depend on Casablanca offsets now use instants before 2026-09-20, so they pass on any tz
+  data version.
+
+**Tests:** web 15 (cart operations, FR/AR translation completeness with plural forms, `/v/:token`
+rendered through the router with a single verify call), nest-kit tz data check. All suites: shared 32,
+events 15, outbox-relay 11, nest-kit 9, qr 45, api 116, backoffice 15, web 15. Lint and typecheck green;
+OpenAPI unchanged.
+
+**Verified manually (phone viewport 375×812)**
+
+- COOP02 catalogue → cart (250,00 MAD) → sign-in → checkout → mock payment approved → order page shows
+  "Paiement accepté" (status `payee`).
+- `/v/<token>` shows "Authentique" with the scan recorded (appareil `Android`); Arabic RTL rendering.
+  (A COOP02 test order and a demo QR code now exist in the local dev database.)
+
+**Not covered yet:** Playwright end-to-end tests (phase 9).
+
+## Phase 9 — Hardening (2026-11-12)
+
+**Done**
+
+- Container images (`apps/docker`):
+  - Multi-arch `linux/amd64` + `linux/arm64`. Install and build run once on the build platform and
+    only the runtime layer is per-architecture: a two-platform build of `api` or `web` takes about
+    30 s locally (no emulated `pnpm install`). The arm64 `api` image was run under emulation: Node
+    24.22.3, tz data 2026e.
+  - Build context filtered by `node-service.Dockerfile.dockerignore` / `spa.Dockerfile.dockerignore`.
+    Before, `COPY . .` sent `.env`, `data/` and `node_modules` to the builder.
+  - Node runtime: app files owned by root and read-only for the `node` user; OCI labels.
+  - Front ends: runtime configuration served as `/config.js` (`OIDC_AUTHORITY`, `OIDC_CLIENT_ID`), so
+    one image runs in every environment (it was documented in `src/config.ts` but never wired).
+    Content-Security-Policy, `Permissions-Policy`, `server_tokens off`; security headers repeated in
+    every location (nginx drops inherited `add_header`s in a location that sets its own).
+- `docker-compose.apps.yml`, app services: healthchecks, `init`, `no-new-privileges`, all capabilities
+  dropped, read-only root file system with a `/tmp` tmpfs for the Node services; the front ends wait
+  for healthy `api` and `qr`; the API gets the Keycloak Admin API settings (platform admin).
+- Demo seed `apps/dev/seed/002_demo_catalogue.sql` (COOP02 only, `is_synthetic = true`, idempotent,
+  dates relative to the seeding day): 6 products, 9 lots incl. one expiring within 30 days and one
+  expired, stock movements, 3 orders allocated FEFO, 2 demo QR codes (authentic / flagged).
+  `pnpm db:seed` re-runs the seed files.
+- Playwright (`apps/e2e`): storefront happy path on a phone viewport (catalogue → cart → Keycloak
+  sign-in at checkout → mock payment → order paid; QR check authentic and unknown) and back-office
+  happy path (sign-in → product → lot → ship the order just paid). Every page fails the test on a CSP
+  violation. `pnpm e2e`.
+- CI `.github/workflows/apps-ci.yml` (path filter `apps/**`, `packages/**`, `contracts/**`):
+  format, lint, typecheck, tests, OpenAPI / generated client drift check; the five images built for
+  amd64 + arm64 with the GitHub Actions cache (no push); e2e on the Compose stack with reports and logs
+  uploaded on failure. Checked with actionlint (incl. shellcheck).
+- `apps/README.md`: prerequisites, both ways to run, URLs, demo users and data, checks, e2e, images,
+  CI.
+
+**Bugs found (all fixed)**
+
+- The front-end images never started: `log_format` was inside `server {}` (nginx only allows it in
+  `http`). Found by running the images for the first time.
+- The `api` image would not start from Compose: images run with `NODE_ENV=production`, where the API
+  refuses the built-in dev payment secret that Compose passed by default. Compose now passes
+  `COMPOSE_PAYMENT_MOCK_SECRET` (local default).
+
+**Tests:** shared 32, events 15, outbox-relay 11, nest-kit 9, qr 45, api 116, backoffice 15, web 15 —
+258 green, plus 3 Playwright tests green against the app **images** (two consecutive green runs). One
+combined lint + typecheck + test run had an outbox-relay suite error at start-up, with the whole stack
+running beside it; it did not reproduce in the next two full runs (Testcontainers start-up under load).
+
+**Not verified:** the workflow has not run on GitHub yet (no remote in this repository); its steps
+were run locally (checks, contract drift, multi-arch builds, Compose stack + Playwright) and the file
+passes actionlint.
+
+**Local state:** the stack now runs from the app images (`--profile apps`) on the usual ports; the
+`pnpm dev` servers were stopped. COOP02 has the demo seed plus the e2e orders and products.
+
+## UI redesign — phase 1: design system (2026-11-13)
+
+Brief: premium "Moroccan olive oil" look for the storefront and back office, with motion; FR + AR
+(RTL), light + dark; no change to business logic, API, routes, auth or existing i18n keys.
+
+**Done**
+
+- New package `@agricoop/ui` (TypeScript source, consumed by both Vite apps):
+  - Tokens (`theme.css`, Tailwind v4 `@theme`, OKLCH): brand scales olive / gold / terracotta / sand,
+    semantic tokens kept under the shadcn names (so existing screens restyle without code changes),
+    warm dark theme, layered warm shadows, radii 8–20px, fluid display scale (`text-display-sm…2xl`,
+    `clamp()`), easing tokens incl. a CSS `linear()` spring, brand utilities `zellige`, `grain`,
+    `arch`, `glass`, `hairline-gold`.
+  - Fonts, self-hosted with `font-display: swap`: Fraunces (display, optical sizing), Manrope (UI),
+    IBM Plex Sans Arabic + Noto Kufi Arabic (reached through the font stacks, so Arabic text switches
+    face automatically and the Arabic files load only when Arabic is rendered).
+  - `motion.ts`: durations, easings, springs, `fade`, `fadeUp`, `scaleIn`, RTL-aware
+    `slideInFromStart/End`, `stagger`, `wordReveal`, `revealViewport`, `inlineOffset()`.
+  - `ThemeProvider` (light / dark / system, remembered), `MotionProvider` (`reducedMotion="user"`),
+    `useDirection()`.
+  - Components: Button (gold variant, pill shape, 44px `lg`), Input, Textarea, Label, Card
+    (`interactive`), Badge (status dot, success/warning/info/gold/terracotta, striped `synthetic`),
+    Dialog (spring open), Sheet (logical sides), Table (sticky header, hairline rows), Skeleton
+    (shimmer), Tabs (sliding indicator), DropdownMenu (logical spacing), Switch (RTL), Toaster (brand,
+    follows theme and direction), BrandMark, Ornament, ZelligeBackdrop, ThemeToggle.
+  - Tests: theme persistence and resolution, RTL offsets, class merging, and WCAG AA for 20 token
+    pairs × 2 themes computed from `theme.css` (it caught a light focus ring at 2.8:1, fixed to ≥ 3:1).
+- Both apps now import their UI components from `@agricoop/ui` (local shadcn copies removed), load the
+  fonts, wrap the app in `ThemeProvider` + `MotionProvider`, and apply the saved theme before first
+  paint (`public/theme-init.js`, allowed by the CSP).
+- Language switcher (both apps): segmented pill with a sliding indicator; short endonyms (FR / ع) on
+  phones, full names kept as accessible labels.
+- Back office `/styleguide`: colours, scales, type scale, buttons, fields, badges, cards, tabs, table
+  with skeleton rows and row menu, dialog, sheets, dropdown, toasts, motion presets (replayable),
+  textures. Not in the navigation.
+- Visual review tooling: `pnpm --filter @agricoop/e2e screenshots` (Playwright) captures pages at
+  1440px and 390px, light and dark, FR and AR, and fails on horizontal overflow.
+
+**Tests:** all suites green (ui 45 incl. 40 contrast checks, plus the existing suites), Playwright
+e2e 3/3 against the redesigned UI with no selector change.
+
+**Not done yet (next phases):** page layouts themselves (header, hero, catalogue, cart drawer, QR
+page, dashboard shell, command palette, charts); Lenis, cmdk, vaul, Embla and NumberFlow are added
+when their components are built (phases 2–4).
+
+## UI redesign — phase 2: storefront header, home, footer (2026-11-13)
+
+**Done**
+
+- Header: fixed; transparent over the hero, then a frosted glass bar with a soft shadow once the page
+  scrolls (always glass on other pages). Desktop navigation to the home sections with a gold underline
+  on hover, language switch, sign-in / account, cart with a gold count badge that bounces when an item
+  is added. Mobile: an animated menu (top sheet, staggered links, language and theme controls).
+- Hero (full height): gold eyebrow, serif headline revealed word by word, two CTAs with
+  micro-interactions, trust points, the olive grove in a Moroccan arch with a parallax and a gold arch
+  outline drifting the other way, floating glass chips, scroll cue.
+- Home sections: "Notre histoire" (harvest photo in an arch, live figures counting up with
+  NumberFlow: cooperatives, products, provinces), featured products carousel (Embla, swipe/drag,
+  RTL-aware, controls disabled at the ends, hover zoom and reveal), category tiles (arch photos, zoom,
+  sliding panel; each leads to the coop with the most products of that kind, pre-filtered),
+  "Authenticité garantie par QR" on a deep olive band (three steps, animated phone scanning a QR code,
+  drawn checkmark), cooperative cards from the live catalogues (families, product count, lowest price),
+  newsletter, rich footer (zellige band, links, language and theme, demo and photo credits).
+- Catalogue page: optional `?groupe=huile|olives|soins|coffrets` filter with a chip to clear it (used by
+  the category tiles; the catalogue itself is redesigned in phase 3).
+- Lenis smooth scrolling (storefront only, off with reduced motion, paused under overlays).
+- Imagery: Unsplash placeholder photos (free licence, credited in the footer) via `src/lib/images.ts`;
+  `<Picture>` in `@agricoop/ui` gives stable aspect ratios, lazy loading, blur-up and a branded fallback.
+  CSP `img-src` allows `https://images.unsplash.com`; the hero photo is preconnected and loads eagerly.
+- Translations: ~80 new keys in FR and AR (Arabic plural forms included).
+
+**Fixes found while reviewing the screenshots**
+
+- The screenshot helper did not wait for lazy photos or for the scan animation: it now waits for every
+  `<Picture>` and for the longest in-view sequence.
+- Two products of the same category showed the same photo: photos now alternate by rank.
+- White titles on light category photos lacked contrast: stronger gradient.
+
+**Tests:** web 20 (5 new: category groups, featured selection alternating coops, tile targets, exact
+lowest price, photo variants); the router test now mounts the same providers as the app. All suites
+green, Playwright e2e 3/3 unchanged, home page checked in the nginx image under the production CSP (no
+violations). Screenshots: `apps/e2e/screenshots/redesign/phase2/`.
+
+**Open point:** the newsletter has no backend. Making it real needs an API endpoint (and a consent
+record), so it currently shows an honest "opening soon" message and stores nothing.
+
+## UI redesign — phase 3: catalogue, product page, cart, checkout, QR page (2026-11-13)
+
+**Done**
+
+- Catalogue (`/coops/:code`): coop header band (arch monogram, province, product count), filter chips
+  with a sliding active pill (`?groupe=`), 2–4 column grid with animated filtering and skeleton cards.
+  Product cards: second photo on hover, quick "Ajouter" sliding up (always visible on touch screens),
+  animated price, availability, QR-per-unit badge, stretched link to the product page.
+- Product page (new route `/coops/:code/produits/:produitId`): Embla gallery with thumbnails
+  (RTL-aware), sticky buy box (animated price, stock dot, quantity stepper, gold "Ajouter au panier"),
+  accordion (description, origin and cooperative, traceability by lot / by unit, reference), "Du même
+  producteur". The card image morphs into the gallery with the View Transitions API (Motion
+  `layoutId` fallback); route changes cross-fade (`defaultViewTransition`), none with reduced motion.
+- Cart: drawer opened by the header cart (side sheet on desktop, Vaul bottom sheet with drag-to-close
+  on phones) with animated add/remove lines, thumbnails and an animated total; the thumbnail flies
+  from the product to the cart icon on add (arc, transform/opacity only). `/panier` restyled for
+  direct visits. Cart lines remember the product category for thumbnails (optional fields: carts
+  saved before keep working).
+- Checkout: journey indicator (Panier → Livraison → Paiement → Confirmation, gold line growing),
+  delivery form card and sticky summary, pay button with spinner. Order page: success card with a
+  drawn checkmark and a small confetti burst after payment, animated status timeline, badges with
+  status dots.
+- QR verification `/v/:token`: scanning animation while loading; authentic → a gold 8-point seal
+  turning into place with a drawn checkmark, then the product card with photo and details; warning →
+  pulsing shield, each alert with its own icon, and calm advice; unknown code → clear shield and
+  advice. Same texts as before (tests unchanged).
+- Empty / 404 / error states: zellige medallions, an arch with a serif "404" / "!", retry on errors;
+  restyled loading (breathing olive mark), sign-in gate and account page.
+- `@agricoop/ui`: Accordion (fade + lift, no height animation). Storefront: `Price` (NumberFlow on
+  money strings), `CheckoutSteps`, `Confetti`, `ProductCard`, `useAddToCart`, fly-to-cart layer.
+- A second soap photo (green olive soap) so soap products alternate.
+
+**Bug found by the e2e test (fixed)**
+
+- The quick "Ajouter" button could not be clicked: the card image wrapper carries a
+  `view-transition-name`, which makes it a stacking context, so the button's `z-index` stayed under
+  the card's stretched link. The button now sits outside that wrapper.
+
+**Fixes found while reviewing the screenshots**
+
+- On phones the "added to cart" toast covered the drawer's checkout button: opening the drawer now
+  dismisses toasts.
+- Prices forced to LTR rendered "د.م." differently from static prices: they now follow the page
+  direction like `formatMad`.
+- The paid order showed step 4 as "in progress": the indicator now has a completed state.
+
+**Tests:** all suites green; Playwright e2e 3/3 with no selector change (the storefront journey now
+goes through the drawer and the new checkout). New visual capture of the purchase journey
+(`visual/flows.visual.ts`: drawer, checkout, paid order). Every phase-3 page loaded in the nginx image
+under the production CSP: no violation. Screenshots: `apps/e2e/screenshots/redesign/phase3/`.
+
+**Limits (API, not UI):** product pages cannot show lot or expiry dates (the public catalogue has
+none; the QR page shows them), and product photos are per category until products have their own.
+
+## UI redesign — phase 4: back-office shell, command palette, dashboard (2026-11-13)
+
+**Done**
+
+- Shell: collapsible sidebar (icon-only mode remembered per browser; labels stay as screen-reader
+  text so links keep their names; nav grouped Pilotage / Catalogue / Ventes / Traçabilité /
+  Plateforme; active highlight sliding with Motion `layoutId`, gold marker), the same navigation in a
+  sheet below `lg`, glass top bar with breadcrumbs, coop switcher (saas_admin), synthetic-data switch,
+  theme toggle, language switch and user menu; striped banner while synthetic data is shown.
+- Command palette (`@agricoop/ui` Command on cmdk, Ctrl/⌘ K): every page, "Nouveau produit" /
+  "Nouveau lot" (new optional `?nouveau=1` on `/produits` and `/lots` opens the create dialog),
+  cooperatives (saas_admin), synthetic data, theme, language, sign out.
+- Dashboard: KPI cards with NumberFlow count-up (revenue and orders over 30 days with change vs the
+  previous 30 days and daily sparklines, stock value at cost, lots to watch, QR scans with change),
+  action pills (orders to ship / awaiting payment), Recharts restyled (sales vs forecast: gradient
+  area + dashed forecast; stock by famille; scans by city; brand tooltip, animated entry off with
+  reduced motion), recent orders and expiry alerts.
+- No aggregate endpoint exists, so figures are computed in the browser from the existing lists with
+  bounded paging (`src/dashboard/metrics.ts`, unit-tested: exact money, Casablanca days, deltas,
+  stock value, scan windows, forecast gaps); a note appears if the order history is truncated.
+
+**Fixes found while reviewing the screenshots**
+
+- Brand title repeated "Back-office"; empty comparisons showed "— —"; KPI grid left a gap at 1440 px;
+  forecast legend shown without forecast data; dark switch thumb looked "off".
+- Screenshot captures now use reduced motion (full-page captures replayed chart animations).
+
+**Tests:** back office 21 (6 new). All suites green, Playwright e2e 3/3 (no selector change), the
+back-office image checked under the production CSP (no violation).
+
+## Data-plane sync: event contract, analytics API, shared infra (2026-11-15)
+
+The teammate added the data plane's work (BI SQL, ML notebooks, Python pipeline) and two shared
+contracts. Imported unchanged: `data/bi`, `data/ml`, `data/pipelines`, `contracts/api/analytics.yaml`,
+`contracts/events/evenements.schema.json`, and their root `docker-compose.yml` (now with Redpanda).
+`.gitignore` / `.gitattributes` merged (their entries added, ours kept); their two contract files
+are in `.prettierignore` so our tooling never reformats them.
+
+**Event contract — apps aligned to the data plane's** (`evenements.schema.json`; their relay,
+pseudonymiser and simulator validate against it):
+
+- One topic `agricoop.events` (was one topic per type, `agricoop.<type>.v1`), key `coop_id`.
+- Envelope exactly `event_id, coop_id, type, version (1), occurred_at, payload` (no `is_synthetic`).
+- Three types with their exact payloads: `commande_creee` (lines with `code_produit`, unit price as a
+  JSON number), `stock_modifie` (adds `code_produit`; no `stock_apres` / `motif` / `commande_id`),
+  `qr_scanne` (scan only: no verdict, never the token).
+- No longer emitted (not in the contract): `commande_statut_modifie`, `lot_cree`. A new lot is still
+  published as its `stock_modifie` entry; a cancellation as its `stock_modifie` re-entries.
+- `@agricoop/events` now generates its types from that single file (`$defs` per type) and validates
+  with Ajv; our per-type schemas were removed; `contracts/events/README.md` rewritten.
+- `outbox-relay` publishes the contract envelope to `agricoop.events`; invalid rows go to
+  `agricoop.events.dead_letter` without payload. Our relay and theirs are interchangeable (run one).
+
+**Analytics API** (`contracts/api/analytics.yaml`): the nine read-only endpoints implemented in
+`apps/api/src/analytics/` at `/api/analytics/*` (outside `/api/v1`, as the contract says), for coop
+managers, filtered on the request tenant, reading the `gold` views through a separate pool as
+`analytics_reader` (`ANALYTICS_DATABASE_URL`; 503 `analytics_indisponible` without it), numbers as
+JSON numbers, `X-Date-Reference` on stock routes, alert levels computed by the API. Response schemas
+in `@agricoop/shared` (`schemas/analytics.ts`), OpenAPI regenerated. Dev proxy and nginx forward
+`/api/analytics/`.
+
+**Gold layer in dev and tests**: their SQL needs the notebooks' ML tables first. `loadGoldLayer()`
+(`@agricoop/testing`) and `pnpm db:gold` create them with the DDL extracted from `data/ml/*.ipynb` at
+run time, then run `data/bi/01..04_*.sql` unchanged.
+
+**Compose**: Redpanda now comes from the root file (`agricoop-redpanda`, v24.2.7); our duplicate
+service and its volume were removed from `docker-compose.apps.yml`. Locally, the old Redpanda data
+volume (written by v26) made v24 refuse to start ("incompatible downgrade"): Redpanda was recreated
+with fresh storage; the old volume `agricoop-intelligence-main_redpanda-data` is no longer used.
+
+**Tests:** events 14 (contract file = embedded copy, types match the contract, payloads and
+envelopes valid/invalid, no PII), relay (contract envelope on `agricoop.events`, dead letter), API
+order/stock/QR event assertions updated, analytics 8 integration tests against the real gold SQL
+(exact KPIs, coverage levels, lots, risk, anomalies, forecasts, segments, QR alerts, tenant isolation,
+`analytics_reader` denied on application tables and `client_pii`, 503, paths), shared 34. All 42
+tasks green, Playwright e2e 3/3. Verified on the running stack: a QR scan and the teammate's
+`evenements_test.sql` → the valid event on `agricoop.events`, the one with a phone number on the dead
+letter without payload; real orders / lots published contract-shaped events.
+
+**For the teammate:** the contract's security note says the token carries `coop_id` and `role`;
+our Keycloak tokens carry `tenant_id` and realm roles, and the API maps them (no change needed on
+their side). `prevision` keeps being read by `/api/v1/previsions` as before.
+
+## Shared seed from the data plane (2026-11-15)
+
+The teammate shared `agricoop_seed.dump` (pg_dump 16, custom format; not in git): COOP01 with every
+table (11 products, 363 lots, 3,660 QR codes, 5,466 scans, 1,982 customers, 6,644 orders from
+2023-10-01 to 2026-09-30, 12,374 stock movements, all synthetic), the model outputs (159 forecasts in
+two versions, 1,982 segment rows, 92 QR alerts) and the gold schema. No roles or grants inside.
+
+**Done**
+
+- `pnpm db:restore -- <dump>` (`scripts/restore-seed.mjs`): replaces the local database with the dump,
+  then runs the apps seeds (COOP02) and `pnpm db:gold` (gold grants for `analytics_reader`).
+- COOP01's id in the dump (`56783517-58a9-42ee-b9d5-c8b946b6b6e3`) differs from the fixed id we had
+  chosen. The dump is the shared reference, so our side follows it: `apps/dev/seed/001_demo_coops.sql`,
+  the Keycloak realm export (group `/coops/COOP01`, attribute `tenant_id`), and the running local
+  Keycloak (admin CLI). COOP02 keeps its id.
+- Dashboard: a forecast with one or two weeks only (the production model forecasts the next week)
+  now shows as dots instead of an invisible line.
+
+**Verified** as `manager.coop01` on the restored data: the dashboard (sales history, stock value
+29,561.63 MAD at cost, 41 orders to ship, synthetic badges), the forecasts page with the walk-forward
+version against weekly sales, and every `/api/analytics/*` endpoint (12 months of KPIs for 2025-2026,
+11 products with alert levels, 5 segments, 92 QR alerts, 159 forecasts, no stock anomaly,
+`X-Date-Reference` 2026-10-01). All checks green, Playwright e2e 3/3. One relay integration test
+timed out once while every suite ran in parallel beside the stack; it passed twice in a row alone.
+
+**Notes for the teammate:** please keep COOP01's id stable in future dumps (the Keycloak tenant is
+bound to it). The two forecast versions have the same `date_calcul`, so "latest version" picks the
+production model (one future week); the backtest is selectable in the back office.
+
+## Back-office analytics pages (2026-11-15)
+
+New page **Analyses** (`/analyses`, nav group Pilotage, command palette, breadcrumb) on the data
+plane's `/api/analytics/*` endpoints (generated Orval hooks, no API or contract change). Four tabs, the
+current one in the URL (`?onglet=stocks|clients|qr`):
+
+- **Ventes:** campaign picker (October → September, grouped client-side from `kpi-mensuels`), six
+  figures (revenue, margin, margin rate, orders, average basket, new customers), monthly
+  revenue/margin bars with the order count, monthly table with totals.
+- **Stocks:** counts per alert level, products by urgency (rupture → critique → attention → ok, then
+  shortest cover), lots near expiry, unsold-stock risk (labelled as an estimate, with its total),
+  stock quality check ("Aucune anomalie" when empty). Shows the API's `X-Date-Reference` date.
+- **Clientèle:** share of customers vs share of revenue per segment (chart + table); "Voir" opens a
+  side sheet with the segment's customers (pseudonymous id, recency, frequency, amount; largest first,
+  200 rows max). No contact details: the analytics role cannot read `client_pii`.
+- **Contrefaçon QR:** model alerts filtered by level (all / signalé / à vérifier), with a link to the
+  QR codes page. Flagging stays a manager decision there.
+
+**Choices:** analytics amounts come as JSON numbers (contract); sums go through decimal.js and a
+signed formatter (`formatAmount`; `formatMad` accepts non-negative amounts only). Segment and QR
+level labels from the model are mapped to FR/AR keys (`analyses.segments.*`, `analyses.qr.niveaux.*`);
+the anomaly text stays as the data plane writes it (French). Month labels use `fr-FR` (`fr-MA`
+abbreviates June and July alike). New error key `analytics_indisponible` (503 when the gold layer is
+not configured). The visual suite takes `VISUAL_USER=manager.coop01` to capture the analytics tabs
+on the shared seed.
+
+**Tests:** `apps/backoffice/test/analytics.test.ts` (campaigns, exact totals, severity order, segment
+order and keys, month labels, negative amounts, reference date header). All checks green, Playwright
+e2e 3/3; screenshots of the four tabs × desktop/mobile × light/dark × FR/AR with no horizontal
+overflow (`VISUAL_PHASE=analyses`). As before, the relay integration test timed out once in the
+parallel run and passed alone.
+
+## UI redesign — phase 5: back-office tables, forms, remaining pages (2026-11-17)
+
+Every back-office page now uses the design system; no API, route, auth or generated client changed.
+
+**Shared pieces** (`apps/backoffice/src/components/`):
+
+- `data.tsx`: `DataCard` (table card; from lg up the table scrolls inside it so the header stays
+  sticky), `TableSkeleton` (skeleton rows instead of a spinner), `FilterChip` / `FilterBar` (a filter
+  is a dashed "+ Label" chip that opens its choices, then a tinted "Label : value" chip with ×; chips
+  animate in/out, "Réinitialiser" when any is set), `RowActions` (row "⋯" menu), `ExpiryBar` (days left
+  on a 90-day scale, coloured by the 30/60/90 thresholds, grows from the inline start), `BackLink`,
+  `DetailItem`.
+- `confirm.tsx`: `useConfirm()`, a promise-based branded dialog that replaces every `window.confirm`
+  (delete product, cancel order, re-issue QR labels).
+- `common.tsx`: `StatusBadge` uses the kit's dot badges (the old fixed light colours were unreadable
+  in dark mode), `SyntheticBadge` the striped kit variant, `EmptyState` gets the zellige texture, an
+  icon, a title and an action, `Field` links its message to the control (`aria-invalid`,
+  `aria-describedby`) and animates it in, `Pagination` shows "1–20 sur 363 · Page 1 / 19", `Money`
+  accepts negative amounts (a product with a negative margin made it throw).
+- `lots/labels.ts`: `usePrintLabels()`, label printing shared by the lots list and the lot page.
+
+**Pages:** products (family and active/inactive chips, product + category cell, row menu with edit,
+activate/deactivate and delete, form in sections with a live unit-margin preview), lots (status tabs +
+product chip, expiry bar on available lots, stock "12 / 82", row menu with open and print labels),
+lot page (stock gauge, dates and expiry bar, loss form with inline validation, signed and coloured
+movements), expiry alerts (expiry bar per lot, count per level and units), orders (status and channel
+chips, row menu with the allowed status changes), order page (status timeline Créée → Payée → Expédiée
+→ Livrée or the cancelled notice, client card with icons), QR codes (status chip, lot and serial in one
+cell, row menu, scan history as a timeline, scans per city with the dashboard's bar chart and period
+tabs; the chart sits beside the table only from 2xl), forecasts (the dashboard's area + dashed-line
+chart per family, "this week" forecast), cooperatives (current coop highlighted), sign-in, forbidden
+and 404 screens (brand mark, zellige backdrop).
+
+**Also:** the app shell passes the page direction to Radix (menus, tabs and sheets align and use the
+arrow keys correctly in Arabic). `theme.css` turns off letter-spacing on RTL pages (tracking breaks
+Arabic letter joining; it showed in the uppercase synthetic badge). On phones, tables hide secondary
+columns (orders keep reference, status, amount; lots keep number, expiry, stock, status). An empty
+number field now says "Champ obligatoire." instead of Zod's "NaN reçu". The dashboard's recent-orders
+rows can wrap (the wider synthetic badge overflowed 390 px in French).
+
+**Tests:** all 42 tasks green; Playwright e2e 3/3 (selectors only: the orders status filter is now a
+chip menu, and the product code cell is matched exactly since the row's switch and menu are labelled
+with the code). Visual review (`VISUAL_PHASE=phase5`, `VISUAL_USER=manager.coop01`): every back-office
+page × desktop/mobile × light/dark × FR/AR (128 captures, including the product form showing its
+validation) and the storefront (50), no horizontal overflow.
+
+## UI redesign — phase 6: polish, reduced motion, RTL, dark mode, Lighthouse (2026-11-17)
+
+**Audits** (both apps and the kit): no physical-direction utilities left (only symmetric centring),
+every directional icon mirrors in RTL, motion x-offsets go through presets; no theme-blind colours
+outside text-over-photo scrims and the dark footer.
+
+**Reduced motion:** `theme.css` now also neutralises tw-animate-css movement (dialogs, sheets,
+menus, accordion fade only), makes transform transitions instant (hover nudges, switch thumb,
+sidebar width) and turns off smooth scrolling. Verified in Chromium: a sheet's entrance offset is
+`100%` normally and `0` with `prefers-reduced-motion: reduce`.
+
+**Performance and quality** (storefront home, production image, Lighthouse 13.6 mobile):
+Performance 47 → median 82 (79 / 82 / 93), Accessibility 100, Best practices 96 → 100, SEO 83 → 100;
+first paint and LCP 7.5 s → 3.4 s, TBT 460 → ~220 ms.
+
+- nginx gzip for text responses (the bundles were sent uncompressed).
+- Hero paragraph (the LCP element) painted at once; below-the-fold home sections use the new
+  `defer-render` utility (`content-visibility: auto`).
+- Cart drawer split: `cart/drawer-context.ts` + `CartDrawerProvider` at the root, the drawer UI
+  (`CartDrawer.tsx`, Vaul) loaded on first open and prefetched on cart-button hover/focus.
+- Lenis loaded when the browser is idle; photo srcsets gain 480/800 widths.
+- `@agricoop/shared` sets Zod to jitless in browsers (`zod-config.ts`, first import): its
+  `new Function` probe was a CSP `script-src` violation in production (the e2e CSP check runs on the
+  dev server, which has no CSP). Node services keep the JIT.
+- `meta description`; `robots.txt` for both apps (storefront never indexes `/v/…` QR links, which
+  carry a secret token; back office disallows everything).
+- Language buttons: the accessible name now contains the visible text ("FR Français", WCAG 2.5.3);
+  unit tests match the name by pattern.
+
+**Remaining:** the median stays under the brief's 90 because the storefront is client-rendered
+(~280 KB gzipped JS before the first paint). Reaching 90 reliably needs the first screen in the
+HTML (pre-rendering the home hero), an architectural change left for a decision.
+
+**Docs:** `docs/ui-design.md` documents tokens, typography, components, motion presets and rules,
+RTL, accessibility and the Lighthouse results and method.
+
+**Tests:** all 42 tasks green, Playwright e2e 3/3, visual suite 181 captures (both apps, every
+page × desktop/mobile × light/dark × FR/AR) without horizontal overflow (`VISUAL_PHASE=phase6`).
+
+## Storefront: pre-rendered home shell (2026-11-17)
+
+Closes the gap left by phase 6: the storefront home now meets the brief's Lighthouse target on
+mobile. Performance 79 / 82 / 93 → **96 / 99 / 98**, first paint and LCP 3.4 s → **1.1 s**;
+Accessibility, Best practices and SEO stay at 100 (production image, three runs each).
+
+- Build: `apps/web` `build` = `vite build && node scripts/prerender.mjs`. The script SSR-builds
+  `src/prerender/entry.tsx` (real `SiteHeader` + `Hero` in a minimal router; French, anonymous,
+  empty cart) into a temporary `.prerender/` folder (git-ignored, deleted afterwards) and injects
+  the HTML into `dist/index.html` (`#root > #prerender`, 18.5 KB). The Docker image build runs it.
+- `theme-init.js` moved to `<head>`: besides the theme, it marks `html.prerendered` on `/` for a
+  French visitor; an inline style hides `#prerender` everywhere else (other routes, Arabic).
+- `main.tsx` imports `lib/prerender.ts` first and, over the shell, awaits `router.load()` before
+  rendering (no empty frame while the lazy home chunk loads). `useSkipIntro()` skips the hero's
+  entrance animations on that first render only.
+- `src/i18n` no longer touches `document` when there is none (the pre-render runs in Node).
+
+**Verified on the production image:** hero paragraph visible from the first paint and never hidden
+during React's takeover (0 / 247 frames); shell shown only for the French home (not for Arabic, the
+catalogue or a QR page); no CSP violation and no console error; Playwright e2e 3/3 against the
+production storefront (real CSP) and against the dev servers; storefront captures (51) without
+overflow. All 42 tasks green.
+
+## Power BI embedding — phase 2: backend (2026-11-18)
+
+"Embed for your customers": the API authenticates to Power BI as a service principal and gives the
+back office short-lived embed tokens filtered by row-level security.
+
+**Endpoints** (`apps/api/src/powerbi`, under `/api/v1`, not the data plane's `/api/analytics`
+contract): `GET /api/v1/analytics/powerbi/reports` (key, title, page, last refresh) and
+`GET /api/v1/analytics/powerbi/embed/{reportKey}` (`embedUrl`, `embedToken`, `expiresAt`, RLS role).
+Roles: `coop_manager` and `saas_admin`; the embed route is rate-limited (30/min) and logs the report
+key, role and coop_id, never the token.
+
+- **Identity:** `GenerateToken` (v2, multi-resource) with the effective identity
+  `{ username: <coop_id from RequestContext>, roles: ["Cooperative"], datasets: [<datasetId>] }`.
+  A `saas_admin` with `X-Coop-Id` gets that cooperative; without it, the unfiltered `Admin` role
+  (new opt-in `@AdminTenantOptional()` in nest-kit's guard; every other route is unchanged).
+- **Entra ID:** `@azure/msal-node` client credentials for
+  `https://analysis.windows.net/powerbi/api/.default`, cached until 5 minutes before expiry,
+  concurrent callers share one renewal.
+- **Report map:** `POWERBI_REPORTS` maps a key to a report id, or to `{ reportId, page, title }`: the
+  data plane ships ONE report (`data/bi/reports/AgriCoop_Dashboard.pbix`, pages Contrôles, Vue
+  d'ensemble, Stocks, Prévisions), so keys can target pages. Titles: setting, else page display
+  name, else report name. Report metadata is cached 10 minutes.
+- **Demo mode:** without the five required settings (or with blank ones, as compose passes them)
+  the endpoints answer `mode: "demo"` with the names of the missing settings; a partial
+  configuration fails at startup. CI and local dev need no Azure.
+- **Errors:** unknown key 404 `rapport_powerbi_inconnu`, malformed key 400, Power BI failure 502
+  `powerbi_indisponible` (status and Power BI error code logged, nothing echoed to the client).
+- DTOs in `@agricoop/shared` (`powerbi.ts`) as plain objects (`mode` + fields): `createZodDto` cannot
+  build a class from a union. nest-kit also gains `@RateLimit()`.
+- `contracts/api/openapi.yaml` regenerated (two paths); Orval hooks `usePowerBiReports`,
+  `usePowerBiEmbed`. `.env.example` and `docker-compose.apps.yml` (api) list the settings.
+
+**Tests:** `powerbi.int.test.ts` (11, fake REST layer): demo mode, blank and partial settings, report
+list, the token's identity equals the caller's coop_id, query parameters and a manager's foreign
+`X-Coop-Id` cannot change it (403 before Power BI is called), saas_admin with/without a cooperative,
+customer/reseller 403 and anonymous 401, unknown/inherited/malformed keys, 502 mapping, rate limit;
+`entra-token.test.ts` (cache, shared renewal, missing token). All 42 tasks green.
+
+**Still needed outside this repo** (docs in phase 3): an Entra app + secret, the tenant setting for
+service principals, the principal as workspace Member, a capacity, and — from the data plane — the
+`Cooperative` (`[coop_id] = USERNAME()`) and `Admin` RLS roles on the semantic model.
+
+## Power BI embedding — phase 3: back-office tab, theme, CSP, setup guide (2026-11-18)
+
+New **Power BI** tab on `/analyses` (`?onglet=powerbi`, existing tabs and URL logic unchanged),
+loaded lazily (`powerbi-client` is a 256 KB chunk of its own).
+
+- **Picker and states:** segmented control over the reports/pages from
+  `GET /api/v1/analytics/powerbi/reports`, last refresh date, RLS label ("Filtré sur votre
+  coopérative" / "Toutes les coopératives"); branded skeleton until the report's `rendered` event,
+  then a fade-in (motion presets); error card with retry (API error, or Power BI's `error` event);
+  **not-configured state** in demo mode listing the missing settings and pointing to the guide.
+- **Embed config:** `tokenType: Embed`, filter and page-navigation panes hidden, transparent
+  background, `localeSettings` from the app language (fr / ar), `MobilePortrait` layout under
+  640 px (used when the report has a mobile layout).
+- **Token refresh:** 5 minutes before `expiresAt` (never more often than every 30 s) and on an
+  expired-token error, applied with `report.setAccessToken()` without reloading the iframe. The
+  token an embed starts with lives in state, because `PowerBIEmbed` re-embeds on any config
+  change. Note: powerbi-client 2.25 has **no `tokenExpired` event** (unknown event names throw):
+  expiry arrives as `error` with message `TokenExpired`, which is what the tab handles.
+- **Theme:** `scripts/powerbi-theme.ts` converts the kit's OKLCH tokens to a Power BI theme (data
+  colours, sentiment colours, text classes, card-like visuals, transparent page) in light and dark;
+  applied with `report.applyTheme()` and re-applied when the app theme changes. Copies in
+  `public/powerbi-theme{,-dark}.json` for report authors (Power BI Desktop). Power BI cannot load
+  web fonts: Georgia / Segoe UI stand in. A test fails if the files drift from the tokens.
+- **Synthetic toggle:** not applied to the report — the gold views and the model have no
+  `is_synthetic` column; the tab says so when synthetic data is hidden (request to the data plane
+  in the guide).
+- **CSP:** the shared SPA nginx template gains `CSP_EXTRA_FRAME_SRC` (empty by default); compose
+  sets `https://app.powerbi.com` for the back office only. Checked on the built images: back office
+  `frame-src … https://app.powerbi.com`, storefront unchanged.
+- **Docs:** `docs/powerbi-embedding.md` — Entra app + secret, tenant setting for service
+  principals, workspace Member, capacity (F/A SKU, trial for the demo), the RLS roles `Cooperative`
+  (`[coop_id] = USERNAME()`) and `Admin` flagged as a **request to the data plane**, settings with
+  the current `.pbix` page names, CSP, theme, checks and troubleshooting.
+- FR/AR strings; error keys `rapport_powerbi_inconnu`, `powerbi_indisponible`.
+
+**Verified:** demo state captured in every variant (desktop/mobile × light/dark × FR/AR, no
+overflow). Client wiring exercised against the real `app.powerbi.com` with intercepted API
+answers (fake token): the iframe loads, Power BI's 403 reaches the retry card, and the token
+refresh fires on schedule (2 token requests in 45 s). Unit tests for refresh timing, expiry
+detection, locale and theme drift. All 42 tasks green, Playwright e2e 3/3. A real report needs the
+Azure setup and the data plane's RLS roles (guide).
+
+## Login theme — phase 4: Keycloakify setup and the login page (2026-11-18)
+
+New workspace package **`apps/keycloak-theme`**: a Keycloak login theme (`agricoop`) built with
+**Keycloakify 11.16.4** (React 19, Vite 8, Tailwind 4), importing the real design system
+(`@agricoop/ui` tokens, self-hosted fonts, components, motion presets). Not wired into Keycloak yet
+(phase 5: JAR build, compose, realm).
+
+- **Template** (every page): desktop split screen — arch-masked olive-grove photo with a slow zoom,
+  the zellige lattice fading in from the bottom, eyebrow + serif tagline (FR/AR/EN) — and the
+  auth card; on phones a compact photo header and one column. The sides mirror in RTL. Header:
+  brand, language switcher wired to Keycloak's locales (FR / العربية / English, sets `lang` and
+  `dir`), light/dark/system theme toggle. Card: serif title, "attempted username" row with restart,
+  messages as branded alerts (sanitized with `kcSanitize`), try-another-way, social providers
+  area (none configured on the realm), required-fields note. Entrance: card fade-up; reduced motion
+  keeps fades only (MotionProvider).
+- **Login page** (`login.ftl`): floating-label fields, password show/hide, caps-lock warning,
+  inline field errors from Keycloak (animated, linked with `aria-describedby`), remember me,
+  forgot password, register link, submit button with a loading state (no double submit). Field
+  ids/names unchanged (`username`, `password`, `rememberMe`, `kc-login`): the existing e2e login
+  helper keeps working.
+- **`FloatingInput`** added to `@agricoop/ui` (label moved by transform only, `toggleLabels`,
+  `capsLockMessage`, `error` / `invalid`); component tests in the back office's DOM test setup.
+- **Strings:** our own keys (`agricoop*`) and rewordings of Keycloak messages that read badly
+  ("Se connecter", "Identifiant ou e-mail", "Pas encore de compte ?", "Créer un compte",
+  "Identifiant ou mot de passe incorrect.", Arabic equivalents); every key in fr/ar/en.
+- **Other pages** render Keycloakify's default markup inside our template with design-system
+  classes until phase 5 gives each its own component.
+- **Preview without Keycloak:** dev server on 5176 with Keycloakify mock contexts
+  (`/?page=login.ftl&lang=…&state=error|info`), used instead of Storybook (no extra toolchain);
+  `apps/e2e/visual/login-preview.visual.ts` captures login, login with error and with an info
+  message × desktop/mobile × light/dark × FR/AR/EN (36, no overflow) into
+  `apps/e2e/screenshots/login/preview/`. Fixed while reviewing: the photo's fade mask replaced the
+  zellige mask (horizontal bands); they are now two layers.
+- Local photo copies (1100 px / 720 px WebP, 317 / 143 KB) of the storefront's olive grove: no
+  third-party request on the sign-in page.
+- Tooling: ESLint React rules cover the package; `kc.gen.tsx` (generated, committed) is ignored by
+  ESLint/Prettier; `dist_keycloak/` git-ignored. All 44 tasks green.
+
+## Login theme — phase 5: every auth page, Keycloak wiring, in-app auth states (2026-11-19)
+
+- **Pages:** each Keycloak page the realm can show now has its own component in
+  `apps/keycloak-theme/src/login/pages/`: register (our own user-profile fields on
+  `useUserProfileForm`: floating inputs, native select for options), reset password, update
+  password, OTP, TOTP setup (QR code + manual key), verify e-mail, error, info, logout confirm, page
+  expired, select authenticator. Anything else still renders Keycloakify's default markup in our
+  template. More wording fixes in fr/ar/en (`backToLogin`, `backToApplication`,
+  `proceedWithAction`, `registerTitle`, `email`). The submit button's "disabled" (form not ready)
+  is now separate from "submitting" (spinner).
+- **Wiring:** `pnpm keycloak:theme` builds the theme JAR (`vite build` + `keycloakify build`) into
+  `apps/keycloak/providers/` (git-ignored), mounted read-only by `docker-compose.apps.yml`; restart
+  Keycloak after a rebuild. Keycloakify packages with Maven: without a local `mvn`, the script puts
+  a stand-in on PATH that runs the `maven:3.9-eclipse-temurin-21` image (about a minute).
+  Realm: `"loginTheme": "agricoop"` (the only realm change; the running Keycloak was updated through
+  kcadm since `--import-realm` skips an existing realm). Without the JAR Keycloak logs an error and
+  falls back to its built-in theme: sign-in still works. CI builds the JAR in the checks job
+  (uploaded as an artifact) and before the e2e stack starts.
+- **In-app auth states:** `AuthScreen` in `@agricoop/ui` (brand, zellige, lifted card, same look as
+  the login theme). The back office uses it for redirecting, sign-in failed, access reserved and
+  a new **signed-out** screen (it no longer bounces straight back to Keycloak after logout); the
+  storefront for "sign-in required". `signOut(auth)` (both apps) marks the tab before Keycloak's
+  logout redirect; the storefront then shows a "signed out" toast. `SessionNotices` shows a
+  persistent "session expired — sign in again" toast when silent renew fails or the access token
+  expires. Arrow icons mirror in Arabic (`mirrorIcon`).
+- **Real-flow screenshots:** `apps/e2e/visual/login-flow.visual.ts` drives back office → Keycloak
+  → back office → sign out on the running stack and captures login, login error (unknown account,
+  so brute-force protection never locks a demo user), forgot password, register and signed out ×
+  desktop/mobile × light/dark × FR/AR (40, no overflow) into `apps/e2e/screenshots/login/`.
+  Fixed while reviewing: the signed-out icon pointed the wrong way in Arabic. The mock previews
+  (`login-preview.visual.ts`) cover all 14 pages × FR/AR/EN (168).
+- **Verified:** themed sign-in served by Keycloak 26.8 with the expected field ids, no console
+  errors; Playwright e2e green through the themed login; fallback without the JAR checked.
+
+## Back office: per-product AI forecasts (2026-11-23)
+
+Connects `/previsions` to `GET /api/v1/previsions/produits` (Mohamed's PR #2, branch
+`feat/integration-previsions-produit`), below the existing per-family charts.
+
+- **Section "Prévisions IA par produit"** (`src/previsions/ProduitForecasts.tsx`): week selector
+  (latest week by default), family filter chip, product / family / forecast quantity / type table,
+  and a count + total line. The model version and calculation date sit in one line above the
+  table (the same for a week's rows in practice) instead of two wide columns.
+- **Simulations are labelled as such:** rows whose `type_prevision` starts with `simulation`
+  (the example data: `simulation_apres_historique`, week of 2026-09-28) get a "Simulation" badge
+  and a notice that they replay the model on past sales and are not forecasts for the weeks ahead.
+- **One request:** the endpoint is called without parameters and the week and family lists come
+  from its rows, so the filters only offer values that exist; filtering is client-side. If the
+  table grows to many weeks, pass `semaine` to the API instead.
+- **Quantities** (`NUMERIC(12,2)` strings) are summed with the shared decimal constructor and
+  formatted from the string (`src/previsions/produits.ts`, unit-tested: exact totals, grouping,
+  values beyond the money helpers' 8 integer digits). Never JS numbers.
+- Phones: product names wrap and the Type column is hidden (the notice carries it); no sideways
+  scrolling in FR or AR. Strings in fr/ar (Arabic plural forms for the total).
+- **Verified** against the local stack with the example forecasts loaded (PR #2's migration +
+  `contracts/examples/previsions_demo_2026-09-28.json`, COOP01, `manager.coop01`): 11 products,
+  total 159,21 units (exact sum), family filter (cosmetics: 4 products, 69,41), Arabic RTL on a
+  phone, no console errors. Back-office lint, typecheck and tests green.

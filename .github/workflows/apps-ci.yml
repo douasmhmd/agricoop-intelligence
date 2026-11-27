@@ -1,0 +1,146 @@
+# CI for the application scope (apps/, packages/, contracts/). The data plane has its own workflows.
+#
+#   checks  format, lint, typecheck, unit + integration tests (Testcontainers), contract drift
+#   images  multi-arch builds (linux/amd64 + linux/arm64) of the five images, no push yet
+#   e2e     the whole stack with docker compose, then the Playwright happy paths
+name: apps-ci
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'apps/**'
+      - 'packages/**'
+      - 'contracts/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - 'docker-compose.apps.yml'
+      - '.github/workflows/apps-ci.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apps-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: '1'
+  # Testcontainers: Ryuk cleans up containers left by crashed test workers.
+  TESTCONTAINERS_RYUK_DISABLED: 'false'
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # version from package.json "packageManager"
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format
+        run: pnpm format:check
+      - name: Lint, typecheck, test
+        run: pnpm turbo run lint typecheck test
+      # Login theme (apps/keycloak-theme): Keycloakify packages it with Maven (preinstalled on the
+      # Ubuntu runners; Java from setup-java).
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Login theme JAR
+        run: pnpm keycloak:theme
+      - uses: actions/upload-artifact@v7
+        with:
+          name: keycloak-theme
+          path: apps/keycloak/providers/agricoop-keycloak-theme.jar
+          retention-days: 7
+      - name: Contract drift (OpenAPI + generated clients must be committed)
+        run: |
+          pnpm contracts:openapi
+          git diff --exit-code -- contracts/api apps/web/src/api/generated apps/backoffice/src/api/generated
+
+  images:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { app: api, dockerfile: node-service }
+          - { app: qr, dockerfile: node-service }
+          - { app: outbox-relay, dockerfile: node-service }
+          - { app: web, dockerfile: spa }
+          - { app: backoffice, dockerfile: spa }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Build ${{ matrix.app }} (linux/amd64, linux/arm64)
+        uses: docker/build-push-action@v7
+        with:
+          # Path context so apps/docker/<Dockerfile>.dockerignore applies.
+          context: .
+          file: apps/docker/${{ matrix.dockerfile }}.Dockerfile
+          build-args: APP=${{ matrix.app }}
+          platforms: linux/amd64,linux/arm64
+          push: false
+          tags: agricoop/${{ matrix.app }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: checks
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @agricoop/e2e... --filter @agricoop/keycloak-theme...
+      # The realm uses the "agricoop" login theme: build it before Keycloak starts (mounted from
+      # apps/keycloak/providers), so the e2e sign-in goes through the real theme.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Login theme JAR
+        run: pnpm keycloak:theme
+      - name: Local-only configuration
+        run: cp .env.example .env
+      - name: Start the stack (Postgres, Keycloak, Redpanda, Mailpit, app images, demo seed)
+        run: >-
+          docker compose -f docker-compose.yml -f docker-compose.apps.yml --profile apps
+          up -d --build --wait --wait-timeout 300
+      - name: Install Chromium
+        run: pnpm --filter @agricoop/e2e e2e:install
+      - name: Playwright
+        run: |
+          set -a; . ./.env; set +a
+          pnpm --filter @agricoop/e2e e2e
+      - name: Stack logs
+        if: failure()
+        run: docker compose -f docker-compose.yml -f docker-compose.apps.yml --profile apps logs --no-color > compose.log
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            apps/e2e/playwright-report
+            apps/e2e/test-results
+            compose.log
+          retention-days: 7

@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+/* AgriCoop design system: tokens, light/dark themes, brand utilities (packages/ui). */
+@import '@agricoop/ui/theme.css';
+
+/* The design system ships TypeScript source: let Tailwind see its class names. */
+@source '../../../packages/ui/src';

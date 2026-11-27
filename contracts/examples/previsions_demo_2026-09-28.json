@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "type_prevision": "simulation_apres_historique",
+  "semaine": "2026-09-28",
+  "exporte_le_utc": "2026-11-22T16:47:22.732591+00:00",
+  "previsions": [
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "COF-CAD",
+      "famille": "coffret",
+      "quantite_prevue": 2.35,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "CREME-50ML",
+      "famille": "cosmetique",
+      "quantite_prevue": 17.59,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "HV-5L",
+      "famille": "alimentaire",
+      "quantite_prevue": 3.56,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "HVE-1L",
+      "famille": "alimentaire",
+      "quantite_prevue": 24.32,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "HVE-5L",
+      "famille": "alimentaire",
+      "quantite_prevue": 8.21,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "ON-1KG",
+      "famille": "alimentaire",
+      "quantite_prevue": 21.15,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "OVC-1KG",
+      "famille": "alimentaire",
+      "quantite_prevue": 22.64,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "SAV-100G",
+      "famille": "cosmetique",
+      "quantite_prevue": 19.5,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "SAV-BELDI",
+      "famille": "cosmetique",
+      "quantite_prevue": 19.0,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "SHAMP-250ML",
+      "famille": "cosmetique",
+      "quantite_prevue": 13.32,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    },
+    {
+      "coop_id": "56783517-58a9-42ee-b9d5-c8b946b6b6e3",
+      "code_produit": "THE-100G",
+      "famille": "alimentaire",
+      "quantite_prevue": 7.57,
+      "version_modele": "dbw_agricoop_poc.gold.prevision_demande_lightgbm/1@Candidate"
+    }
+  ]
+}

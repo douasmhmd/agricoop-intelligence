@@ -1,0 +1,237 @@
+# App-side services for local development. Use TOGETHER with the root compose file (Postgres):
+#
+#   cp .env.example .env
+#   docker compose -f docker-compose.yml -f docker-compose.apps.yml up -d                 # infra only
+#   docker compose -f docker-compose.yml -f docker-compose.apps.yml --profile apps up -d  # + app images
+#
+# Infra (always on): db-seed (one shot), keycloak, redpanda-console, mailpit. Postgres and Redpanda
+# come from the root docker-compose.yml (data plane, shared): this file only references them.
+# App images (profile "apps"): api, qr, outbox-relay, web, backoffice. During development you usually
+# run them with `pnpm dev` instead, against this infra.
+#
+# Ports: postgres 5433 (root file) · keycloak 8080 · redpanda 19092 (Kafka API, root file) · console 8088 ·
+#        mailpit 8025 (UI) / 1025 (SMTP) · api 3000 · qr 3001 · relay 3002 · web 5173 · backoffice 5174
+
+# Hardening shared by every app container: no privilege escalation, no Linux capabilities, an init
+# process for signal forwarding.
+x-hardened: &hardened
+  init: true
+  security_opt: ['no-new-privileges:true']
+  cap_drop: ['ALL']
+
+x-node-service: &node-service
+  <<: *hardened
+  restart: unless-stopped
+  profiles: ['apps']
+  # The images contain only built JavaScript: the root file system can stay read-only.
+  read_only: true
+  tmpfs: ['/tmp']
+  depends_on:
+    postgres:
+      condition: service_healthy
+    db-seed:
+      condition: service_completed_successfully
+
+services:
+  db-seed:
+    image: postgres:16
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: agricoop
+      PGDATABASE: agricoop
+      PGPASSWORD: ${POSTGRES_PASSWORD:-agricoop_dev}
+    volumes:
+      - ./apps/dev/seed:/seed:ro
+    entrypoint:
+      - sh
+      - -c
+      - 'for f in /seed/*.sql; do psql -v ON_ERROR_STOP=1 -q -f "$$f" || exit 1; done'
+    restart: 'no'
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    command: ['start-dev', '--import-realm']
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?set KC_ADMIN_PASSWORD in .env (see .env.example)}
+      KC_HEALTH_ENABLED: 'true'
+      KC_LOG_LEVEL: ${KC_LOG_LEVEL:-info}
+      # Tokens are issued for the browser-facing URL; containers reach Keycloak on keycloak:8080.
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: 'true'
+      # Substituted into apps/keycloak/realm-agricoop.json at import time.
+      KC_DEMO_PASSWORD: ${KC_DEMO_PASSWORD:?set KC_DEMO_PASSWORD in .env (see .env.example)}
+      KC_PROVISIONER_SECRET: ${KC_PROVISIONER_SECRET:?set KC_PROVISIONER_SECRET in .env (see .env.example)}
+      KC_API_CLIENT_SECRET: ${KC_API_CLIENT_SECRET:?set KC_API_CLIENT_SECRET in .env (see .env.example)}
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./apps/keycloak/realm-agricoop.json:/opt/keycloak/data/import/realm-agricoop.json:ro
+      # Login theme "agricoop" (apps/keycloak-theme): build it with `pnpm keycloak:theme`, then
+      # restart Keycloak. start-dev already disables theme and template caching.
+      - ./apps/keycloak/providers:/opt/keycloak/providers:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"UP"' <&3
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  redpanda-console:
+    image: redpandadata/console:v3.14.0
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+      SCHEMAREGISTRY_ENABLED: 'true'
+      SCHEMAREGISTRY_URLS: http://redpanda:8081
+    ports:
+      - '8088:8080'
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.33.1
+    ports:
+      - '8025:8025'
+      - '1025:1025'
+    restart: unless-stopped
+
+  api:
+    <<: *node-service
+    build:
+      context: .
+      dockerfile: apps/docker/node-service.Dockerfile
+      args: { APP: api }
+    image: agricoop/api:dev
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://agricoop:${POSTGRES_PASSWORD:-agricoop_dev}@postgres:5432/agricoop
+      CORS_ORIGINS: http://localhost:5173,http://localhost:5174
+      LOG_LEVEL: info
+      # Tokens carry the browser-facing issuer; keys are fetched on the internal hostname.
+      OIDC_ISSUER: http://localhost:8080/realms/agricoop
+      OIDC_JWKS_URL: http://keycloak:8080/realms/agricoop/protocol/openid-connect/certs
+      SMTP_URL: smtp://mailpit:1025
+      # The images run with NODE_ENV=production, where the API refuses the built-in dev secret.
+      PAYMENT_MOCK_SECRET: ${COMPOSE_PAYMENT_MOCK_SECRET:-local-compose-only-payment-mock-secret}
+      # Platform admin provisions cooperatives in Keycloak through its Admin API.
+      KEYCLOAK_ADMIN_URL: http://keycloak:8080
+      KC_PROVISIONER_SECRET: ${KC_PROVISIONER_SECRET:?set KC_PROVISIONER_SECRET in .env (see .env.example)}
+      # Read-only role on the data plane's gold schema (data/bi/04_role_lecture.sql, local default
+      # password). Build the layer first: pnpm db:gold.
+      ANALYTICS_DATABASE_URL: postgres://analytics_reader:${ANALYTICS_READER_PASSWORD:-analytics_dev}@postgres:5432/agricoop
+      # Power BI Embedded (docs/powerbi-embedding.md). Unset = demo mode.
+      POWERBI_TENANT_ID: ${POWERBI_TENANT_ID:-}
+      POWERBI_CLIENT_ID: ${POWERBI_CLIENT_ID:-}
+      POWERBI_CLIENT_SECRET: ${POWERBI_CLIENT_SECRET:-}
+      POWERBI_WORKSPACE_ID: ${POWERBI_WORKSPACE_ID:-}
+      POWERBI_REPORTS: ${POWERBI_REPORTS:-}
+    ports:
+      - '3000:3000'
+    healthcheck: &node-health
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3000/health/ready']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+
+  qr:
+    <<: *node-service
+    build:
+      context: .
+      dockerfile: apps/docker/node-service.Dockerfile
+      args: { APP: qr }
+    image: agricoop/qr:dev
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgres://agricoop:${POSTGRES_PASSWORD:-agricoop_dev}@postgres:5432/agricoop
+      CORS_ORIGINS: http://localhost:5173,http://localhost:5174
+      LOG_LEVEL: info
+      OIDC_ISSUER: http://localhost:8080/realms/agricoop
+      OIDC_JWKS_URL: http://keycloak:8080/realms/agricoop/protocol/openid-connect/certs
+      # Encoded in printed labels: ${WEB_PUBLIC_URL}/v/<token>
+      WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-http://localhost:5173}
+      QR_VERIFY_RATE_PER_MIN: 30
+    ports:
+      - '3001:3001'
+    healthcheck:
+      <<: *node-health
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3001/health/ready']
+
+  outbox-relay:
+    <<: *node-service
+    build:
+      context: .
+      dockerfile: apps/docker/node-service.Dockerfile
+      args: { APP: outbox-relay }
+    image: agricoop/outbox-relay:dev
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgres://agricoop:${POSTGRES_PASSWORD:-agricoop_dev}@postgres:5432/agricoop
+      KAFKA_BROKERS: redpanda:9092
+      LOG_LEVEL: info
+    ports:
+      - '3002:3002'
+    healthcheck:
+      <<: *node-health
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3002/health/ready']
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/docker/spa.Dockerfile
+      args: { APP: web }
+    image: agricoop/web:dev
+    <<: *hardened
+    profiles: ['apps']
+    environment:
+      OIDC_AUTHORITY: http://localhost:8080/realms/agricoop
+    ports:
+      - '5173:8080'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    depends_on:
+      api:
+        condition: service_healthy
+      qr:
+        condition: service_healthy
+    restart: unless-stopped
+
+  backoffice:
+    build:
+      context: .
+      dockerfile: apps/docker/spa.Dockerfile
+      args: { APP: backoffice }
+    image: agricoop/backoffice:dev
+    <<: *hardened
+    profiles: ['apps']
+    environment:
+      OIDC_AUTHORITY: http://localhost:8080/realms/agricoop
+      # Embedded Power BI reports (/analyses → Power BI) are framed from app.powerbi.com.
+      CSP_EXTRA_FRAME_SRC: https://app.powerbi.com
+    ports:
+      - '5174:8080'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    depends_on:
+      api:
+        condition: service_healthy
+      qr:
+        condition: service_healthy
+    restart: unless-stopped

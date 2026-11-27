@@ -1,0 +1,277 @@
+{
+  "app": {
+    "name": "AgriCoop"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "notFound": "Page introuvable",
+  "nav": {
+    "home": "Toutes les coopératives",
+    "account": "Mon compte",
+    "cart_one": "Panier ({{count}} article)",
+    "cart_other": "Panier ({{count}} articles)",
+    "products": "Produits",
+    "cooperatives": "Coopératives",
+    "story": "Notre histoire",
+    "authenticity": "Authenticité",
+    "menu": "Menu",
+    "main": "Navigation principale"
+  },
+  "common": {
+    "loading": "Chargement…",
+    "close": "Fermer"
+  },
+  "footer": {
+    "verify": "Scannez le QR code d'une étiquette pour vérifier son authenticité.",
+    "tagline": "Huile d'olive, olives et savons des coopératives du Maroc, traçables lot par lot.",
+    "shop": "Boutique",
+    "trust": "Confiance",
+    "preferences": "Préférences",
+    "demo": "Coopératives fictives — plateforme de démonstration.",
+    "photos": "Photos : Unsplash",
+    "rights": "© {{year}} AgriCoop"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "required": "Connectez-vous pour continuer.",
+    "registerHint": "Pas encore de compte ? Créez-le depuis la page de connexion.",
+    "redirecting": "Redirection vers la connexion…",
+    "signedOut": "Vous êtes déconnecté. À bientôt !",
+    "sessionExpired": "Votre session a expiré.",
+    "signInAgain": "Se reconnecter"
+  },
+  "home": {
+    "title": "Produits des coopératives oléicoles du Maroc",
+    "intro": "Huile d'olive, olives de table, savons et coffrets, directement des producteurs. Chaque produit est traçable par QR code.",
+    "cooperatives": "Coopératives",
+    "none": "Aucune coopérative pour le moment."
+  },
+  "famille": {
+    "alimentaire": "Alimentaire",
+    "cosmetique": "Cosmétique",
+    "coffret": "Coffret"
+  },
+  "catalogue": {
+    "empty": "Aucun produit disponible.",
+    "add": "Ajouter",
+    "soldOut": "Épuisé",
+    "available_one": "{{count}} disponible",
+    "available_other": "{{count}} disponibles",
+    "qrUnit": "QR code d'authenticité sur chaque unité",
+    "filtered": "Filtré : {{famille}}",
+    "clearFilter": "Tout afficher",
+    "all": "Tout",
+    "filters": "Filtrer par univers",
+    "products": "Les produits"
+  },
+  "cart": {
+    "title": "Panier",
+    "empty": "Votre panier est vide.",
+    "browse": "Voir les produits",
+    "from": "Commande auprès de {{coop}}",
+    "quantity": "Quantité",
+    "less": "Diminuer la quantité",
+    "more": "Augmenter la quantité",
+    "remove": "Retirer du panier",
+    "total": "Total",
+    "checkout": "Commander",
+    "added": "{{nom}} ajouté au panier",
+    "view": "Voir le panier",
+    "otherCoop": "Votre panier contient des produits de {{coop}}. Une commande concerne une seule coopérative : vider le panier et ajouter ce produit ?",
+    "priceNotice": "Les prix sont confirmés au moment de la commande.",
+    "continue": "Continuer mes achats"
+  },
+  "checkout": {
+    "title": "Finaliser la commande",
+    "delivery": "Livraison",
+    "nom": "Nom complet",
+    "telephone": "Téléphone (facultatif)",
+    "adresse": "Adresse",
+    "ville": "Ville",
+    "privacy": "Vos coordonnées servent uniquement à livrer votre commande (loi 09-08). Elles ne sont jamais partagées.",
+    "pay": "Payer",
+    "shortage_one": "{{nom}} : il ne reste que {{count}} unité.",
+    "shortage_other": "{{nom}} : il ne reste que {{count}} unités.",
+    "steps": "Étapes de la commande",
+    "stepCart": "Panier",
+    "stepDelivery": "Livraison",
+    "stepPayment": "Paiement",
+    "stepDone": "Confirmation",
+    "summary": "Récapitulatif",
+    "redirect": "Vous serez redirigé vers la page de paiement sécurisée."
+  },
+  "statut": {
+    "creee": "Créée",
+    "payee": "Payée",
+    "expediee": "Expédiée",
+    "livree": "Livrée",
+    "annulee": "Annulée"
+  },
+  "order": {
+    "title": "Commande",
+    "progress": "Avancement de la commande",
+    "paid": "Paiement accepté. Merci ! Un e-mail de confirmation vous a été envoyé.",
+    "notPaid": "Le paiement n'a pas abouti. Vous pouvez réessayer.",
+    "payNow": "Payer maintenant",
+    "cancel": "Annuler la commande",
+    "confirmCancel": "Annuler cette commande ?",
+    "cancelled": "Commande annulée",
+    "allOrders": "Toutes mes commandes"
+  },
+  "account": {
+    "title": "Mon compte",
+    "orders": "Mes commandes",
+    "onlyWithOrders": "Seules les coopératives auprès desquelles vous avez commandé apparaissent.",
+    "hello": "Bonjour {{name}}",
+    "empty": "Vous n'avez pas encore passé de commande."
+  },
+  "verify": {
+    "authentic": "Authentique ✓",
+    "authenticText": "Ce produit a bien été produit et étiqueté par {{coop}}.",
+    "warning": "Attention ⚠",
+    "unknownTitle": "Code inconnu ⚠",
+    "unknownText": "Ce QR code n'a été émis par aucune coopérative de la plateforme. Le produit pourrait être une contrefaçon.",
+    "alerte": {
+      "qr_inactif": "Ce code a été désactivé ou signalé par la coopérative.",
+      "lot_perime": "La date de péremption de ce lot est dépassée.",
+      "scans_multiples": "Ce code a été scanné un nombre inhabituel de fois.",
+      "villes_multiples": "Ce code a été scanné dans plusieurs villes en peu de temps : il pourrait avoir été copié."
+    },
+    "produit": "Produit",
+    "cooperative": "Coopérative",
+    "lot": "Lot",
+    "serie": "N° de série",
+    "fabrication": "Fabrication",
+    "peremption": "Péremption",
+    "scans": "Vérifications",
+    "scansCount_one": "{{count}} vérification",
+    "scansCount_other": "{{count}} vérifications",
+    "shop": "Découvrir les produits des coopératives",
+    "checking": "Vérification du code…",
+    "seal": "Sceau d'authenticité AgriCoop",
+    "details": "Détails du produit",
+    "whatToDo": "Que faire ?",
+    "warningAdvice": "Ce produit n'est pas forcément contrefait. En cas de doute, contactez la coopérative avant de le consommer.",
+    "unknownAdvice": "Ne consommez pas ce produit et signalez-le au vendeur."
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Réessayez.",
+    "not_found": "Élément introuvable.",
+    "validation": "Certaines valeurs sont invalides.",
+    "unknown_cooperative": "Coopérative inconnue.",
+    "stock_insuffisant": "Stock insuffisant pour certains produits.",
+    "produit_inactif": "Un produit n'est plus vendu.",
+    "email_non_verifie": "Confirmez d'abord votre adresse e-mail (lien reçu par e-mail), puis réessayez.",
+    "transition_invalide": "Cette commande ne peut plus être annulée.",
+    "qr_inconnu": "QR code inconnu."
+  },
+  "theme": {
+    "group": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "hero": {
+    "eyebrow": "Coopératives oléicoles du Maroc",
+    "title": "L'or vert des collines, de la coopérative à votre table",
+    "cta": "Découvrir les produits",
+    "verify": "Vérifier un produit",
+    "coldPressed": "Pressée à froid",
+    "traceable": "Traçable par QR",
+    "direct": "En direct des coopératives",
+    "scroll": "Faire défiler",
+    "imageAlt": "Oliveraie bordée d'un muret de pierre, sous un ciel bleu",
+    "badgeHarvest": "Récolte de la saison",
+    "badgeVerified": "Authenticité vérifiée"
+  },
+  "story": {
+    "eyebrow": "Notre histoire",
+    "title": "Des familles d'oléiculteurs, réunies en coopératives",
+    "p1": "Dans les collines du nord du Maroc, des coopératives récoltent, pressent et conditionnent elles-mêmes leur huile, leurs olives et leurs savons.",
+    "p2": "AgriCoop les relie directement à vous : chaque achat leur revient, et chaque produit garde la trace de son lot.",
+    "imageAlt": "Mains triant des olives fraîchement récoltées",
+    "statCoops": "Coopératives",
+    "statProducts": "Produits",
+    "statProvinces": "Provinces"
+  },
+  "featured": {
+    "eyebrow": "Sélection",
+    "title": "Les produits du moment",
+    "subtitle": "Huiles, olives et savons tout juste arrivés des coopératives.",
+    "prev": "Produits précédents",
+    "next": "Produits suivants"
+  },
+  "categories": {
+    "eyebrow": "Univers",
+    "title": "Du fruit au flacon",
+    "huile": "Huiles d'olive",
+    "olives": "Olives de table",
+    "soins": "Savons et soins",
+    "coffrets": "Coffrets cadeaux",
+    "count_one": "{{count}} produit",
+    "count_other": "{{count}} produits",
+    "explore": "Découvrir",
+    "soon": "Bientôt"
+  },
+  "qr": {
+    "eyebrow": "Authenticité garantie",
+    "title": "Un QR code sur chaque étiquette, une preuve à chaque scan",
+    "text": "Chaque lot reçoit un code unique, très difficile à falsifier. Scannez-le avec l'appareil photo de votre téléphone : la coopérative, le lot et les dates s'affichent aussitôt.",
+    "step1": "Scannez le code",
+    "step1Text": "Avec l'appareil photo, sans application.",
+    "step2": "Vérifiez l'origine",
+    "step2Text": "Coopérative, lot, fabrication et péremption.",
+    "step3": "Achetez en confiance",
+    "step3Text": "Un code copié ou désactivé est signalé.",
+    "illustration": "Illustration : un téléphone scanne le QR code d'une étiquette et affiche « Authentique ».",
+    "authentic": "Authentique"
+  },
+  "coops": {
+    "eyebrow": "Les producteurs",
+    "subtitle": "Achetez directement auprès des coopératives.",
+    "from": "À partir de {{price}}",
+    "visit": "Voir la boutique"
+  },
+  "newsletter": {
+    "title": "Les nouvelles récoltes, en avant-première",
+    "text": "Une lettre par saison : arrivages, coopératives et recettes.",
+    "email": "Adresse e-mail",
+    "submit": "S'inscrire",
+    "soon": "L'inscription à la lettre ouvrira bientôt. Merci de votre intérêt !",
+    "invalid": "Saisissez une adresse e-mail valide."
+  },
+  "product": {
+    "back": "Retour à la boutique",
+    "gallery": "Photos du produit",
+    "photo": "Photo {{n}}",
+    "addToCart": "Ajouter au panier",
+    "securePayment": "Paiement sécurisé",
+    "qrLot": "QR code d'authenticité sur chaque lot",
+    "details": "Détails",
+    "description": "Description",
+    "desc": {
+      "huile": "Huile d'olive pressée à froid par la coopérative, à partir d'olives récoltées dans la région.",
+      "olives": "Olives de table préparées et conditionnées par la coopérative.",
+      "soins": "Soin à l'huile d'olive, fabriqué de façon artisanale par la coopérative.",
+      "coffrets": "Une sélection de produits de la coopérative, prête à offrir.",
+      "autre": "Produit de la coopérative, préparé et conditionné sur place."
+    },
+    "origin": "Origine et coopérative",
+    "originText": "Produit par {{coop}}, province de {{province}}.",
+    "traceability": "Traçabilité",
+    "traceLot": "Chaque lot porte un QR code unique : scannez-le pour voir le lot, sa date de fabrication et sa date de péremption.",
+    "traceUnit": "Chaque unité porte son propre QR code numéroté : scannez-le pour vérifier le lot, les dates et le numéro de série.",
+    "reference": "Référence",
+    "sameCoop": "Du même producteur",
+    "notFound": "Ce produit n'est plus proposé."
+  },
+  "lost": {
+    "text": "Cette page s'est égarée dans l'oliveraie.",
+    "errorTitle": "Quelque chose s'est mal passé",
+    "retry": "Réessayer"
+  }
+}

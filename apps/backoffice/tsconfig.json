@@ -1,0 +1,8 @@
+{
+  "extends": "@agricoop/config/tsconfig.react.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node", "@testing-library/jest-dom/vitest"],
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": ["src", "test", "*.config.ts"]
+}

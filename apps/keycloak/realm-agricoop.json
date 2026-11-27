@@ -1,0 +1,335 @@
+{
+  "realm": "agricoop",
+  "displayName": "AgriCoop",
+  "loginTheme": "agricoop",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "verifyEmail": true,
+  "bruteForceProtected": true,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["fr", "ar", "en"],
+  "defaultLocale": "fr",
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@agricoop.local",
+    "fromDisplayName": "AgriCoop"
+  },
+  "roles": {
+    "realm": [
+      {
+        "name": "customer",
+        "description": "Storefront customer (particulier)"
+      },
+      {
+        "name": "reseller",
+        "description": "Storefront reseller (revendeur)"
+      },
+      {
+        "name": "coop_manager",
+        "description": "Cooperative manager: back office of their own cooperative"
+      },
+      {
+        "name": "saas_admin",
+        "description": "Platform administrator: tenants; may act on a tenant via X-Coop-Id (audited)"
+      },
+      {
+        "name": "offline_access"
+      },
+      {
+        "name": "uma_authorization"
+      },
+      {
+        "name": "default-roles-agricoop",
+        "description": "Roles granted to every new user (self-registration = customer)",
+        "composite": true,
+        "composites": {
+          "realm": ["customer", "offline_access", "uma_authorization"]
+        }
+      }
+    ]
+  },
+  "defaultRole": {
+    "name": "default-roles-agricoop"
+  },
+  "groups": [
+    {
+      "name": "coops",
+      "subGroups": [
+        {
+          "name": "COOP01",
+          "attributes": {
+            "tenant_id": ["56783517-58a9-42ee-b9d5-c8b946b6b6e3"],
+            "coop_code": ["COOP01"]
+          }
+        },
+        {
+          "name": "COOP02",
+          "attributes": {
+            "tenant_id": ["22222222-2222-4222-8222-222222222222"],
+            "coop_code": ["COOP02"]
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "agricoop-api",
+      "name": "AgriCoop API (token audience)",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "secret": "${KC_API_CLIENT_SECRET:dev-only-api-client-secret}"
+    },
+    {
+      "clientId": "agricoop-web",
+      "name": "AgriCoop storefront",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true",
+            "multivalued": "false",
+            "aggregate.attrs": "false"
+          }
+        },
+        {
+          "name": "audience agricoop-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "agricoop-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "agricoop-backoffice",
+      "name": "AgriCoop back office",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:5174/*"],
+      "webOrigins": ["http://localhost:5174"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5174/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true",
+            "multivalued": "false",
+            "aggregate.attrs": "false"
+          }
+        },
+        {
+          "name": "audience agricoop-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "agricoop-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "agricoop-dev-cli",
+      "name": "DEV ONLY - password grant for local testing (never in other environments)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true",
+            "multivalued": "false",
+            "aggregate.attrs": "false"
+          }
+        },
+        {
+          "name": "audience agricoop-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "agricoop-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "agricoop-provisioner",
+      "name": "API service account: creates cooperative groups and manager users",
+      "enabled": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "secret": "${KC_PROVISIONER_SECRET:dev-only-provisioner-secret}",
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "kc-admin-api",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-agricoop-provisioner",
+      "enabled": true,
+      "serviceAccountClientId": "agricoop-provisioner",
+      "clientRoles": {
+        "realm-management": ["manage-users", "view-users", "query-users", "query-groups"]
+      }
+    },
+    {
+      "username": "manager.coop01",
+      "email": "manager.coop01@agricoop.local",
+      "firstName": "Gestionnaire",
+      "lastName": "COOP01",
+      "enabled": true,
+      "emailVerified": true,
+      "realmRoles": ["default-roles-agricoop", "coop_manager"],
+      "groups": ["/coops/COOP01"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KC_DEMO_PASSWORD:dev-only-Demo-2026}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "manager.coop02",
+      "email": "manager.coop02@agricoop.local",
+      "firstName": "Gestionnaire",
+      "lastName": "COOP02",
+      "enabled": true,
+      "emailVerified": true,
+      "realmRoles": ["default-roles-agricoop", "coop_manager"],
+      "groups": ["/coops/COOP02"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KC_DEMO_PASSWORD:dev-only-Demo-2026}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "client.demo",
+      "email": "client.demo@agricoop.local",
+      "firstName": "Client",
+      "lastName": "Démo",
+      "enabled": true,
+      "emailVerified": true,
+      "realmRoles": ["default-roles-agricoop"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KC_DEMO_PASSWORD:dev-only-Demo-2026}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "revendeur.demo",
+      "email": "revendeur.demo@agricoop.local",
+      "firstName": "Revendeur",
+      "lastName": "Démo",
+      "enabled": true,
+      "emailVerified": true,
+      "realmRoles": ["default-roles-agricoop", "reseller"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KC_DEMO_PASSWORD:dev-only-Demo-2026}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "admin.saas",
+      "email": "admin.saas@agricoop.local",
+      "firstName": "Admin",
+      "lastName": "Plateforme",
+      "enabled": true,
+      "emailVerified": true,
+      "realmRoles": ["default-roles-agricoop", "saas_admin"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KC_DEMO_PASSWORD:dev-only-Demo-2026}",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

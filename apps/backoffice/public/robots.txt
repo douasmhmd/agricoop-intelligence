@@ -1,0 +1,3 @@
+# Back office: private, nothing to index.
+User-agent: *
+Disallow: /

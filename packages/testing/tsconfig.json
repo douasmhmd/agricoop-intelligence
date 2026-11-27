@@ -1,0 +1,4 @@
+{
+  "extends": "@agricoop/config/tsconfig.lib.json",
+  "include": ["src", "test", "*.config.ts"]
+}

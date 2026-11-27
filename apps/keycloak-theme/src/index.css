@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+/* Same design system as the storefront and the back office (packages/ui). */
+@import '@agricoop/ui/theme.css';
+
+/* The design system ships TypeScript source: let Tailwind see its class names. */
+@source '../../../packages/ui/src';
+
+/* Keycloak's own pages put classes on <html>/<body>; ours fill the viewport. */
+html,
+body,
+#root {
+  min-height: 100%;
+}

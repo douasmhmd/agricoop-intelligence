@@ -18,6 +18,12 @@ __pycache__/
  Node
 node_modules/
 dist/
+# Keycloakify theme build output (apps/keycloak-theme)
+dist_keycloak/
+# Built theme JAR mounted into Keycloak (pnpm keycloak:theme)
+apps/keycloak/providers/*.jar
+# Temporary SSR build of the storefront pre-render (apps/web/scripts/prerender.mjs)
+.prerender/
 #
  Donnes (versionnes par DVC, pas par Git)
 *.parquet
@@ -28,7 +34,30 @@ data/synthetic-factory/output/
 .vscode/
 
 data/synthetic-factory/output/
+
+# apps tooling
+.turbo/
+coverage/
+*.tsbuildinfo
+.env.local
+.env.*.local
+playwright-report/
+# TanStack Router generator scratch files
+.tanstack/
+test-results/
+apps/*/openapi.json
+
+# generated at build time
+packages/events/src/generated/
+
+# generated API clients (pnpm api:generate)
+apps/*/src/api/generated/
+
+# Visual review output and Playwright auth state
+apps/e2e/screenshots/
+apps/e2e/.auth/
+
+# Data plane (teammate): MLflow tracking and the local lake
 data/ml/mlflow.db
 data/ml/mlruns/
-data/lake/
 data/lake/

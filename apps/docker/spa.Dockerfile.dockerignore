@@ -1,0 +1,19 @@
+# Build context filter for spa.Dockerfile (BuildKit reads <Dockerfile>.dockerignore).
+# Never send secrets, data or local build output to the builder.
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.tfvars
+.oci
+.git
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+**/playwright-report
+**/test-results
+data
+infra
+docs
