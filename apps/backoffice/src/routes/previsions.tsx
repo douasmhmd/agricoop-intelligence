@@ -9,6 +9,7 @@ import { usePrevisionsSeries, usePrevisionsVersions } from '@/api/generated/prev
 import { ok } from '@/api/ok';
 import { EmptyState, ErrorAlert, NativeSelect, PageHeader } from '@/components/common';
 import { ChartCard, ChartSkeleton, SalesForecastChart } from '@/dashboard/charts';
+import { ProduitForecasts } from '@/previsions/ProduitForecasts';
 import { usePreferences } from '@/state/preferences';
 
 export const Route = createFileRoute('/previsions')({
@@ -118,6 +119,7 @@ function PrevisionsPage() {
           </motion.div>
         </>
       )}
+      <ProduitForecasts />
     </>
   );
 }
