@@ -1015,3 +1015,28 @@ New workspace package **`apps/keycloak-theme`**: a Keycloak login theme (`agrico
   (`login-preview.visual.ts`) cover all 14 pages × FR/AR/EN (168).
 - **Verified:** themed sign-in served by Keycloak 26.8 with the expected field ids, no console
   errors; Playwright e2e green through the themed login; fallback without the JAR checked.
+
+## Back office: per-product AI forecasts (2026-11-23)
+
+Connects `/previsions` to `GET /api/v1/previsions/produits` (Mohamed's PR #2, branch
+`feat/integration-previsions-produit`), below the existing per-family charts.
+
+- **Section "Prévisions IA par produit"** (`src/previsions/ProduitForecasts.tsx`): week selector
+  (latest week by default), family filter chip, product / family / forecast quantity / type table,
+  and a count + total line. The model version and calculation date sit in one line above the
+  table (the same for a week's rows in practice) instead of two wide columns.
+- **Simulations are labelled as such:** rows whose `type_prevision` starts with `simulation`
+  (the example data: `simulation_apres_historique`, week of 2026-09-28) get a "Simulation" badge
+  and a notice that they replay the model on past sales and are not forecasts for the weeks ahead.
+- **One request:** the endpoint is called without parameters and the week and family lists come
+  from its rows, so the filters only offer values that exist; filtering is client-side. If the
+  table grows to many weeks, pass `semaine` to the API instead.
+- **Quantities** (`NUMERIC(12,2)` strings) are summed with the shared decimal constructor and
+  formatted from the string (`src/previsions/produits.ts`, unit-tested: exact totals, grouping,
+  values beyond the money helpers' 8 integer digits). Never JS numbers.
+- Phones: product names wrap and the Type column is hidden (the notice carries it); no sideways
+  scrolling in FR or AR. Strings in fr/ar (Arabic plural forms for the total).
+- **Verified** against the local stack with the example forecasts loaded (PR #2's migration +
+  `contracts/examples/previsions_demo_2026-09-28.json`, COOP01, `manager.coop01`): 11 products,
+  total 159,21 units (exact sum), family filter (cosmetics: 4 products, 69,41), Arabic RTL on a
+  phone, no console errors. Back-office lint, typecheck and tests green.

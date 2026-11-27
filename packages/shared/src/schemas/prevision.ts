@@ -42,3 +42,36 @@ export const previsionsSchema = z.object({
   series: z.array(previsionSerieSchema),
 });
 export type Previsions = z.infer<typeof previsionsSchema>;
+
+/**
+ * Prévisions IA par produit, écrites depuis le pipeline analytique.
+ * La coopérative est déterminée par l'identité authentifiée.
+ */
+
+export const previsionsProduitsQuery = z.object({
+  semaine: isoDate.optional(),
+  famille: z.string().min(1).optional(),
+});
+export type PrevisionsProduitsQuery = z.infer<typeof previsionsProduitsQuery>;
+
+export const previsionProduitSchema = z.object({
+  produit_id: z.uuid(),
+  code_produit: z.string(),
+  nom_produit: z.string(),
+  famille: z.string(),
+  semaine: isoDate,
+
+  // PostgreSQL NUMERIC est retourné comme chaîne.
+  quantite_prevue: z.string(),
+
+  // Permet de distinguer simulation et vraie prévision.
+  type_prevision: z.string(),
+  version_modele: z.string(),
+  date_calcul: z.iso.datetime({ offset: true }),
+});
+
+export type PrevisionProduit = z.infer<typeof previsionProduitSchema>;
+
+export const previsionsProduitsSchema = z.array(previsionProduitSchema);
+
+export type PrevisionsProduits = z.infer<typeof previsionsProduitsSchema>;

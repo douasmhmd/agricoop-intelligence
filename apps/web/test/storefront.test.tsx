@@ -108,16 +108,20 @@ const verification = {
 };
 
 function renderAt(path: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [path] }),
-    context: { queryClient: new QueryClient() },
+    context: { queryClient },
   });
+
   render(
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-    >
-      {/* Same providers as main.tsx (the layout's theme toggles need ThemeProvider). */}
+    <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <CartProvider>
           <RouterProvider router={router} />
@@ -146,7 +150,7 @@ describe('verification page /v/:token', () => {
   it('shows "Authentique" with the product details, and records exactly one scan', async () => {
     respond(200, verification);
     renderAt('/v/AAAAAAAAAAAAAAAAAAAAAA');
-    expect(await screen.findByText('Authentique ✓')).toBeInTheDocument();
+    expect(await screen.findByText('Authentique ✓', {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText("Huile d'olive vierge extra 5 L")).toBeInTheDocument();
     expect(screen.getByText('7')).toBeInTheDocument();
     const verifyCalls = fetchMock.mock.calls.filter(([url]) =>

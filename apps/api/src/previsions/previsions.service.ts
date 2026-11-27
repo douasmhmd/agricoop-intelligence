@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { commande, ligne_commande, prevision, produit } from '@agricoop/db';
+import { commande, ligne_commande, prevision, produit, previsionProduit } from '@agricoop/db';
 import { CLOCK, type Clock, TenantDb, today } from '@agricoop/nest-kit';
 import {
   addDays,
@@ -10,6 +10,8 @@ import {
   toIsoTimestamp,
   type VersionModele,
   weeksBetween,
+  type PrevisionProduit,
+  type PrevisionsProduitsQuery,
 } from '@agricoop/shared';
 import { and, desc, eq, gte, lte, ne, sql } from 'drizzle-orm';
 
@@ -126,6 +128,49 @@ export class PrevisionsService {
           })),
         })),
       };
+    });
+  }
+
+  /**
+   * Prévisions IA par produit pour la coopérative authentifiée.
+   * Le contexte tenant est déterminé par TenantDb.
+   */
+  async produits(query: PrevisionsProduitsQuery): Promise<PrevisionProduit[]> {
+    return this.tenantDb.run(async (scope) => {
+      const rows = await scope.tx
+        .select({
+          produit_id: previsionProduit.produit_id,
+          code_produit: produit.code,
+          nom_produit: produit.nom,
+          famille: produit.famille,
+          semaine: previsionProduit.semaine,
+          quantite_prevue: previsionProduit.quantite_prevue,
+          type_prevision: previsionProduit.type_prevision,
+          version_modele: previsionProduit.version_modele,
+          date_calcul: previsionProduit.date_calcul,
+        })
+        .from(previsionProduit)
+        .innerJoin(
+          produit,
+          and(
+            eq(previsionProduit.produit_id, produit.produit_id),
+            eq(previsionProduit.coop_id, produit.coop_id),
+            scope.owns(produit),
+          ),
+        )
+        .where(
+          and(
+            scope.owns(previsionProduit),
+            query.semaine ? eq(previsionProduit.semaine, query.semaine) : undefined,
+            query.famille ? eq(produit.famille, query.famille) : undefined,
+          ),
+        )
+        .orderBy(desc(previsionProduit.semaine), produit.code);
+
+      return rows.map((row) => ({
+        ...row,
+        date_calcul: toIsoTimestamp(row.date_calcul),
+      }));
     });
   }
 }
